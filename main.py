@@ -1,10 +1,12 @@
 import sys
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QApplication, QTableWidget, QTreeWidget, QStyledItemDelegate, QMessageBox
+from PyQt6.QtWidgets import QApplication, QTableWidget, QTreeWidget, QStyledItemDelegate, QMessageBox, QFileDialog, \
+    QTableWidgetItem
 from PyQt6 import QtCore, QtGui, QtWidgets
 from main_window import Ui_MainWindow
 from new_cost_estimate_window import Ui_new_cost_estimate_window
 from enum import Enum
+
 
 class row_type(Enum):
     position = "position"
@@ -108,12 +110,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.delegate = ReadOnlyDelegate(self)
         self.init_ui()
         ######################################
-        self.PositonsTable.insertRow(0)
-        self.root = basic_row(row_type.root_element)
-        for column in range(0, self.PositonsTable.columnCount()):
-            self.PositonsTable.setItem(0, column, self.root.list_items[column])
+        self.csv_file = ""
 
-        self.load_test_data()
         self.refresh_table()
 
     # TODO
@@ -131,9 +129,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.PositonsTable.setRowCount(0)
         self.PositonsTable.setColumnWidth(3, 400)
 
-        self.PositonsTable.setItemDelegateForColumn(0, self.delegate)
-        self.PositonsTable.setItemDelegateForColumn(1, self.delegate)
-        self.PositonsTable.setItemDelegateForColumn(7, self.delegate)
+        # self.PositonsTable.setItemDelegateForColumn(0, self.delegate)
+        # self.PositonsTable.setItemDelegateForColumn(1, self.delegate)
+        # self.PositonsTable.setItemDelegateForColumn(7, self.delegate)
 
         self.actionNew.triggered.connect(self.action_new_handler)
         self.actionOpen.triggered.connect(self.action_open_handler)
@@ -142,9 +140,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionExport_xlsx.triggered.connect(self.action_export_xlsx_handler)
         self.actionImport_xlm.triggered.connect(self.action_import_xlm_handler)
         self.actionSave_as.triggered.connect(self.action_save_as_handler)
+        self.actionImportCsv.triggered.connect(self.action_import_csv_handler)
+        self.actionExportCsv.triggered.connect(self.action_export_csv_handler)
 
-        self.treeWidget.setColumnCount(1)
-        self.treeWidget.setHeaderHidden(True)
+    def action_import_csv_handler(self):
+        self.open_file()
+
+    def action_export_csv_handler(self):
+        self.save_file()
 
     def on_context_menu(self, pos):
         index = self.PositonsTable.indexAt(pos)
@@ -209,7 +212,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.PositonsTable.removeRow(row_position)
 
     def cell_changed_handler(self, row, column):
-        # todo: sprawdz czy nie tekst, zaokraglanie do 2 miejsc
+        # todo: sprawdz czy nie tekst, zaokraglanie do 2 miejsc dodanie zł
+
         if column == 5 or column == 6:
             if self.PositonsTable.item(row, 5) and self.PositonsTable.item(row, 6):
                 if is_float(self.PositonsTable.item(row, 5).text()) and is_float(
@@ -220,22 +224,59 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.PositonsTable.item(row, 6).setForeground(QtGui.qRgb(0, 0, 0))
                     self.PositonsTable.setItem(row, 7, QtWidgets.QTableWidgetItem(str(quantity * price)))
 
-    def load_test_data(self):
-        pass
-        for i in range(1, 14):
-            if i in (1, 9):
-                self.add_row(row_type.element, i)
-            else:
-                self.add_row(row_type.position, i)
-        # def insert_item_at_position(parent_item, child_text, position):
-        #     new_child = QtWidgets.QTreeWidgetItem([child_text])
-        #     parent_item.insertChild(position, new_child)
-        #     return new_child
-        # root = QtWidgets.QTreeWidgetItem(self.treeWidget)
-        # root.setText(0, "Kosztorys: Przykład - kosztorys szczegółowy")
-        # insert_item_at_position(root, "2000", 0)
-        # insert_item_at_position(root, "8000", 0)
-        # insert_item_at_position(root, "20000", 0)
+    def open_file(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, 'Open file', '', "CSV Files (*.csv *.tsv *.txt);;All Files (*.*)")
+        if file_name:
+            self.csv_file = file_name
+            self.load_csv(self.csv_file)
+            self.statusbar.showMessage(f"{file_name} loaded")
+
+    def load_csv(self, filename):
+        csv_text = open(filename, "r",encoding="UTF-8").read()
+        tab_counter = csv_text.splitlines()[0].count("\t")
+        comma_counter = csv_text.splitlines()[0].count(",")
+        if tab_counter > comma_counter:
+            self.PositonsTable.setColumnCount(tab_counter + 1)
+            delimiter = "\t"
+        else:
+            self.PositonsTable.setColumnCount(comma_counter + 1)
+            delimiter = ","
+        row = 0
+        for list_row in csv_text.splitlines():
+            self.PositonsTable.insertRow(row)
+            row_text = list_row.split(delimiter)
+            column = 0
+            for cell in row_text:
+                cell_text = QTableWidgetItem(cell)
+                self.PositonsTable.setItem(row, column, cell_text)
+                column += 1
+            row += 1
+
+    def save_file(self):
+        if self.PositonsTable.rowCount() < 1:
+            return
+        if self.csv_file != "":
+            file_name = self.csv_file
+        else:
+            file_name = "*.csv"
+
+        fname, _ = QFileDialog.getSaveFileName(self, 'Save file', file_name,
+                                               "CSV Files (*.csv *.tsv *.txt);;All Files (*.*)")
+        if fname:
+            self.save_csv(fname)
+            self.csv_file = fname
+
+    def save_csv(self, filename):
+        row_text = ""
+        for row in range(self.PositonsTable.rowCount() - 1):
+
+            for column in range(self.PositonsTable.columnCount() - 1):
+                cell_text = self.PositonsTable.item(row, column).text()
+                row_text += f"{cell_text}\t"
+            row_text = row_text.rstrip("\t")
+            row_text += "\n"
+        with open(filename, "w",encoding="UTF-8") as f:
+            f.write(row_text)
 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)

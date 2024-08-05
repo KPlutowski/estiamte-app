@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1431</width>
-    <height>759</height>
+    <width>1103</width>
+    <height>750</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,94 +16,176 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_3">
     <item>
-     <widget class="QTableWidget" name="PositonsTable">
-      <property name="contextMenuPolicy">
-       <enum>Qt::CustomContextMenu</enum>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
-      <property name="sizeAdjustPolicy">
-       <enum>QAbstractScrollArea::AdjustToContents</enum>
-      </property>
-      <property name="rowCount">
-       <number>20</number>
-      </property>
-      <property name="columnCount">
-       <number>8</number>
-      </property>
-      <attribute name="horizontalHeaderCascadingSectionResizes">
-       <bool>true</bool>
-      </attribute>
-      <attribute name="horizontalHeaderStretchLastSection">
-       <bool>true</bool>
-      </attribute>
-      <attribute name="verticalHeaderVisible">
-       <bool>false</bool>
-      </attribute>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <row/>
-      <column>
-       <property name="text">
-        <string>-</string>
-       </property>
-       <property name="toolTip">
-        <string notr="true"/>
-       </property>
-       <property name="whatsThis">
-        <string notr="true"/>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Numer pozycji</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Podstawa</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Opis</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Jm</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Ilość</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Cena</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Wartość</string>
-       </property>
-      </column>
+      <widget class="QWidget" name="tab_1">
+       <attribute name="title">
+        <string>Tab 1</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QTableWidget" name="PositonsTable">
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
+          <property name="sizeAdjustPolicy">
+           <enum>QAbstractScrollArea::AdjustToContents</enum>
+          </property>
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+          <property name="rowCount">
+           <number>21</number>
+          </property>
+          <property name="columnCount">
+           <number>6</number>
+          </property>
+          <attribute name="horizontalHeaderStretchLastSection">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="verticalHeaderVisible">
+           <bool>false</bool>
+          </attribute>
+          <row>
+           <property name="text">
+            <string>awd</string>
+           </property>
+          </row>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <column>
+           <property name="text">
+            <string>MATERIAŁ</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>OPIS</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>J.M.</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>ILOŚĆ</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>CENA</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>WARTOŚĆ NETTO</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Tab 2</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QTreeWidget" name="treeWidget">
+          <column>
+           <property name="text">
+            <string>Nazwa</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Wartość</string>
+           </property>
+          </column>
+          <item>
+           <property name="text">
+            <string>pow.siatki</string>
+           </property>
+           <property name="text">
+            <string>10.75</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Długość budynku w m</string>
+           </property>
+           <property name="text">
+            <string>6.47</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>szerokość budynku w m</string>
+           </property>
+           <property name="text">
+            <string>5.47</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>pow.fundamentu</string>
+           </property>
+           <property name="text">
+            <string>dł*szerokość</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>obwód</string>
+           </property>
+           <property name="text">
+            <string>(dł+szer)*2</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Czy komin?</string>
+           </property>
+           <property name="text">
+            <string>TAK</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Tab 3</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>Tab 4</string>
+       </attribute>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -113,7 +195,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1431</width>
+     <width>1103</width>
      <height>26</height>
     </rect>
    </property>
@@ -126,12 +208,14 @@
       <string>Import</string>
      </property>
      <addaction name="actionImport_xlm"/>
+     <addaction name="actionImportCsv"/>
     </widget>
     <widget class="QMenu" name="menuEksport">
      <property name="title">
       <string>Eksport</string>
      </property>
      <addaction name="actionExport_xlsx"/>
+     <addaction name="actionExportCsv"/>
     </widget>
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
@@ -150,24 +234,6 @@
    <property name="enabled">
     <bool>true</bool>
    </property>
-  </widget>
-  <widget class="QDockWidget" name="dockWidget_3">
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_4">
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QTreeWidget" name="treeWidget">
-       <column>
-        <property name="text">
-         <string notr="true">1</string>
-        </property>
-       </column>
-      </widget>
-     </item>
-    </layout>
-   </widget>
   </widget>
   <action name="actionNew">
    <property name="text">
@@ -229,6 +295,16 @@
   <action name="actionExport_xlsx">
    <property name="text">
     <string>Plik XLSX</string>
+   </property>
+  </action>
+  <action name="actionImportCsv">
+   <property name="text">
+    <string>*.csv</string>
+   </property>
+  </action>
+  <action name="actionExportCsv">
+   <property name="text">
+    <string>*.csv</string>
    </property>
   </action>
  </widget>
