@@ -166,39 +166,51 @@ class Spreadsheet:
         else:
             self._set_value_without_formula(row, column, formula_from_user)
 
-    def _set_formula_and_evaluate(self, row: int, column: int, formula_from_user: str):
-        python_formula = self._convert_to_python_formula(formula_from_user[1:])
-        cell = self.get_cell(row, column)
-        cell.user_formula = formula_from_user
-        try:
-            value = str(eval(python_formula))
-            cell.value = value
-            cell.error_message = None
-        except Exception as e:
-            cell.value = str(e)
-            cell.error_message = str(e)
-
     def _set_value_without_formula(self, row: int, column: int, value: str):
         cell = self.get_cell(row, column)
         cell.user_formula = value
         cell.value = value
         cell.error_message = None
 
+    def _set_formula_and_evaluate(self, row: int, column: int, formula_from_user: str):
+        python_formula = self._convert_to_python_formula(formula_from_user[1:])
+        cell = self.get_cell(row, column)
+        cell.user_formula = formula_from_user
+        try:
+            cell.value = str(eval(python_formula))
+            cell.error_message = None
+        except Exception as e:
+            cell.value = str(e)
+            cell.error_message = str(e)
+
     def _convert_to_python_formula(self, formula: str) -> str:
-        pattern = r'([A-Z]+)(\d+)'
-        matches = re.findall(pattern, formula)
+        """
+        Convert an Excel-like formula to a Python formula that references worksheet cells.
 
-        for col_str, row_str in matches:
-            col_idx = self._column_letter_to_index(col_str)
-            row_idx = int(row_str) - 1
+        Example:
+            Excel formula: "=A1 + A2"
+            Python formula: "self.get_cell(0,0).value + self.get_cell(1,0).value"
+        """
+        # Regular expression to find cell references in the format like A1, B2, etc.
+        cell_ref_pattern = re.compile(r'([A-Z]+)(\d+)')
 
-            if 0 <= row_idx < len(self.worksheet) and 0 <= col_idx < self.row_length:
-                cell_value = self.get_cell(row_idx, col_idx).value
-                formula = formula.replace(f"{col_str}{row_str}", self._format_value(cell_value))
-            else:
-                formula = formula.replace(f"{col_str}{row_str}", '""')
+        def replace_match(match):
+            column_letter = match.group(1)
+            row_number = int(match.group(2))
 
-        return formula
+            # Convert column letter to zero-based index
+            column_index = self._column_letter_to_index(column_letter)
+            # Convert row number to zero-based index
+            row_index = row_number - 1
+
+
+            # Return the Python equivalent reference to the cell
+            return f'self.get_cell({row_index},{column_index}).value'
+
+        # Substitute all occurrences of the pattern in the formula
+        python_formula = cell_ref_pattern.sub(replace_match, formula)
+
+        return python_formula
 
     @staticmethod
     def _format_value(value: str) -> str:
