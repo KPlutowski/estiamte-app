@@ -22,14 +22,14 @@ class ItemDelegate(QtWidgets.QStyledItemDelegate):
             editor.textChanged.connect(lambda text: self.on_editor_text_changed(index, text))
             editor.editingFinished.connect(lambda: self.commit_and_close_editor(editor, index))  # Ensure to commit changes
             self.cellEditingStarted.emit(index.row(), index.column())
-            self.parent().spreadsheet.set_cell_editing_state(index.row(), index.column(), True)
+            self.parent().spreadsheet.get_cell(index.row(), index.column()).error_message = True
         return editor
 
     def setModelData(self, editor, model, index):
         super(ItemDelegate, self).setModelData(editor, model, index)
         text = editor.text()
         self.cellEditingFinished.emit(index.row(), index.column(), text)
-        self.parent().spreadsheet.set_cell_editing_state(index.row(), index.column(), False)
+        self.parent().spreadsheet.get_cell(index.row(), index.column()).error_message = False
 
     def commit_and_close_editor(self, editor, index):
         """Helper method to commit the editor's data and close it."""
@@ -67,7 +67,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.init_ui()
 
-        self.spreadsheet = Spreadsheet()
+        self.spreadsheet = Spreadsheet(self.PositonsTable.columnCount())
         self.quantity_column_nr = 3
         self.price_column_nr = 4
         self.netto_column_nr = 5
@@ -147,23 +147,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def cell_double_clicked_handler(self, row, column):
         print("cell_double_clicked_handler")
         # Display the formula in the table if it exists
-        formula = self.spreadsheet.get_formula(row, column)
+        formula = self.spreadsheet.get_cell(row, column).user_formula
         if formula:
             self.PositonsTable.item(row, column).setText(formula)
         else:
-            self.PositonsTable.item(row, column).setText(self.spreadsheet.get_value(row, column))
+            self.PositonsTable.item(row, column).setText(self.spreadsheet.get_cell(row, column).value)
 
     def cell_editing_handler(self, row, column, text):
         print("cell_editing_handler")
         if row == self.current_row and column == self.current_column:
+            self.spreadsheet.get_cell(self.current_row, self.current_column).edit_mode = True
             self.spreadsheet.set_cell_formula(row, column, text)
-            self.spreadsheet.set_cell_editing_state(self.current_row, self.current_column, True)
-            self.lineEdit.setText(self.spreadsheet.get_formula(row, column))
+            self.lineEdit.setText(self.spreadsheet.get_cell(row, column).user_formula)
 
     def cell_activated_handler(self, row, column):
         print("cellActivated")
         if self.current_row is not None and self.current_column is not None:
-            self.spreadsheet.set_cell_editing_state(self.current_row, self.current_column, False)
+            self.spreadsheet.get_cell(self.current_row, self.current_column).edit_mode = False
             self.spreadsheet.set_cell_formula(self.current_row, self.current_column, self.lineEdit.text())
 
     def current_cell_changed_handler(self, row, column):
@@ -176,24 +176,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.current_column = column
 
         # Get the formula if it exists, otherwise, get the value
-        formula = self.spreadsheet.get_formula(row, column)
+        formula = self.spreadsheet.get_cell(row, column).user_formula
         if formula:
             self.lineEdit.setText(formula)
         else:
-            self.lineEdit.setText(self.spreadsheet.get_value(row, column))
+            self.lineEdit.setText(self.spreadsheet.get_cell(row, column).value)
 
     def handle_line_editing_finished(self):
         print("handle_line_editing_finished")
         # This function is called when editing is finished
         text = self.lineEdit.text()
         if self.current_row is not None and self.current_column is not None:
-            self.spreadsheet.set_cell_editing_state(self.current_row, self.current_column, False)
+            self.spreadsheet.get_cell(self.current_row, self.current_column).edit_mode = False
             self.spreadsheet.set_cell_formula(self.current_row, self.current_column, text)
 
     def line_edit_text_changed_handler(self, text):
         print("line_edit_text_changed_handler")
         if self.current_row is not None and self.current_column is not None:
-            self.spreadsheet.set_cell_editing_state(self.current_row, self.current_column, True)
+            self.spreadsheet.get_cell(self.current_row, self.current_column).edit_mode = True
             self.spreadsheet.set_cell_formula(self.current_row, self.current_column, text)
 
 
