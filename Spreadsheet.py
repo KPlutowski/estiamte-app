@@ -4,7 +4,7 @@ from PyQt6 import QtGui
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget
 from enum import Enum, auto
-
+from collections import defaultdict
 
 def is_float(value: str) -> bool:
     """Check if the given string can be converted to a float."""
@@ -34,8 +34,9 @@ class Cell:
         self._format = NumberFormat.GENERAL
         self.edit_mode = False
         self._value = ''
-        self._user_formula = ''
+        self._formula = ''
         self._python_formula = ''
+        self.dependencies = []
         self._error_message: Optional[str] = None
         self._item = QTableWidgetItem()
 
@@ -78,20 +79,20 @@ class Cell:
         self.update_cell()
 
     @property
-    def user_formula(self) -> str:
-        return self._user_formula
-
-    @user_formula.setter
-    def user_formula(self, formula: str):
-        self._user_formula = formula
-
-    @property
     def error_message(self) -> Optional[str]:
         return self._error_message
 
     @error_message.setter
     def error_message(self, error: Optional[str]):
         self._error_message = error
+
+    @property
+    def python_formula(self) -> Optional[str]:
+        return self._python_formula
+
+    @python_formula.setter
+    def python_formula(self, python_formula: Optional[str]):
+        self._python_formula = python_formula
 
     @property
     def item(self) -> QTableWidgetItem:
@@ -112,76 +113,12 @@ class Cell:
         else:
             self.item.setText(self.value)
 
-
-class Spreadsheet:
-    def __init__(self, row_length: int):
-        self.worksheet: List[List[Cell]] = [[Cell() for _ in range(row_length)]]
-        self.row_length = row_length
-
-    def get_cell(self, row: int, column: int) -> Cell:
-        return self.worksheet[row][column]
-
-    def set_cell(self, row: int, column: int, cell: Cell):
-        self.worksheet[row][column] = cell
-
-    def insert_row(self, index: int, num_cells: int, table: QTableWidget, row_type: RowType = RowType.NO_TYPE):
-        table.insertRow(index)
-        self._ensure_row_exists(index, num_cells)
-
-        default_formulas = {
-            RowType.POSITION: ["SIATKA 20x20", "nie zamawiamy powyżej 150zł/h", "szt.", "8", "184.64", "", "", ""],
-            RowType.ROOT_ELEMENT: ["Kosztorys", "Przykład - kosztorys szczegółowy", "", "", "", "0", "", ""]
-        }
-
-        for column in range(num_cells):
-            cell = Cell()
-            if row_type in default_formulas:
-                formulas = default_formulas[row_type]
-                if column < len(formulas):
-                    cell.user_formula = formulas[column]
-            cell.number_format = NumberFormat.GENERAL
-            cell.color = (255, 0, 0) if row_type == RowType.ROOT_ELEMENT else (0, 0, 0)
-            cell.is_bold = row_type == RowType.ROOT_ELEMENT
-
-            self.set_cell(index, column, cell)
-            self.set_cell_formula(index, column, cell.user_formula)
-            table.setItem(index, column, cell.item)
-
-        self.update_table()
-
-    def delete_row(self, index: int, table: QTableWidget):
-        table.removeRow(index)
-        if 0 <= index < len(self.worksheet):
-            self.worksheet.pop(index)
-        self.update_table()
-
-    def update_table(self):
-        for row in self.worksheet:
-            for cell in row:
-                cell.update_cell()
-
-    def set_cell_formula(self, row: int, column: int, formula_from_user: str):
-        if formula_from_user.startswith("=") and not self.get_cell(row, column).edit_mode:
-            self._set_formula_and_evaluate(row, column, formula_from_user)
-        else:
-            self._set_value_without_formula(row, column, formula_from_user)
-
-    def _set_value_without_formula(self, row: int, column: int, value: str):
-        cell = self.get_cell(row, column)
-        cell.user_formula = value
-        cell.value = value
-        cell.error_message = None
-
-    def _set_formula_and_evaluate(self, row: int, column: int, formula_from_user: str):
-        python_formula = self._convert_to_python_formula(formula_from_user[1:])
-        cell = self.get_cell(row, column)
-        cell.user_formula = formula_from_user
-        try:
-            cell.value = str(eval(python_formula))
-            cell.error_message = None
-        except Exception as e:
-            cell.value = str(e)
-            cell.error_message = str(e)
+    @staticmethod
+    def _column_letter_to_index(letter: str) -> int:
+        index = 0
+        for char in letter:
+            index = index * 26 + (ord(char.upper()) - ord('A'))
+        return index
 
     def _convert_to_python_formula(self, formula: str) -> str:
         """
@@ -203,7 +140,6 @@ class Spreadsheet:
             # Convert row number to zero-based index
             row_index = row_number - 1
 
-
             # Return the Python equivalent reference to the cell
             return f'self.get_cell({row_index},{column_index}).value'
 
@@ -212,16 +148,40 @@ class Spreadsheet:
 
         return python_formula
 
-    @staticmethod
-    def _format_value(value: str) -> str:
-        return value if is_float(value) else f'"{value}"'
+    @property
+    def formula(self) -> str:
+        return self._formula
 
-    @staticmethod
-    def _column_letter_to_index(letter: str) -> int:
-        index = 0
-        for char in letter:
-            index = index * 26 + (ord(char.upper()) - ord('A'))
-        return index
+    @formula.setter
+    def formula(self, user_input: str):
+        if user_input.startswith('='):
+            try:
+                self.value = user_input
+                self._formula = user_input
+                self.python_formula = self._convert_to_python_formula(user_input[1:])
+                # python formula eg. self.get_cell(0,0).value + self.get_cell(0,1).value
+                self.error_message = None
+                self.dependencies = []  # TODO: get dependences
+            except Exception as e:
+                self.value = str(e)
+                self._formula = user_input
+                self.python_formula = None
+                self.error_message = str(e)
+                self.dependencies = []
+        else:
+            self.value = user_input
+            self._formula = user_input
+            self.python_formula = None
+            self.error_message = None
+            self.dependencies = []
+
+
+
+class Spreadsheet:
+    def __init__(self, row_length: int):
+        self.worksheet: List[List[Cell]] = [[Cell() for _ in range(row_length)]]
+        self.row_length = row_length
+        self.dependency_graph = defaultdict(list)  # To store the dependency graph
 
     def _ensure_row_exists(self, index: int, num_cells: int):
         """Ensure the worksheet has enough rows and cells."""
@@ -230,3 +190,60 @@ class Spreadsheet:
         for row in self.worksheet:
             if len(row) < num_cells:
                 row.extend(Cell() for _ in range(num_cells - len(row)))
+
+    def get_cell(self, row: int, column: int) -> Cell:
+        return self.worksheet[row][column]
+
+    def set_cell(self, row: int, column: int, cell: Cell):
+        self.worksheet[row][column] = cell
+
+    def insert_row(self, index: int, num_cells: int, table: QTableWidget, row_type: RowType = RowType.NO_TYPE):
+        table.insertRow(index)
+        self._ensure_row_exists(index, num_cells)
+
+        default_formulas = {
+            RowType.POSITION: ["SIATKA 20x20", "nie zamawiamy powyżej 150zł/h", "szt.", "8", "184.64", "", "", ""],
+            RowType.ROOT_ELEMENT: ["Kosztorys", "Przykład - kosztorys szczegółowy", "", "", "", "0", "", ""]
+        }
+
+        for column in range(num_cells):
+            cell = Cell()
+            if row_type in default_formulas:
+                formulas = default_formulas[row_type]
+                if column < len(formulas):
+                    cell.formula = formulas[column]
+            cell.number_format = NumberFormat.GENERAL
+            cell.color = (255, 0, 0) if row_type == RowType.ROOT_ELEMENT else (0, 0, 0)
+            cell.is_bold = row_type == RowType.ROOT_ELEMENT
+
+            self.set_cell(index, column, cell)
+            self.set_cell_formula(index, column, cell.formula)
+            table.setItem(index, column, cell.item)
+
+        self.update_table()
+
+    def delete_row(self, index: int, table: QTableWidget):
+        table.removeRow(index)
+        if 0 <= index < len(self.worksheet):
+            self.worksheet.pop(index)
+        self.update_table()
+
+    def update_table(self):
+        for row in self.worksheet:
+            for cell in row:
+                cell.update_cell()
+
+    def set_cell_formula(self, row: int, column: int, formula_from_user: str):
+        cell = self.get_cell(row, column)
+        cell.formula = formula_from_user
+        if cell.python_formula is not None and not cell.edit_mode:
+            self._evaluate_formula(row, column)
+
+    def _evaluate_formula(self, row: int, column: int):
+        cell = self.get_cell(row, column)
+        try:
+            cell.value = str(eval(self.get_cell(row, column).python_formula))
+            cell.error_message = None
+        except Exception as e:
+            cell.value = str(e)
+            cell.error_message = str(e)

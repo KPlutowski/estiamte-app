@@ -147,7 +147,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def cell_double_clicked_handler(self, row, column):
         print("cell_double_clicked_handler")
         # Display the formula in the table if it exists
-        formula = self.spreadsheet.get_cell(row, column).user_formula
+        formula = self.spreadsheet.get_cell(row, column).formula
         if formula:
             self.PositonsTable.item(row, column).setText(formula)
         else:
@@ -158,7 +158,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if row == self.current_row and column == self.current_column:
             self.spreadsheet.get_cell(self.current_row, self.current_column).edit_mode = True
             self.spreadsheet.set_cell_formula(row, column, text)
-            self.lineEdit.setText(self.spreadsheet.get_cell(row, column).user_formula)
+            self.lineEdit.setText(self.spreadsheet.get_cell(row, column).formula)
 
     def cell_activated_handler(self, row, column):
         print("cellActivated")
@@ -176,7 +176,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.current_column = column
 
         # Get the formula if it exists, otherwise, get the value
-        formula = self.spreadsheet.get_cell(row, column).user_formula
+        formula = self.spreadsheet.get_cell(row, column).formula
         if formula:
             self.lineEdit.setText(formula)
         else:
