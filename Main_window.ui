@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1103</width>
+    <width>1062</width>
     <height>750</height>
    </rect>
   </property>
@@ -26,6 +26,9 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
+         <widget class="QLineEdit" name="lineEdit"/>
+        </item>
+        <item>
          <widget class="QTableWidget" name="PositonsTable">
           <property name="contextMenuPolicy">
            <enum>Qt::CustomContextMenu</enum>
@@ -35,6 +38,12 @@
           </property>
           <property name="alternatingRowColors">
            <bool>true</bool>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::ExtendedSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectItems</enum>
           </property>
           <property name="rowCount">
            <number>21</number>
@@ -195,7 +204,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1103</width>
+     <width>1062</width>
      <height>26</height>
     </rect>
    </property>

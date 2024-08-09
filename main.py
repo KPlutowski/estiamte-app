@@ -1,32 +1,43 @@
+# main.py
 import sys
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QApplication, QTableWidget, QTreeWidget, QStyledItemDelegate, QMessageBox, QFileDialog, \
-    QTableWidgetItem
+
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QTableWidget, QStyledItemDelegate,
+    QFileDialog, QTableWidgetItem, QMenu, QLineEdit
+)
 from PyQt6 import QtCore, QtGui, QtWidgets
+
+from Spreadsheet import RowType, Spreadsheet
 from main_window import Ui_MainWindow
 from new_cost_estimate_window import Ui_new_cost_estimate_window
-from enum import Enum
 
 
-class row_type(Enum):
-    position = "position"
-    element = "element"
-    root_element = "root_element"
-    comment = "comment"
+class ItemDelegate(QtWidgets.QStyledItemDelegate):
+    cellEditingStarted = QtCore.pyqtSignal(int, int)
+    cellEditingFinished = QtCore.pyqtSignal(int, int, str)
 
-
-def is_float(string):
-    try:
-        float(string)
-        return True
-    except ValueError:
-        return False
-
-
-class ReadOnlyDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
-        print('createEditor event fired')
-        return
+        editor = super(ItemDelegate, self).createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit):
+            editor.textChanged.connect(lambda text: self.on_editor_text_changed(index, text))
+            editor.editingFinished.connect(lambda: self.commit_and_close_editor(editor, index))  # Ensure to commit changes
+            self.cellEditingStarted.emit(index.row(), index.column())
+            self.parent().spreadsheet.set_cell_editing_state(index.row(), index.column(), True)
+        return editor
+
+    def setModelData(self, editor, model, index):
+        super(ItemDelegate, self).setModelData(editor, model, index)
+        text = editor.text()
+        self.cellEditingFinished.emit(index.row(), index.column(), text)
+        self.parent().spreadsheet.set_cell_editing_state(index.row(), index.column(), False)
+
+    def commit_and_close_editor(self, editor, index):
+        """Helper method to commit the editor's data and close it."""
+        # self.setModelData(editor, self.parent().model(), index)
+        self.closeEditor.emit(editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint)
+
+    def on_editor_text_changed(self, index, text):
+        self.cellEditingFinished.emit(index.row(), index.column(), text)
 
 
 class new_cost_estimate(QtWidgets.QWidget, Ui_new_cost_estimate_window):
@@ -48,90 +59,41 @@ class new_cost_estimate(QtWidgets.QWidget, Ui_new_cost_estimate_window):
         print("reject")
 
 
-class basic_row:
-    def __init__(self, _type: row_type):
-        self.parent = None
-        self.type = _type
-        self.color = (0, 0, 0)
-        self.bold = False
-        self.children = []
-
-        self.list_items: [QtWidgets.QTableWidgetItem] = [QtWidgets.QTableWidgetItem() for _ in range(8)]
-        if _type == row_type.position:
-            self.list_items[1].setText("P")
-            self.list_items[2].setText("KNNR 1 0201-0200")
-            self.list_items[3].setText("Roboty ziemne wykonywane koparkami przedsiębiernymi o pojemności łyżki 0,"
-                                       "15 m3, z transportem urobku samochodami samowyładowczymi do 5 t na odległość "
-                                       "do 1 km, grunt o normalnej wilgotności kat. III")
-            self.list_items[4].setText("m3")
-            self.list_items[5].setText("303")
-            self.list_items[6].setText("5")
-        elif _type == row_type.element:
-            self.list_items[2].setText("1.")
-            self.list_items[3].setText("STAN ZEROWY")
-            self.list_items[4].setText("m3")
-            self.list_items[5].setText("200")
-
-            self.list_items[6].setFlags(self.list_items[6].flags() ^ QtCore.Qt.ItemFlag.ItemIsEditable)
-
-            self.color = (0, 0, 255)
-            self.bold = True
-        elif _type == row_type.root_element:
-            self.list_items[2].setText("Kosztorys")
-            self.list_items[3].setText("Przykład - kosztorys szczegółowy")
-            self.list_items[4].setText("m3")
-            self.list_items[5].setText("600")
-            for item in self.list_items:
-                item.setFlags(item.flags() ^ QtCore.Qt.ItemFlag.ItemIsEditable)
-            self.color = (255, 0, 0)
-            self.bold = True
-        elif _type == row_type.comment:
-            self.list_items[1].setText("K")
-            for column in (2, 4, 5, 6):
-                self.list_items[column].setFlags(self.list_items[column].flags() ^ QtCore.Qt.ItemFlag.ItemIsEditable)
-            self.bold = True
-        self.reset_color()
-        self.reset_bold()
-
-    def reset_bold(self):
-        font = QFont()
-        font.setBold(self.bold)
-        for item in self.list_items:
-            item.setFont(font)
-
-    def reset_color(self):
-        for item in self.list_items:
-            item.setForeground(QtGui.qRgb(self.color[0], self.color[1], self.color[2]))
-
-
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, *args, obj=None, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
-        self.delegate = ReadOnlyDelegate(self)
+        self.setupUi(self)
+        self.delegate = ItemDelegate(self)
+
         self.init_ui()
-        ######################################
-        self.csv_file = ""
 
-        self.refresh_table()
+        self.spreadsheet = Spreadsheet()
+        self.quantity_column_nr = 3
+        self.price_column_nr = 4
+        self.netto_column_nr = 5
 
-    # TODO
-    def action_new_handler(self):
-        print("action_new_handler")
-        self.new_cost_estimate_window = new_cost_estimate()
-        self.new_cost_estimate_window.show()
+        self.current_row = None
+        self.current_column = None
 
     def init_ui(self):
-        self.setupUi(self)
-        self.PositonsTable.cellChanged.connect(self.cell_changed_handler)
+        self.PositonsTable.setItemDelegate(self.delegate)
+
+        # Connecting cellEditingFinished to the handler
+        self.delegate.cellEditingFinished.connect(self.cell_editing_handler)
+
+        # Other handlers
+        self.PositonsTable.cellDoubleClicked.connect(self.cell_double_clicked_handler)
+        self.PositonsTable.currentCellChanged.connect(self.current_cell_changed_handler)
+        self.PositonsTable.cellActivated.connect(self.cell_activated_handler)
+
+        # LINEEDIT HANDLERS CONNECTING
+        self.lineEdit.editingFinished.connect(self.handle_line_editing_finished)
+        self.lineEdit.textEdited.connect(self.line_edit_text_changed_handler)
+        # END OF HANDLERS
 
         self.PositonsTable.customContextMenuRequested.connect(self.on_context_menu)
         self.PositonsTable.horizontalHeader().sectionResized.connect(self.PositonsTable.resizeRowsToContents)
         self.PositonsTable.setRowCount(0)
-        self.PositonsTable.setColumnWidth(3, 400)
-
-        # self.PositonsTable.setItemDelegateForColumn(0, self.delegate)
-        # self.PositonsTable.setItemDelegateForColumn(1, self.delegate)
-        # self.PositonsTable.setItemDelegateForColumn(7, self.delegate)
 
         self.actionNew.triggered.connect(self.action_new_handler)
         self.actionOpen.triggered.connect(self.action_open_handler)
@@ -143,96 +105,115 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionImportCsv.triggered.connect(self.action_import_csv_handler)
         self.actionExportCsv.triggered.connect(self.action_export_csv_handler)
 
-    def action_import_csv_handler(self):
-        self.open_file()
-
-    def action_export_csv_handler(self):
-        self.save_file()
-
     def on_context_menu(self, pos):
         index = self.PositonsTable.indexAt(pos)
+
         valid_column = index.isValid() and index.column() == 1
-        #  if you need to get the menu for that column, no matter if a row exists
+        # if you need to get the menu for that column, no matter if a row exists
         if not valid_column:
             left = self.PositonsTable.horizontalHeader().sectionPosition(1)
             width = self.PositonsTable.horizontalHeader().sectionSize(1)
             if left <= pos.x() <= left + width:
                 valid_column = True
+
         if valid_column:
             menu = QtWidgets.QMenu()
+
+            add_root = menu.addAction('Dopisz root')
             add_position = menu.addAction('Dopisz pozycję')
-            add_element = menu.addAction('Dopisz Element')
-            add_comment = menu.addAction('Dopisz komentarz')
             menu.addSeparator()
-
-            cut = menu.addAction('Wytnij')
-            copy = menu.addAction('Kopiuj')
-            paste = menu.addAction('Wklej')
-
             delete = menu.addAction('Usuń...')
+
             action = menu.exec(self.PositonsTable.mapToGlobal(pos))
+            if action:
+                if not index.isValid():
+                    # If click POSITION is invalid, set the index to the last row
+                    index = self.PositonsTable.model().index(self.PositonsTable.rowCount() - 1, 0)
+                row = index.row()
+                if action == add_position:
+                    self.add_row(RowType.POSITION, row + 1)
+                elif action == delete:
+                    self.delete_row(row)
+                elif action == add_root:
+                    self.add_row(RowType.ROOT_ELEMENT, row + 1)
 
-            if action == add_position:
-                self.add_row(row_type.position)
-            elif action == add_element:
-                self.add_row(row_type.element)
-            elif action == add_comment:
-                self.add_row(row_type.comment)
-            elif action == delete:
-                self.delete_row()
+    def add_row(self, _type: RowType, index):
+        index = min(index, self.PositonsTable.rowCount())
+        self.spreadsheet.insert_row(index, self.PositonsTable.columnCount(), self.PositonsTable, _type)
 
-            # elif action == cut:
-            #     self.cut_row()
-            # elif action == copy:
-            #     self.copy_row()
-            # elif action == paste:
-            #     self.paste_row()
+    def delete_row(self, index):
+        self.spreadsheet.delete_row(index,self.PositonsTable)
 
-    def add_row(self, _type: row_type, row_position=-1):
-        if row_position == -1:
-            row_position = self.PositonsTable.currentRow() + 1
-        self.PositonsTable.insertRow(row_position)
-        row_to_add = basic_row(_type)
-        for column in range(0, self.PositonsTable.columnCount()):
-            self.PositonsTable.setItem(row_position, column, row_to_add.list_items[column])
-
-        if _type == row_type.element:
-            self.root.children.append(row_to_add)
+    def cell_double_clicked_handler(self, row, column):
+        print("cell_double_clicked_handler")
+        # Display the formula in the table if it exists
+        formula = self.spreadsheet.get_formula(row, column)
+        if formula:
+            self.PositonsTable.item(row, column).setText(formula)
         else:
-            suma = 1  # because of root
-            for el in self.root.children:
-                suma = suma + len(el.children) + 1
-                if suma >= row_position:
-                    el.children.append(row_to_add)
-                    break
+            self.PositonsTable.item(row, column).setText(self.spreadsheet.get_value(row, column))
 
-    def delete_row(self):
-        if self.PositonsTable.rowCount() > 0:
-            row_position = self.PositonsTable.currentRow()
-            self.PositonsTable.removeRow(row_position)
+    def cell_editing_handler(self, row, column, text):
+        print("cell_editing_handler")
+        if row == self.current_row and column == self.current_column:
+            self.spreadsheet.set_cell_formula(row, column, text)
+            self.spreadsheet.set_cell_editing_state(self.current_row, self.current_column, True)
+            self.lineEdit.setText(self.spreadsheet.get_formula(row, column))
 
-    def cell_changed_handler(self, row, column):
-        # todo: sprawdz czy nie tekst, zaokraglanie do 2 miejsc dodanie zł
+    def cell_activated_handler(self, row, column):
+        print("cellActivated")
+        if self.current_row is not None and self.current_column is not None:
+            self.spreadsheet.set_cell_editing_state(self.current_row, self.current_column, False)
+            self.spreadsheet.set_cell_formula(self.current_row, self.current_column, self.lineEdit.text())
 
-        if column == 5 or column == 6:
-            if self.PositonsTable.item(row, 5) and self.PositonsTable.item(row, 6):
-                if is_float(self.PositonsTable.item(row, 5).text()) and is_float(
-                        self.PositonsTable.item(row, 6).text()):
-                    quantity = float(self.PositonsTable.item(row, 5).text())
-                    price = float(self.PositonsTable.item(row, 6).text())
-                    self.PositonsTable.item(row, 5).setForeground(QtGui.qRgb(0, 0, 0))
-                    self.PositonsTable.item(row, 6).setForeground(QtGui.qRgb(0, 0, 0))
-                    self.PositonsTable.setItem(row, 7, QtWidgets.QTableWidgetItem(str(quantity * price)))
+    def current_cell_changed_handler(self, row, column):
+        print("current_cell_changed_handler")
+        # print(self.spreadsheet.get_value(row, column))
+        # print(self.spreadsheet.get_value(row, column))
 
+        # Update lineEdit with the formula or value of the clicked cell
+        self.current_row = row
+        self.current_column = column
+
+        # Get the formula if it exists, otherwise, get the value
+        formula = self.spreadsheet.get_formula(row, column)
+        if formula:
+            self.lineEdit.setText(formula)
+        else:
+            self.lineEdit.setText(self.spreadsheet.get_value(row, column))
+
+    def handle_line_editing_finished(self):
+        print("handle_line_editing_finished")
+        # This function is called when editing is finished
+        text = self.lineEdit.text()
+        if self.current_row is not None and self.current_column is not None:
+            self.spreadsheet.set_cell_editing_state(self.current_row, self.current_column, False)
+            self.spreadsheet.set_cell_formula(self.current_row, self.current_column, text)
+
+    def line_edit_text_changed_handler(self, text):
+        print("line_edit_text_changed_handler")
+        if self.current_row is not None and self.current_column is not None:
+            self.spreadsheet.set_cell_editing_state(self.current_row, self.current_column, True)
+            self.spreadsheet.set_cell_formula(self.current_row, self.current_column, text)
+
+
+
+
+
+
+
+    # TODO
     def open_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, 'Open file', '', "CSV Files (*.csv *.tsv *.txt);;All Files (*.*)")
+        file_name, _ = QFileDialog.getOpenFileName(self, 'Open file', '',
+                                                   "CSV Files (*.csv *.tsv *.txt);;All Files (*.*)")
         if file_name:
             self.csv_file = file_name
             self.load_csv(self.csv_file)
             self.statusbar.showMessage(f"{file_name} loaded")
 
+    # TODO
     def load_csv(self, filename):
-        csv_text = open(filename, "r",encoding="UTF-8").read()
+        csv_text = open(filename, "r", encoding="UTF-8").read()
         tab_counter = csv_text.splitlines()[0].count("\t")
         comma_counter = csv_text.splitlines()[0].count(",")
         if tab_counter > comma_counter:
@@ -252,6 +233,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 column += 1
             row += 1
 
+    # TODO
     def save_file(self):
         if self.PositonsTable.rowCount() < 1:
             return
@@ -266,6 +248,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.save_csv(fname)
             self.csv_file = fname
 
+    # TODO
     def save_csv(self, filename):
         row_text = ""
         for row in range(self.PositonsTable.rowCount() - 1):
@@ -275,9 +258,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 row_text += f"{cell_text}\t"
             row_text = row_text.rstrip("\t")
             row_text += "\n"
-        with open(filename, "w",encoding="UTF-8") as f:
+        with open(filename, "w", encoding="UTF-8") as f:
             f.write(row_text)
 
+    # TODO
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         if event.key() == QtCore.Qt.Key.Key_C and (event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier):
@@ -285,39 +269,50 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif event.key() == QtCore.Qt.Key.Key_V and (event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier):
             self.paste_row()
 
+    # TODO
     def copy_row(self):
-        current_row = self.PositonsTable.currentRow()
-        self.PositonsTable.clearSelection()
-        self.PositonsTable.selectRow(current_row)
-        copied_cells = sorted(self.PositonsTable.selectedIndexes())
-        copy_text = ''
+        pass
+        # current_row = self.PositonsTable.currentRow()
+        # self.PositonsTable.clearSelection()
+        # self.PositonsTable.selectRow(current_row)
+        # copied_cells = sorted(self.PositonsTable.selectedIndexes())
+        # copy_text = ''
+        #
+        # for c in copied_cells:
+        #     if self.PositonsTable.item(c.row(), c.column()):
+        #         copy_text += self.PositonsTable.item(c.row(), c.column()).text()
+        #         if c.column() == self.PositonsTable.columnCount() - 1:
+        #             copy_text += '\n'
+        #         else:
+        #             copy_text += '\t'
+        #     else:
+        #         copy_text += '\t'
+        # QApplication.clipboard().setText(copy_text)
 
-        for c in copied_cells:
-            if self.PositonsTable.item(c.row(), c.column()):
-                copy_text += self.PositonsTable.item(c.row(), c.column()).text()
-                if c.column() == self.PositonsTable.columnCount() - 1:
-                    copy_text += '\n'
-                else:
-                    copy_text += '\t'
-            else:
-                copy_text += '\t'
-        QApplication.clipboard().setText(copy_text)
-
+    # TODO
     def paste_row(self):
         pass
-        rows = QApplication.clipboard().text().split('\n')
-        row = rows[0].split('\t')
-        if len(row) == 0:
-            return
+        # rows = QApplication.clipboard().text().split('\n')
+        # row = rows[0].split('\t')
+        # if len(row) == 0:
+        #     return
+        #
+        # row_to_paste = self.PositonsTable.currentRow() + 1
+        # self.PositonsTable.clearSelection()
+        # self.PositonsTable.selectRow(row_to_paste - 1)
+        # self.add_row(RowType.POSITION)
+        #
+        # for i, value in enumerate(row):
+        #     item = QtWidgets.QTableWidgetItem(value)
+        #     self.PositonsTable.setItem(row_to_paste, i, item)
 
-        row_to_paste = self.PositonsTable.currentRow() + 1
-        self.PositonsTable.clearSelection()
-        self.PositonsTable.selectRow(row_to_paste - 1)
-        self.add_row(row_type.position)
+    # TODO
+    def action_import_csv_handler(self):
+        self.open_file()
 
-        for i, value in enumerate(row):
-            item = QtWidgets.QTableWidgetItem(value)
-            self.PositonsTable.setItem(row_to_paste, i, item)
+    # TODO
+    def action_export_csv_handler(self):
+        self.save_file()
 
     # TODO
     def action_open_handler(self):
@@ -349,7 +344,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def refresh_table(self):
         for row_nr in range(0, self.PositonsTable.rowCount()):
-            self.cell_changed_handler(row_nr,5)
+            self.cell_changed_handler(row_nr, 5)
+
+    # TODO
+    def action_new_handler(self):
+        print("action_new_handler")
+        self.new_cost_estimate_window = new_cost_estimate()
+        self.new_cost_estimate_window.show()
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
