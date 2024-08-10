@@ -1,10 +1,8 @@
 import re
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Tuple
 from PyQt6 import QtGui
-from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget
 from enum import Enum, auto
-from collections import defaultdict
 
 
 def convert_excel_formula_to_python(formula: str) -> str:
@@ -255,6 +253,7 @@ class Spreadsheet:
     def __init__(self, row_length: int):
         self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell() for _ in range(row_length)]]
         self.row_length = row_length
+        self.visited_cells = set()  # Set to track visited cells during calculation
 
     def _ensure_row_exists(self, index: int, num_cells: int):
         """Ensure the worksheet has enough rows and cells."""
@@ -305,6 +304,7 @@ class Spreadsheet:
         for row_idx, row in enumerate(self.worksheet):
             for col_idx, cell in enumerate(row):
                 location = (row_idx, col_idx)
+                self.visited_cells = set()  # Reset visited cells for each calculation
                 self.calculate_cell_value(*location)
 
     def calculate_cell_value(self, row: int, column: int):
@@ -320,9 +320,21 @@ class Spreadsheet:
             cell.apply_formatting_to_display_value()
             return
 
+        cell_ref = f"{chr(column + 65)}{row + 1}"
+        if cell_ref in self.visited_cells:
+            cell.value = "#CYCLE!"  # Indicate a cyclic dependency error
+            cell.apply_formatting_to_display_value()
+            return
+
+        # Mark the cell as visited to detect potential cycles
+        self.visited_cells.add(cell_ref)
+
         self._update_cell_dependencies(cell)
         self._calculate_cell_value(cell)
         self._calculate_dependent_cells(row, column)
+
+        # Unmark the cell as visited after calculation
+        self.visited_cells.remove(cell_ref)
 
     def _update_cell_dependencies(self, cell: SpreadsheetCell):
         """
