@@ -83,7 +83,7 @@ def extract_dependencies_from_formula(formula: str) -> List[str]:
                 col_letter = index_to_letter(col)
                 dependencies.add(f"{col_letter}{row + 1}")
 
-    return list(dependencies)  # Convert set to list before returning
+    return list(dependencies)
 
 
 def is_convertible_to_float(value: str) -> bool:
@@ -253,7 +253,7 @@ class Spreadsheet:
     def __init__(self, row_length: int):
         self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell() for _ in range(row_length)]]
         self.row_length = row_length
-        self.visited_cells = set()  # Set to track visited cells during calculation
+        self.visited_cells = set()
 
     def _ensure_row_exists(self, index: int, num_cells: int):
         """Ensure the worksheet has enough rows and cells."""
@@ -322,7 +322,7 @@ class Spreadsheet:
 
         cell_ref = f"{chr(column + 65)}{row + 1}"
         if cell_ref in self.visited_cells:
-            cell.value = "#CYCLE!"  # Indicate a cyclic dependency error
+            cell.value = "#CYCLE!"
             cell.apply_formatting_to_display_value()
             return
 
@@ -346,7 +346,6 @@ class Spreadsheet:
 
         cell.depends_on = new_dependencies
 
-        # Remove old dependencies
         self._remove_old_dependencies(cell, old_dependencies - new_dependencies_set)
 
         # Add new dependencies, ensuring they are within range
@@ -424,7 +423,7 @@ class Spreadsheet:
         """Calculate the sum of a range of cells."""
         total = 0
         for cell in cells:
-            if isinstance(cell, SpreadsheetCell):  # Ensure cell is an instance of SpreadsheetCell
+            if isinstance(cell, SpreadsheetCell):
                 try:
                     total += float(cell.value)
                 except ValueError:
