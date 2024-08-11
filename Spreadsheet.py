@@ -8,17 +8,12 @@ from enum import Enum, auto
 def convert_excel_formula_to_python(formula: str) -> str:
     """
     Convert an Excel-like formula to a Python formula that references worksheet cells.
-
-    Example:
-        Excel formula: "=SUM(A1:A3)"
-        Python formula: "self.sum(self.get_range(0,0,2,0))"
     """
-    # Regular expression to find cell references in the format like A1, B2, etc.
     cell_ref_pattern = re.compile(r'([A-Z]+)(\d+)')
     range_pattern = re.compile(r'([A-Z]+)(\d+):([A-Z]+)(\d+)')
     function_pattern = re.compile(r'(\w+)\(([A-Z]+\d+(:[A-Z]+\d+)?)\)')
 
-    def replace_match(match):
+    def replace_cell(match):
         column_letter = match.group(1)
         row_number = int(match.group(2))
         column_index = letter_to_index(column_letter)
@@ -30,12 +25,10 @@ def convert_excel_formula_to_python(formula: str) -> str:
         start_row = int(match.group(2))
         end_col = match.group(3)
         end_row = int(match.group(4))
-
         start_col_index = letter_to_index(start_col)
         end_col_index = letter_to_index(end_col)
         start_row_index = start_row - 1
         end_row_index = end_row - 1
-
         return f'self.sum(self.get_range({start_row_index}, {start_col_index}, {end_row_index}, {end_col_index}))'
 
     def replace_function(match):
@@ -45,43 +38,36 @@ def convert_excel_formula_to_python(formula: str) -> str:
             return replace_range(re.search(range_pattern, range_str))
         return match.group(0)
 
-    # Substitute all occurrences of the patterns in the formula
     formula = function_pattern.sub(replace_function, formula)
-    python_formula = cell_ref_pattern.sub(replace_match, formula)
-
-    return python_formula
+    return cell_ref_pattern.sub(replace_cell, formula)
 
 
 def extract_dependencies_from_formula(formula: str) -> List[str]:
     """
     Parse the formula and extract unique cell references, including those in ranges.
     """
-    dependencies = set()  # Use a set to avoid duplicate entries
+    dependencies = set()
     cell_ref_pattern = re.compile(r'([A-Z]+)(\d+)')
     range_pattern = re.compile(r'([A-Z]+)(\d+):([A-Z]+)(\d+)')
 
     # Extract single cell references
-    cell_matches = cell_ref_pattern.findall(formula)
-    for match in cell_matches:
-        col = match[0]
-        row = match[1]
+    for match in cell_ref_pattern.findall(formula):
+        col, row = match
         dependencies.add(f"{col}{row}")
 
     # Extract ranges
-    range_matches = range_pattern.findall(formula)
-    for start_col, start_row, end_col, end_row in range_matches:
-        start_row = int(start_row)
-        end_row = int(end_row)
+    for start_col, start_row, end_col, end_row in range_pattern.findall(formula):
+        start_row, end_row = int(start_row), int(end_row)
         start_col_index = letter_to_index(start_col)
         end_col_index = letter_to_index(end_col)
         start_row_index = start_row - 1
         end_row_index = end_row - 1
 
-        # Add all cells within the range
-        for row in range(start_row_index, end_row_index + 1):
-            for col in range(start_col_index, end_col_index + 1):
-                col_letter = index_to_letter(col)
-                dependencies.add(f"{col_letter}{row + 1}")
+        dependencies.update(
+            f"{index_to_letter(col)}{row + 1}"
+            for row in range(start_row_index, end_row_index + 1)
+            for col in range(start_col_index, end_col_index + 1)
+        )
 
     return list(dependencies)
 
@@ -96,16 +82,15 @@ def is_convertible_to_float(value: str) -> bool:
 
 
 def letter_to_index(letter: str) -> int:
+    """Convert an Excel column letter to a zero-based column index."""
     index = 0
-    for char in letter:
-        index = index * 26 + (ord(char.upper()) - ord('A'))
+    for char in letter.upper():
+        index = index * 26 + (ord(char) - ord('A'))
     return index
 
 
 def index_to_letter(index: int) -> str:
-    """
-    Convert a zero-based column index to an Excel-like column letter.
-    """
+    """Convert a zero-based column index to an Excel-like column letter."""
     letter = ''
     while index >= 0:
         letter = chr(index % 26 + ord('A')) + letter
@@ -114,15 +99,13 @@ def index_to_letter(index: int) -> str:
 
 
 def parse_cell_location(loc: str) -> Tuple[int, int]:
-    """
-    Convert a cell location string (e.g., 'A1') into a tuple (row, column).
-    """
+    """Convert a cell location string (e.g., 'A1') into a tuple (row, column)."""
     match = re.match(r'([A-Z]+)(\d+)', loc)
     if not match:
         raise ValueError(f"Invalid cell location: {loc}")
     col = letter_to_index(match.group(1))
     row = int(match.group(2)) - 1
-    return (row, col)
+    return row, col
 
 
 class NumberFormat(Enum):
@@ -137,22 +120,21 @@ class RowType(Enum):
     ROOT = auto()
 
 
-class cellItem:
+class CellItem:
     def __init__(self):
         self._item = QTableWidgetItem()
         self._value = ''  # THE VALUE THAT WILL BE DISPLAYED AFTER DECORATORS ARE ADDED e.g. "string", "123", "1a2b3c
-
         self._foreground_color = (0, 0, 0)
         self._is_bold = False
-        self._format = NumberFormat.GENERAL  # A tag that represents the format of a number record.
-        self._error_message: Optional[str] = None  # ERROR DISPLAYED IN CELL
+        self._format = NumberFormat.GENERAL
+        self._error_message: Optional[str] = None
 
     @property
-    def color(self) -> tuple[int, int, int]:
+    def color(self) -> Tuple[int, int, int]:
         return self._foreground_color
 
     @color.setter
-    def color(self, color: tuple[int, int, int]):
+    def color(self, color: Tuple[int, int, int]):
         self._foreground_color = color
         self._item.setForeground(QtGui.qRgb(*self._foreground_color))
 
@@ -177,15 +159,15 @@ class cellItem:
         self.apply_formatting_to_display_value()
 
     def apply_formatting_to_display_value(self):
-        if is_convertible_to_float(self.value):
-            if self.number_format == NumberFormat.GENERAL:
-                self.item.setText(self.value)
-            elif self.number_format == NumberFormat.ACCOUNTING:
-                self.item.setText(f"{float(self.value):.2f} zł")
-            elif self.number_format == NumberFormat.NUMBER:
-                self.item.setText(f"{float(self.value):.2f}")
+        if is_convertible_to_float(self._value):
+            if self._format == NumberFormat.GENERAL:
+                self._item.setText(self._value)
+            elif self._format == NumberFormat.ACCOUNTING:
+                self._item.setText(f"{float(self._value):.2f} zł")
+            elif self._format == NumberFormat.NUMBER:
+                self._item.setText(f"{float(self._value):.2f}")
         else:
-            self.item.setText(self.value)
+            self._item.setText(self._value)
 
     @property
     def value(self) -> str:
@@ -213,7 +195,7 @@ class cellItem:
         self._error_message = error
 
 
-class SpreadsheetCell(cellItem):
+class SpreadsheetCell(CellItem):
     def __init__(self):
         super().__init__()
 
@@ -312,14 +294,13 @@ class Spreadsheet:
 
     def calculate_all(self):
         for row_idx, row in enumerate(self.worksheet):
-            for col_idx, cell in enumerate(row):
-                location = (row_idx, col_idx)
+            for col_idx, _ in enumerate(row):
                 self.visited_cells = set()  # Reset visited cells for each calculation
-                self.calculate_cell_value(*location)
+                self.calculate_cell_value(row_idx, col_idx)
 
     def calculate_cell_value(self, row: int, column: int):
         """
-        Calculates the value of a cell and updates its dependencies.
+        Calculate the value of a cell and update its dependencies.
         """
         cell = self.get_cell(row, column)
 
@@ -373,8 +354,6 @@ class Spreadsheet:
         for dependency in old_dependencies:
             try:
                 dep_row, dep_column = parse_cell_location(dependency)
-
-                # Check if the referenced cell is within the valid range of the worksheet
                 if dep_row < len(self.worksheet) and dep_column < len(self.worksheet[dep_row]):
                     dependent_cell = self.get_cell(dep_row, dep_column)
                     cell_ref = f"{chr(cell.item.column() + 65)}{cell.item.row() + 1}"
@@ -420,29 +399,25 @@ class Spreadsheet:
         """
         Get a list of cells that depend on the cell located at (row, column).
         """
-        cells = []
-        for r_idx, _row in enumerate(self.worksheet):
-            for c_idx, cell in enumerate(_row):
-                if f"{chr(column + 65)}{row + 1}" in cell.cells_that_depend_on_me:
-                    cells.append((r_idx, c_idx))
-        return cells
+        return [
+            (r_idx, c_idx)
+            for r_idx, _row in enumerate(self.worksheet)
+            for c_idx, cell in enumerate(_row)
+            if f"{chr(column + 65)}{row + 1}" in cell.cells_that_depend_on_me
+        ]
 
     @staticmethod
-    def sum(self, cells: List[SpreadsheetCell]) -> float:
+    def sum(cells: List[SpreadsheetCell]) -> float:
         """Calculate the sum of a range of cells."""
-        total = 0
-        for cell in cells:
-            if isinstance(cell, SpreadsheetCell):
-                try:
-                    total += float(cell.value)
-                except ValueError:
-                    pass  # Ignore non-numeric values
-        return total
+        return sum(
+            float(cell.value) for cell in cells
+            if isinstance(cell, SpreadsheetCell) and is_convertible_to_float(cell.value)
+        )
 
     def get_range(self, start_row: int, start_col: int, end_row: int, end_col: int) -> List[SpreadsheetCell]:
         """Get a list of cells within a specified range."""
-        cells = []
-        for row in range(start_row, end_row + 1):
-            for col in range(start_col, end_col + 1):
-                cells.append(self.get_cell(row, col))
-        return cells
+        return [
+            self.get_cell(row, col)
+            for row in range(start_row, end_row + 1)
+            for col in range(start_col, end_col + 1)
+        ]
