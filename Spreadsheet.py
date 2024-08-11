@@ -137,19 +137,15 @@ class RowType(Enum):
     ROOT = auto()
 
 
-class SpreadsheetCell:
+class cellItem:
     def __init__(self):
+        self._item = QTableWidgetItem()
+        self._value = ''  # THE VALUE THAT WILL BE DISPLAYED AFTER DECORATORS ARE ADDED e.g. "string", "123", "1a2b3c
+
         self._foreground_color = (0, 0, 0)
         self._is_bold = False
-        self._format = NumberFormat.GENERAL
-        self.edit_mode = False
-        self._value = ''
-        self._formula = ''
-        self._python_formula = ''
-        self.influenced_cells = []
-        self.depends_on = []
-        self._error_message: Optional[str] = None
-        self._item = QTableWidgetItem()
+        self._format = NumberFormat.GENERAL  # A tag that represents the format of a number record.
+        self._error_message: Optional[str] = None  # ERROR DISPLAYED IN CELL
 
     @property
     def color(self) -> tuple[int, int, int]:
@@ -172,15 +168,6 @@ class SpreadsheetCell:
         self._item.setFont(font)
 
     @property
-    def value(self) -> str:
-        return self._value
-
-    @value.setter
-    def value(self, value: str):
-        self._value = value
-        self.apply_formatting_to_display_value()
-
-    @property
     def number_format(self) -> NumberFormat:
         return self._format
 
@@ -189,21 +176,25 @@ class SpreadsheetCell:
         self._format = number_format
         self.apply_formatting_to_display_value()
 
+    def apply_formatting_to_display_value(self):
+        if is_convertible_to_float(self.value):
+            if self.number_format == NumberFormat.GENERAL:
+                self.item.setText(self.value)
+            elif self.number_format == NumberFormat.ACCOUNTING:
+                self.item.setText(f"{float(self.value):.2f} zł")
+            elif self.number_format == NumberFormat.NUMBER:
+                self.item.setText(f"{float(self.value):.2f}")
+        else:
+            self.item.setText(self.value)
+
     @property
-    def error_message(self) -> Optional[str]:
-        return self._error_message
+    def value(self) -> str:
+        return self._value
 
-    @error_message.setter
-    def error_message(self, error: Optional[str]):
-        self._error_message = error
-
-    @property
-    def python_formula(self) -> Optional[str]:
-        return self._python_formula
-
-    @python_formula.setter
-    def python_formula(self, python_formula: Optional[str]):
-        self._python_formula = python_formula
+    @value.setter
+    def value(self, value: str):
+        self._value = value
+        self.apply_formatting_to_display_value()
 
     @property
     def item(self) -> QTableWidgetItem:
@@ -214,23 +205,42 @@ class SpreadsheetCell:
         self._item = new_item
 
     @property
+    def error_message(self) -> Optional[str]:
+        return self._error_message
+
+    @error_message.setter
+    def error_message(self, error: Optional[str]):
+        self._error_message = error
+
+
+class SpreadsheetCell(cellItem):
+    def __init__(self):
+        super().__init__()
+
+        self.cells_on_which_i_depend: List[str] = []  # e.g. A1,B3 etc..
+        self.cells_that_depend_on_me: List[str] = []
+
+        self._formula = ''  # THE FORMULA THE USER ENTERED e.g. "=A1+A2"
+        self._python_formula = ''  # FORMULA TO BE EXECUTED BY THE PROGRAM
+
+        self.row = None  # Row number of the cell in reference.
+        self.col = None  # Column number of the cell in reference.
+
+    @property
+    def python_formula(self) -> Optional[str]:
+        return self._python_formula
+
+    @python_formula.setter
+    def python_formula(self, python_formula: Optional[str]):
+        self._python_formula = python_formula
+
+    @property
     def formula(self) -> str:
         return self._formula
 
     @formula.setter
     def formula(self, user_input: str):
         self._formula = user_input
-
-    def apply_formatting_to_display_value(self):
-        if is_convertible_to_float(self.value) and not self.edit_mode:
-            if self.number_format == NumberFormat.GENERAL:
-                self.item.setText(self.value)
-            elif self.number_format == NumberFormat.ACCOUNTING:
-                self.item.setText(f"{float(self.value):.2f} zł")
-            elif self.number_format == NumberFormat.NUMBER:
-                self.item.setText(f"{float(self.value):.2f}")
-        else:
-            self.item.setText(self.value)
 
     def process_and_set_formula(self, user_input: str):
         self.formula = user_input
@@ -274,8 +284,8 @@ class Spreadsheet:
         self._ensure_row_exists(index, num_cells)
 
         default_formulas = {
-            RowType.POSITION: ["SIATKA 20x20", "nie zamawiamy powyżej 150zł/h", "szt.", "8", "184.64", "", "", ""],
-            RowType.ROOT: ["Kosztorys", "Przykład - kosztorys szczegółowy", "", "", "", "0", "", ""]
+            RowType.POSITION: ["SIATKA 20x20", "nie zamawiamy powyżej 150zł/h", "szt.", "8", "184.64", ""],
+            RowType.ROOT: ["Kosztorys", "Przykład - kosztorys szczegółowy", "", "", "", "0"]
         }
 
         for column in range(num_cells):
@@ -313,8 +323,6 @@ class Spreadsheet:
         """
         cell = self.get_cell(row, column)
 
-        if cell.edit_mode:
-            return
         if not (0 <= row < len(self.worksheet) and 0 <= column < len(self.worksheet[row])):
             cell.value = "Error: Cell reference out of range"
             cell.apply_formatting_to_display_value()
@@ -341,10 +349,10 @@ class Spreadsheet:
         Update the dependencies of the given cell and manage the influenced cells.
         """
         new_dependencies = extract_dependencies_from_formula(cell.formula[1:])
-        old_dependencies = set(cell.depends_on)
+        old_dependencies = set(cell.cells_that_depend_on_me)
         new_dependencies_set = set(new_dependencies)
 
-        cell.depends_on = new_dependencies
+        cell.cells_that_depend_on_me = new_dependencies
 
         self._remove_old_dependencies(cell, old_dependencies - new_dependencies_set)
 
@@ -370,8 +378,8 @@ class Spreadsheet:
                 if dep_row < len(self.worksheet) and dep_column < len(self.worksheet[dep_row]):
                     dependent_cell = self.get_cell(dep_row, dep_column)
                     cell_ref = f"{chr(cell.item.column() + 65)}{cell.item.row() + 1}"
-                    if cell_ref in dependent_cell.influenced_cells:
-                        dependent_cell.influenced_cells.remove(cell_ref)
+                    if cell_ref in dependent_cell.cells_on_which_i_depend:
+                        dependent_cell.cells_on_which_i_depend.remove(cell_ref)
                 else:
                     print(f"Warning: Cell reference {dependency} is out of range. Skipping removal of dependency.")
             except IndexError:
@@ -384,8 +392,8 @@ class Spreadsheet:
         """
         dependent_cell = self.get_cell(dep_row, dep_column)
         cell_ref = f"{chr(cell.item.column() + 65)}{cell.item.row() + 1}"
-        if cell_ref not in dependent_cell.influenced_cells:
-            dependent_cell.influenced_cells.append(cell_ref)
+        if cell_ref not in dependent_cell.cells_on_which_i_depend:
+            dependent_cell.cells_on_which_i_depend.append(cell_ref)
 
     def _calculate_cell_value(self, cell: SpreadsheetCell):
         """
@@ -415,10 +423,11 @@ class Spreadsheet:
         cells = []
         for r_idx, _row in enumerate(self.worksheet):
             for c_idx, cell in enumerate(_row):
-                if f"{chr(column + 65)}{row + 1}" in cell.depends_on:
+                if f"{chr(column + 65)}{row + 1}" in cell.cells_that_depend_on_me:
                     cells.append((r_idx, c_idx))
         return cells
 
+    @staticmethod
     def sum(self, cells: List[SpreadsheetCell]) -> float:
         """Calculate the sum of a range of cells."""
         total = 0

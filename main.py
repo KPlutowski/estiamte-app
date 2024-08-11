@@ -94,6 +94,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             elif action == add_root_action:
                 self.add_row(RowType.ROOT, row + 1)
 
+    ##################################################################################
+
     def add_row(self, row_type: RowType, index: int):
         index = min(index, self.PositonsTable.rowCount())
         self.spreadsheet.add_row(index, self.PositonsTable.columnCount(), self.PositonsTable, row_type)
@@ -101,14 +103,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def delete_row(self, index: int):
         self.spreadsheet.remove_row(index, self.PositonsTable)
 
+    ##################################################################################
+
     def print_cell_details(self, cell):
         print(f"cell at: {self.current_row} {self.current_column}")
         print(f"VALUE: {cell.value}")
         print(f"FORMULA: {cell.formula}")
         print(f"python_formula: {cell.python_formula}")
         print(f"error_message: {cell.error_message}")
-        print(f"influenced_cells: {cell.influenced_cells}")
-        print(f"depends_on: {cell.depends_on}")
+        print(f"influenced_cells: {cell.cells_on_which_i_depend}")
+        print(f"depends_on: {cell.cells_that_depend_on_me}")
         print("-" * 80)
 
     def handle_current_cell_change(self, row: int, column: int):
