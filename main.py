@@ -105,16 +105,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     ##################################################################################
 
-    def print_cell_details(self, cell):
-        print(f"cell at: {self.current_row} {self.current_column}")
-        print(f"VALUE: {cell.value}")
-        print(f"FORMULA: {cell.formula}")
-        print(f"python_formula: {cell.python_formula}")
-        print(f"error_message: {cell.error_message}")
-        print(f"influenced_cells: {cell.cells_on_which_i_depend}")
-        print(f"depends_on: {cell.cells_that_depend_on_me}")
-        print("-" * 80)
-
     def handle_current_cell_change(self, row: int, column: int):
         print("handle_current_cell_change")
         cell = self.spreadsheet.get_cell(row, column)
@@ -123,8 +113,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.lineEdit.setText(cell.formula)
         self.original_text = cell.formula
         self.edited_text = cell.formula
-
-        self.print_cell_details(cell)
+        print(cell)
 
     def handle_cell_double_click(self, row: int, column: int):
         print("handle_cell_double_click")
