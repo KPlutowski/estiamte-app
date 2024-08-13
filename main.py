@@ -5,7 +5,6 @@ from Spreadsheet import Spreadsheet, RowType
 from main_window import Ui_MainWindow
 
 
-
 class ItemDelegate(QStyledItemDelegate):
     cellTextChanged = QtCore.pyqtSignal(str)
     cellRevert = QtCore.pyqtSignal()
@@ -108,7 +107,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def handle_current_cell_change(self, row: int, column: int):
         print("handle_current_cell_change")
-        if 0 < row < self.spreadsheet.row_count:
+        if 0 <= row < self.spreadsheet.row_count:
             cell = self.spreadsheet.get_cell(row, column)
             self.current_row, self.current_column = row, column
 
