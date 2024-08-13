@@ -1,8 +1,9 @@
 import sys
-from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtWidgets import QLineEdit, QStyledItemDelegate, QMainWindow, QMenu
-from Spreadsheet import RowType, Spreadsheet
+from Spreadsheet import Spreadsheet, RowType
 from main_window import Ui_MainWindow
+
 
 
 class ItemDelegate(QStyledItemDelegate):
@@ -98,7 +99,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def add_row(self, row_type: RowType, index: int):
         index = min(index, self.PositonsTable.rowCount())
-        self.spreadsheet.add_row(index, self.PositonsTable.columnCount(), self.PositonsTable, row_type)
+        self.spreadsheet.add_row(index, self.PositonsTable.columnCount(), self.PositonsTable)
 
     def delete_row(self, index: int):
         self.spreadsheet.remove_row(index, self.PositonsTable)
@@ -107,13 +108,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def handle_current_cell_change(self, row: int, column: int):
         print("handle_current_cell_change")
-        cell = self.spreadsheet.get_cell(row, column)
-        self.current_row, self.current_column = row, column
+        if 0 < row < self.spreadsheet.row_count:
+            cell = self.spreadsheet.get_cell(row, column)
+            self.current_row, self.current_column = row, column
 
-        self.lineEdit.setText(cell.formula)
-        self.original_text = cell.formula
-        self.edited_text = cell.formula
-        print(cell)
+            self.lineEdit.setText(cell.formula)
+            self.original_text = cell.formula
+            self.edited_text = cell.formula
+            print(cell)
 
     def handle_cell_double_click(self, row: int, column: int):
         print("handle_cell_double_click")
@@ -139,7 +141,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.current_row is not None and self.current_column is not None:
             print("handle_line_edit_editing_finished")
             self.spreadsheet.set_cell_formula(self.current_row, self.current_column, self.edited_text)
-            self.spreadsheet.calculate_cell_value(self.current_row, self.current_column)
             self.original_text = self.edited_text
 
     ##################################################################################
@@ -154,7 +155,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.current_row is not None and self.current_column is not None:
             print("handle_cell_editing_finished")
             self.spreadsheet.set_cell_formula(self.current_row, self.current_column, self.edited_text)
-            self.spreadsheet.calculate_cell_value(self.current_row, self.current_column)
             self.original_text = self.edited_text
 
     ##################################################################################
