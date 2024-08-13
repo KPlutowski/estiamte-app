@@ -1,7 +1,7 @@
 import sys
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtWidgets import QLineEdit, QStyledItemDelegate, QMainWindow, QMenu
-from Spreadsheet import Spreadsheet, RowType
+from Spreadsheet import Spreadsheet
 from main_window import Ui_MainWindow
 
 
@@ -39,10 +39,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.init_ui()
 
-        self.spreadsheet = Spreadsheet(self.PositonsTable.columnCount())
-        self.quantity_column_nr = 3
-        self.price_column_nr = 4
-        self.netto_column_nr = 5
+        self.spreadsheet = Spreadsheet(self.PositonsTableWidget)
 
         self.current_row = None
         self.current_column = None
@@ -51,57 +48,47 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.edited_text = ""
 
     def init_ui(self):
-        self.PositonsTable.setItemDelegate(self.delegate)
+        self.PositonsTableWidget.setItemDelegate(self.delegate)
 
         self.delegate.cellTextChanged.connect(self.handle_cell_editing)
         self.delegate.cellRevert.connect(self.handle_cell_revert)
         self.delegate.closeEditor.connect(self.handle_cell_editing_finished)
 
-        self.PositonsTable.cellDoubleClicked.connect(self.handle_cell_double_click)
-        self.PositonsTable.currentCellChanged.connect(self.handle_current_cell_change)
+        self.PositonsTableWidget.cellDoubleClicked.connect(self.handle_cell_double_click)
+        self.PositonsTableWidget.currentCellChanged.connect(self.handle_current_cell_change)
         self.lineEdit.editingFinished.connect(self.handle_line_edit_editing_finished)
         self.lineEdit.textEdited.connect(self.handle_line_edit_text_edited)
 
-        self.PositonsTable.customContextMenuRequested.connect(self.show_context_menu)
-        self.PositonsTable.horizontalHeader().sectionResized.connect(self.PositonsTable.resizeRowsToContents)
-        self.PositonsTable.setRowCount(0)
+        self.PositonsTableWidget.customContextMenuRequested.connect(self.show_context_menu)
+        self.PositonsTableWidget.horizontalHeader().sectionResized.connect(self.PositonsTableWidget.resizeRowsToContents)
+        self.PositonsTableWidget.setRowCount(0)
 
     def show_context_menu(self, pos: QtCore.QPoint):
-        def is_valid_context_menu_position(index: QtCore.QModelIndex, pos: QtCore.QPoint) -> bool:
-            if index.isValid() and index.column() == 1:
-                return True
-            header_left = self.PositonsTable.horizontalHeader().sectionPosition(1)
-            header_width = self.PositonsTable.horizontalHeader().sectionSize(1)
-            return header_left <= pos.x() <= header_left + header_width
-
-        index = self.PositonsTable.indexAt(pos)
-        if not is_valid_context_menu_position(index, pos):
+        index = self.PositonsTableWidget.indexAt(pos)
+        if index.isValid():
             return
 
         menu = QMenu()
-        add_root_action = menu.addAction('Dopisz root')
         add_position_action = menu.addAction('Dopisz pozycję')
         menu.addSeparator()
         delete_action = menu.addAction('Usuń...')
 
-        action = menu.exec(self.PositonsTable.mapToGlobal(pos))
+        action = menu.exec(self.PositonsTableWidget.mapToGlobal(pos))
         if action:
-            row = index.row() if index.isValid() else self.PositonsTable.rowCount() - 1
+            row = index.row() if index.isValid() else self.PositonsTableWidget.rowCount() - 1
             if action == add_position_action:
-                self.add_row(RowType.POSITION, row + 1)
+                self.add_row( row + 1)
             elif action == delete_action:
                 self.delete_row(row)
-            elif action == add_root_action:
-                self.add_row(RowType.ROOT, row + 1)
 
     ##################################################################################
 
-    def add_row(self, row_type: RowType, index: int):
-        index = min(index, self.PositonsTable.rowCount())
-        self.spreadsheet.add_row(index, self.PositonsTable.columnCount(), self.PositonsTable)
+    def add_row(self,index: int):
+        index = min(index, self.PositonsTableWidget.rowCount())
+        self.spreadsheet.add_row(index, self.PositonsTableWidget.columnCount())
 
     def delete_row(self, index: int):
-        self.spreadsheet.remove_row(index, self.PositonsTable)
+        self.spreadsheet.remove_row(index)
 
     ##################################################################################
 
@@ -121,7 +108,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         cell = self.spreadsheet.get_cell(row, column)
         self.current_row, self.current_column = row, column
 
-        self.PositonsTable.item(row, column).setText(cell.formula)
+        self.PositonsTableWidget.item(row, column).setText(cell.formula)
         self.lineEdit.setText(cell.formula)
         self.original_text = cell.formula
         self.edited_text = cell.formula
@@ -134,7 +121,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.edited_text = text
 
             # temporarily show the formula in the cell (for the time of editing)
-            self.PositonsTable.item(self.current_row, self.current_column).setText(text)
+            self.PositonsTableWidget.item(self.current_row, self.current_column).setText(text)
 
     def handle_line_edit_editing_finished(self):
         if self.current_row is not None and self.current_column is not None:

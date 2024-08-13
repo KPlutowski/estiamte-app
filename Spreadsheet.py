@@ -70,12 +70,6 @@ def is_convertible_to_float(value: str) -> bool:
         return False
 
 
-class RowType(Enum):
-    UNDEFINED = auto()
-    POSITION = auto()
-    ROOT = auto()
-
-
 class ErrorType(Enum):
     REF = ("#REF!", 'Invalid cell reference.')
     DIV = ('#DIV/0!', 'Division by zero.')
@@ -186,30 +180,31 @@ class SpreadsheetCell:
 
 
 class Spreadsheet:
-    def __init__(self, columns: int):
-        self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell(self) for _ in range(columns)] for _ in
+    def __init__(self, table: QTableWidget):
+        self.table_widget = table
+        self.row_count = 0
+        self.COLUMNS_COUNT = self.table_widget.columnCount()
+        self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell(self) for _ in range(self.COLUMNS_COUNT)] for _ in
                                                        range(0)]
         self.dirty_cells: Set[SpreadsheetCell] = set()
-        self.COLUMNS_COUNT = columns
-        self.row_count = 0
 
     def get_cell(self, row: int, column: int) -> SpreadsheetCell:
         return self.worksheet[row][column]
 
-    def add_row(self, index: int, num_cells: int, table: QTableWidget):
+    def add_row(self, index: int, num_cells: int):
         if index < 0 or index > self.row_count:
             raise IndexError("Index out of range")
 
         self.worksheet.insert(index, [SpreadsheetCell(self) for _ in range(num_cells)])
         self.row_count += 1
-        table.insertRow(index)
+        self.table_widget.insertRow(index)
 
         for col in range(num_cells):
             cell = self.get_cell(index, col)
-            table.setItem(index, col, cell.item)
+            self.table_widget.setItem(index, col, cell.item)
         self.reference_changed()
 
-    def remove_row(self, index: int, table: QTableWidget):
+    def remove_row(self, index: int):
         if index < 0 or index >= self.row_count:
             return
 
@@ -225,7 +220,7 @@ class Spreadsheet:
 
         self.worksheet.pop(index)
         self.row_count -= 1
-        table.removeRow(index)
+        self.table_widget.removeRow(index)
         self.reference_changed()
 
     ##################################################################################
@@ -440,3 +435,8 @@ class Spreadsheet:
             self.update_dependencies(cell)
             self.mark_dirty(cell)
         self.calculate_table()
+
+
+class TableManager:
+    def __init__(self):
+        pass
