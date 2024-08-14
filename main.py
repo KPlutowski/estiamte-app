@@ -1,8 +1,10 @@
 import sys
 from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtWidgets import QLineEdit, QStyledItemDelegate, QMainWindow, QMenu
-from Spreadsheet import Spreadsheet
+from PyQt6.QtWidgets import QLineEdit, QStyledItemDelegate, QMainWindow, QMenu,QTableWidget
+from Spreadsheet import Spreadsheet,SpreadsheetManager
 from main_window import Ui_MainWindow
+from typing import Optional
+
 
 
 class ItemDelegate(QStyledItemDelegate):
@@ -36,35 +38,40 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.delegate = ItemDelegate(self)
-
         self.init_ui()
-
-        self.spreadsheet = Spreadsheet(self.PositonsTableWidget)
-
         self.current_row = None
         self.current_column = None
-
         self.original_text = ""
         self.edited_text = ""
 
+        self.active_table: Optional[QTableWidget] = None
+        self.spreadsheet_manager = SpreadsheetManager()
+        self.init_tables()
+
+    def init_tables(self):
+        self.spreadsheet_manager.add_table(self.tabWidget.tabText(0), Spreadsheet(self.PositonsTableWidget))
+        self.spreadsheet_manager.add_table(self.tabWidget.tabText(1), Spreadsheet(self.PropertiesTableWidget))
+        for name,spreadsheet in self.spreadsheet_manager.spreadsheets.items():
+            spreadsheet.table_widget.setItemDelegate(self.delegate)
+            spreadsheet.table_widget.cellDoubleClicked['int','int'].connect(self.handle_cell_double_click)
+            spreadsheet.table_widget.currentCellChanged.connect(self.handle_current_cell_change)
+            spreadsheet.table_widget.customContextMenuRequested.connect(self.show_context_menu)
+            spreadsheet.table_widget.horizontalHeader().sectionResized.connect(spreadsheet.table_widget.resizeRowsToContents)
+            spreadsheet.table_widget.setRowCount(0)
+        self.tab_changed(self.tabWidget.currentIndex())
+
     def init_ui(self):
-        self.PositonsTableWidget.setItemDelegate(self.delegate)
+        self.tabWidget.currentChanged['int'].connect(self.tab_changed)
 
         self.delegate.cellTextChanged.connect(self.handle_cell_editing)
         self.delegate.cellRevert.connect(self.handle_cell_revert)
         self.delegate.closeEditor.connect(self.handle_cell_editing_finished)
 
-        self.PositonsTableWidget.cellDoubleClicked.connect(self.handle_cell_double_click)
-        self.PositonsTableWidget.currentCellChanged.connect(self.handle_current_cell_change)
-        self.lineEdit.editingFinished.connect(self.handle_line_edit_editing_finished)
-        self.lineEdit.textEdited.connect(self.handle_line_edit_text_edited)
-
-        self.PositonsTableWidget.customContextMenuRequested.connect(self.show_context_menu)
-        self.PositonsTableWidget.horizontalHeader().sectionResized.connect(self.PositonsTableWidget.resizeRowsToContents)
-        self.PositonsTableWidget.setRowCount(0)
+        self.Formula_bar.editingFinished.connect(self.handle_line_edit_editing_finished)
+        self.Formula_bar.textEdited.connect(self.handle_line_edit_text_edited)
 
     def show_context_menu(self, pos: QtCore.QPoint):
-        index = self.PositonsTableWidget.indexAt(pos)
+        index = self.active_table.indexAt(pos)
         if index.isValid():
             return
 
@@ -73,43 +80,48 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         menu.addSeparator()
         delete_action = menu.addAction('Usuń...')
 
-        action = menu.exec(self.PositonsTableWidget.mapToGlobal(pos))
+        action = menu.exec(self.active_table.mapToGlobal(pos))
         if action:
-            row = index.row() if index.isValid() else self.PositonsTableWidget.rowCount() - 1
+            row = index.row() if index.isValid() else self.active_table.rowCount() - 1
             if action == add_position_action:
                 self.add_row( row + 1)
             elif action == delete_action:
                 self.delete_row(row)
 
+    def tab_changed(self, index):
+        self.spreadsheet_manager.active_spreadsheet = self.tabWidget.tabText(index)
+        self.active_table = self.spreadsheet_manager.active_spreadsheet.table_widget
+
     ##################################################################################
 
     def add_row(self,index: int):
-        index = min(index, self.PositonsTableWidget.rowCount())
-        self.spreadsheet.add_row(index, self.PositonsTableWidget.columnCount())
+        index = min(index, self.active_table.rowCount())
+        self.spreadsheet_manager.active_spreadsheet.add_row(index)
 
     def delete_row(self, index: int):
-        self.spreadsheet.remove_row(index)
+        self.spreadsheet_manager.active_spreadsheet.remove_row(index)
 
     ##################################################################################
 
     def handle_current_cell_change(self, row: int, column: int):
         print("handle_current_cell_change")
-        if 0 <= row < self.spreadsheet.row_count:
-            cell = self.spreadsheet.get_cell(row, column)
+        if 0 <= row < self.spreadsheet_manager.active_spreadsheet.row_count:
+            cell = self.spreadsheet_manager.active_spreadsheet.get_cell(row, column)
             self.current_row, self.current_column = row, column
 
-            self.lineEdit.setText(cell.formula)
+            self.Formula_bar.setText(cell.formula)
+            self.Name_box.setText(cell.name)
             self.original_text = cell.formula
             self.edited_text = cell.formula
             print(cell)
 
     def handle_cell_double_click(self, row: int, column: int):
         print("handle_cell_double_click")
-        cell = self.spreadsheet.get_cell(row, column)
+        cell = self.spreadsheet_manager.active_spreadsheet.get_cell(row, column)
         self.current_row, self.current_column = row, column
 
-        self.PositonsTableWidget.item(row, column).setText(cell.formula)
-        self.lineEdit.setText(cell.formula)
+        self.active_table.item(row, column).setText(cell.formula)
+        self.Formula_bar.setText(cell.formula)
         self.original_text = cell.formula
         self.edited_text = cell.formula
 
@@ -121,12 +133,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.edited_text = text
 
             # temporarily show the formula in the cell (for the time of editing)
-            self.PositonsTableWidget.item(self.current_row, self.current_column).setText(text)
+            self.active_table.item(self.current_row, self.current_column).setText(text)
 
     def handle_line_edit_editing_finished(self):
         if self.current_row is not None and self.current_column is not None:
             print("handle_line_edit_editing_finished")
-            self.spreadsheet.set_cell_formula(self.current_row, self.current_column, self.edited_text)
+            self.spreadsheet_manager.active_spreadsheet.set_cell_formula(self.current_row, self.current_column, self.edited_text)
             self.original_text = self.edited_text
 
     ##################################################################################
@@ -135,12 +147,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.current_row is not None and self.current_column is not None:
             print("handle_cell_editing")
             self.edited_text = text
-            self.lineEdit.setText(text)
+            self.Formula_bar.setText(text)
 
     def handle_cell_editing_finished(self):
         if self.current_row is not None and self.current_column is not None:
             print("handle_cell_editing_finished")
-            self.spreadsheet.set_cell_formula(self.current_row, self.current_column, self.edited_text)
+            self.spreadsheet_manager.active_spreadsheet.set_cell_formula(self.current_row, self.current_column, self.edited_text)
             self.original_text = self.edited_text
 
     ##################################################################################
@@ -150,9 +162,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             print("REVERT")
             self.edited_text = self.original_text
 
-            self.lineEdit.setText(self.edited_text)
+            self.Formula_bar.setText(self.edited_text)
 
-            cell = self.spreadsheet.get_cell(self.current_row, self.current_column)
+            cell = self.spreadsheet_manager.active_spreadsheet.get_cell(self.current_row, self.current_column)
             cell.item.setText("leave this")
             cell.item.setText(self.edited_text)
 
@@ -162,3 +174,4 @@ if __name__ == '__main__':
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+

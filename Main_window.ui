@@ -6,43 +6,60 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>839</width>
-    <height>750</height>
+    <width>862</width>
+    <height>726</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Estimatex</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLineEdit" name="Name_box">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="Formula_bar"/>
+      </item>
+     </layout>
+    </item>
     <item>
      <widget class="QTabWidget" name="tabWidget">
+      <property name="tabPosition">
+       <enum>QTabWidget::South</enum>
+      </property>
       <property name="tabShape">
        <enum>QTabWidget::Triangular</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="documentMode">
-       <bool>false</bool>
-      </property>
-      <property name="tabsClosable">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <property name="movable">
        <bool>true</bool>
       </property>
       <property name="tabBarAutoHide">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
-      <widget class="QWidget" name="tab_1">
+      <widget class="QWidget" name="position_tab">
        <attribute name="title">
-        <string>Tab 1</string>
+        <string>Pozycje</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="QLineEdit" name="lineEdit"/>
-        </item>
         <item>
          <widget class="QTableWidget" name="PositonsTableWidget">
           <property name="contextMenuPolicy">
@@ -54,14 +71,8 @@
           <property name="alternatingRowColors">
            <bool>true</bool>
           </property>
-          <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
-          </property>
-          <property name="selectionBehavior">
-           <enum>QAbstractItemView::SelectItems</enum>
-          </property>
           <property name="rowCount">
-           <number>21</number>
+           <number>20</number>
           </property>
           <property name="columnCount">
            <number>6</number>
@@ -69,14 +80,6 @@
           <attribute name="horizontalHeaderStretchLastSection">
            <bool>true</bool>
           </attribute>
-          <attribute name="verticalHeaderVisible">
-           <bool>false</bool>
-          </attribute>
-          <row>
-           <property name="text">
-            <string>awd</string>
-           </property>
-          </row>
           <row/>
           <row/>
           <row/>
@@ -131,13 +134,16 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2">
+      <widget class="QWidget" name="properties_tab">
        <attribute name="title">
-        <string>Tab 2</string>
+        <string>Właściwości</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QTableWidget" name="PropertiesTableWidget">
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
           <property name="sizeAdjustPolicy">
            <enum>QAbstractScrollArea::AdjustToContents</enum>
           </property>
@@ -153,8 +159,8 @@
           <attribute name="horizontalHeaderDefaultSectionSize">
            <number>300</number>
           </attribute>
-          <attribute name="verticalHeaderVisible">
-           <bool>false</bool>
+          <attribute name="horizontalHeaderStretchLastSection">
+           <bool>true</bool>
           </attribute>
           <row/>
           <row/>
@@ -235,16 +241,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_3">
-       <attribute name="title">
-        <string>Tab 3</string>
-       </attribute>
-      </widget>
-      <widget class="QWidget" name="tab_4">
-       <attribute name="title">
-        <string>Tab 4</string>
-       </attribute>
-      </widget>
      </widget>
     </item>
    </layout>
@@ -254,7 +250,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>839</width>
+     <width>862</width>
      <height>26</height>
     </rect>
    </property>

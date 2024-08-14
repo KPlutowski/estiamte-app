@@ -2,7 +2,7 @@ import re
 from typing import List, Optional, Dict, Set
 from collections import deque, defaultdict
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget
-from enum import Enum, auto
+from enum import Enum
 
 
 def index_to_letter(index: int) -> str:
@@ -191,15 +191,15 @@ class Spreadsheet:
     def get_cell(self, row: int, column: int) -> SpreadsheetCell:
         return self.worksheet[row][column]
 
-    def add_row(self, index: int, num_cells: int):
+    def add_row(self, index: int):
         if index < 0 or index > self.row_count:
             raise IndexError("Index out of range")
 
-        self.worksheet.insert(index, [SpreadsheetCell(self) for _ in range(num_cells)])
+        self.worksheet.insert(index, [SpreadsheetCell(self) for _ in range(self.COLUMNS_COUNT)])
         self.row_count += 1
         self.table_widget.insertRow(index)
 
-        for col in range(num_cells):
+        for col in range(self.COLUMNS_COUNT):
             cell = self.get_cell(index, col)
             self.table_widget.setItem(index, col, cell.item)
         self.reference_changed()
@@ -437,6 +437,64 @@ class Spreadsheet:
         self.calculate_table()
 
 
-class TableManager:
+class SpreadsheetManager:
     def __init__(self):
-        pass
+        self.spreadsheets: Dict[str, Spreadsheet] = {}
+        self._active_spreadsheet_name: Optional[str] = None
+        self._active_spreadsheet: Optional[Spreadsheet] = None
+
+    def add_table(self, name: str, table_to_add: Spreadsheet):
+        """Add a new spreadsheet table with the given name."""
+        if name in self.spreadsheets:
+            raise ValueError(f"Table with name '{name}' already exists.")
+        if not isinstance(table_to_add, Spreadsheet):
+            raise TypeError("table_to_add must be an instance of Spreadsheet.")
+        self.spreadsheets[name] = table_to_add
+        if self._active_spreadsheet is None:
+            self.active_spreadsheet_name = name  # Set initial active spreadsheet
+
+    def remove_table(self, name: str):
+        """Remove the spreadsheet table with the given name."""
+        if name not in self.spreadsheets:
+            raise KeyError(f"No table found with name '{name}'.")
+        # If the table to be removed is the active table, clear the active table
+        if name == self._active_spreadsheet_name:
+            self._active_spreadsheet_name = None
+            self._active_spreadsheet = None
+        del self.spreadsheets[name]
+
+    def get_spreadsheet_by_name(self, name: str) -> Optional[Spreadsheet]:
+        """Retrieve the spreadsheet table with the given name."""
+        if name not in self.spreadsheets:
+            raise KeyError(f"No spreadsheet found with name '{name}'.")
+        return self.spreadsheets[name]
+
+    @property
+    def active_spreadsheet(self) -> Optional[Spreadsheet]:
+        return self._active_spreadsheet
+
+    @active_spreadsheet.setter
+    def active_spreadsheet(self, name: Optional[str]):
+        if name is None:
+            self._active_spreadsheet_name = None
+            self._active_spreadsheet = None
+        elif name not in self.spreadsheets:
+            raise KeyError(f"No spreadsheet found with name '{name}'.")
+        else:
+            self._active_spreadsheet_name = name
+            self._active_spreadsheet = self.get_spreadsheet_by_name(name)
+
+    @property
+    def active_spreadsheet_name(self) -> Optional[str]:
+        return self._active_spreadsheet_name
+
+    @active_spreadsheet_name.setter
+    def active_spreadsheet_name(self, name: Optional[str]):
+        if name is None:
+            self.active_spreadsheet = None
+        elif name not in self.spreadsheets:
+            raise KeyError(f"No spreadsheet found with name '{name}'.")
+        else:
+            self.active_spreadsheet = name
+
+
