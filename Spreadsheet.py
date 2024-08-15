@@ -3,32 +3,8 @@ from typing import List, Optional, Dict, Set
 from collections import deque, defaultdict
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget
 from enum import Enum
-
-
-def index_to_letter(index: int) -> str:
-    """Convert a zero-based column index to an Excel-like column letter."""
-    letter = ''
-    while index >= 0:
-        letter = chr(index % 26 + ord('A')) + letter
-        index = index // 26 - 1
-    return letter
-
-
-def letter_to_index(letter: str) -> int:
-    """Convert an Excel column letter to a zero-based column index."""
-    index = 0
-    for char in letter.upper():
-        index = index * 26 + (ord(char) - ord('A'))
-    return index
-
-
-def is_convertible_to_float(value: str) -> bool:
-    """Check if the given string can be converted to a float."""
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
+from utilities import *
+from parser import Parser
 
 
 class ErrorType(Enum):
@@ -217,8 +193,8 @@ class SpreadsheetManager:
         self.spreadsheets: Dict[str, Spreadsheet] = {}
         self._active_spreadsheet_name: Optional[str] = None
         self._active_spreadsheet: Optional[Spreadsheet] = None
-
         self.dirty_cells: Set[SpreadsheetCell] = set()
+        self.parser = Parser(self)
 
     def add_spreadsheet(self, name: str, spreadsheet_to_add: QTableWidget):
         """Add a new spreadsheet table with the given name."""
@@ -288,7 +264,7 @@ class SpreadsheetManager:
         if cell_to_set is not None:
             cell_to_set.formula = formula
             cell_to_set.set_error()
-            cell_to_set.update_dependencies(self.parse_formula_for_dependencies(cell_to_set.formula))
+            cell_to_set.update_dependencies(self.parser.parse_formula_for_dependencies(cell_to_set.formula))
 
             self.mark_dirty(cell_to_set)
             self.calculate_spreadsheets()
@@ -379,7 +355,7 @@ class SpreadsheetManager:
         try:
             if cell.formula.startswith('='):
                 cell.error = None
-                self.make_python_formula(cell)
+                self.parser.make_python_formula(cell)
                 cell.value = str(eval(cell.python_formula))
             else:
                 cell.error = None
@@ -392,114 +368,6 @@ class SpreadsheetManager:
             cell.set_error(ErrorType.NAME)
         except Exception:
             cell.set_error(ErrorType.NAME)
-
-    def parse_formula_for_dependencies(self, formula: str) -> List[SpreadsheetCell]:
-        """Parse formula and return a list of dependent cells."""
-        dependencies = []
-
-        # Regular expression to match cell references (e.g., =Sheet1!C3)
-        cell_ref_pattern = re.compile(r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+)')
-        # Regular expression to match range references (e.g., Sheet2!A1:Sheet2!A6)
-        range_ref_pattern = re.compile(
-            r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+):([A-Z]+)(\d+)')
-        # Regular expression to match function calls (e.g., SUM(Sheet2!A1:Sheet2!A6))
-        func_call_pattern = re.compile(r'\bSUM?\b\s*\(([^)]+)\)')
-
-        # Extract cell references
-        for match in cell_ref_pattern.finditer(formula):
-            sheet_name = match.group(1)
-            col_letter = match.group(2)
-            row_number = match.group(3)
-            cell_name = f"{col_letter}{row_number}"
-            cell = self.get_spreadsheet_by_name(sheet_name).get_cell(int(row_number) - 1, letter_to_index(col_letter))
-            if cell:
-                dependencies.append(cell)
-
-        # Extract range references
-        for match in range_ref_pattern.finditer(formula):
-            sheet_name = match.group(1)
-            start_col_letter = match.group(2)
-            start_row_number = match.group(3)
-            end_col_letter = match.group(4)
-            end_row_number = match.group(5)
-
-            start_col = letter_to_index(start_col_letter)
-            end_col = letter_to_index(end_col_letter)
-            start_row = int(start_row_number) - 1
-            end_row = int(end_row_number) - 1
-
-            for row in range(start_row, end_row + 1):
-                for col in range(start_col, end_col + 1):
-                    cell = self.get_spreadsheet_by_name(sheet_name).get_cell(row, col)
-                    if cell:
-                        dependencies.append(cell)
-
-        # Extract function calls (if the function contains cell or range references)
-        for match in func_call_pattern.finditer(formula):
-            inner_formula = match.group(1)
-            # Recursive call to handle nested formulas
-            dependencies.extend(self.parse_formula_for_dependencies(inner_formula))
-
-        return dependencies
-
-    def make_python_formula(self, cell: SpreadsheetCell):
-        """Create a Python formula based on the cell's formula"""
-        # E.G.
-        # "=Pozycje!A1" -> "float(self.get_cell(0,0,Pozycje).value)"
-        # "=SUM(Pozycje!A1:A6)" -> "self.sum(self._get_range(0,0,5,0,Pozycje))"
-        # "=SUM(Pozycje!A1:Pozycje!A6)+Arkusz2!A1" -> "self.sum(self._get_range(0,0,5,0,Pozycje))+float(self.get_cell(0,0,Arkusz2).value)"
-        # etc..
-
-        formula = cell.formula
-
-        # Remove the '=' at the start of the formula
-        formula = formula[1:]
-
-        # Regular expressions for different types of references
-        cell_ref_pattern = re.compile(r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+)')
-        range_ref_pattern = re.compile(
-            r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+):([A-Z]+)(\d+)')
-        func_call_pattern = re.compile(r'\bSUM?\b\s*\(([^)]+)\)')
-
-        def replace_cell_ref(match):
-            sheet_name = match.group(1)
-            col_letter = match.group(2)
-            row_number = match.group(3)
-            cell_index = letter_to_index(col_letter)
-            return f"float(self.get_cell({int(row_number) - 1}, {cell_index}, '{sheet_name}').value)"
-
-        def replace_range_ref(match):
-            sheet_name = match.group(1)
-            start_col_letter = match.group(2)
-            start_row_number = match.group(3)
-            end_col_letter = match.group(4)
-            end_row_number = match.group(5)
-
-            start_col = letter_to_index(start_col_letter)
-            end_col = letter_to_index(end_col_letter)
-            start_row = int(start_row_number) - 1
-            end_row = int(end_row_number) - 1
-
-            return f"self._get_range({start_row}, {start_col}, {end_row}, {end_col}, '{sheet_name}')"
-
-        def replace_func_call(match):
-            inner_formula = match.group(1)
-            return f"self.sum({inner_formula})"  # Note: Assumes function calls need further parsing
-
-
-        # Convert range references
-        formula = range_ref_pattern.sub(replace_range_ref, formula)
-
-        # Convert cell references
-        formula = cell_ref_pattern.sub(replace_cell_ref, formula)
-
-
-
-        # Convert function calls
-        formula = func_call_pattern.sub(replace_func_call, formula)
-
-
-        cell.python_formula = formula
 
     @staticmethod
     def sum(cells: List['SpreadsheetCell']) -> float:

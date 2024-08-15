@@ -91,6 +91,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """Update active spreadsheet when tab is changed."""
         self.spreadsheet_manager.active_spreadsheet = self.tabWidget.tabText(index)
         self.active_table = self.spreadsheet_manager.active_spreadsheet.table_widget
+        self.current_column = 0
+        self.current_row = 0
 
     def add_row(self, index: int):
         """Add a new row to the active spreadsheet."""
@@ -151,7 +153,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.edited_text = self.original_text
             self.Formula_bar.setText(self.edited_text)
             cell = self.spreadsheet_manager.active_spreadsheet.get_cell(self.current_row, self.current_column)
-            cell.item.setText(self.edited_text)
+            cell.setText(self.edited_text)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
