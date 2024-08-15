@@ -42,11 +42,17 @@ class ErrorType(Enum):
     CIRCULAR = ('#CIRCULAR!', 'Circular reference detected.')
 
 
-class Item:
-    def __init__(self):
+class SpreadsheetCell(QTableWidgetItem):
+    def __init__(self,*args, **kwargs):
+        QTableWidgetItem.__init__(self, *args, **kwargs)
+        self.spreadsheet_name = ""
         self.value = ''
         self.error: Optional[ErrorType] = None
         self.items_that_dependents_on_me = []
+
+        self.items_that_i_depend_on: Dict[str, SpreadsheetCell] = {}  # dependent items and their representation in formula
+        self.formula = ''
+        self.python_formula = ''
 
     def set_error(self, error: Optional[ErrorType] = None):
         """Update the error state of this cell and propagate the change to dependent cells. """
@@ -62,17 +68,7 @@ class Item:
             for cell in self.items_that_dependents_on_me:
                 if cell.error is not None:
                     cell.set_error(None)
-
-
-class SpreadsheetCell(Item, QTableWidgetItem):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-        QTableWidgetItem.__init__(self, *args, **kwargs)
-
-        self.items_that_i_depend_on: Dict[
-            str, SpreadsheetCell] = {}  # dependent items and their representation in formula
-        self.formula = ''  # e.g. =A1*2
-        self.python_formula = ''
+        self.apply_formatting_to_display_value()
 
     def apply_formatting_to_display_value(self):
         if self.error:
@@ -86,7 +82,7 @@ class SpreadsheetCell(Item, QTableWidgetItem):
     def __eq__(self, other):
         # Two cells are considered equal if they have the same row and column
         if isinstance(other, SpreadsheetCell):
-            return (self.row(), self.column()) == (other.row(), other.column())
+            return self.name == other.name
         return False
 
     def __str__(self) -> str:
@@ -106,37 +102,37 @@ class SpreadsheetCell(Item, QTableWidgetItem):
         self.items_that_i_depend_on[reference_name] = cell
 
     def remove_dependent(self, cell: 'SpreadsheetCell'):
-        if cell in self.items_that_i_depend_on:
-            if self.formula.find(cell.name) != -1:
-                range_pattern_ref_1 = re.compile(r'([A-Z]+)(\d+):(#REF!)')
-                range_pattern_ref_2 = re.compile(r'(#REF!):([A-Z]+)(\d+)')
-                range_pattern_ref_3 = re.compile(r'(#REF!):(#REF!)')
-                name_of_cell_to_remove = cell.name
+        if self.formula.find(cell.name) != -1:
+            range_pattern_ref_1 = re.compile(r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+):(#REF!)')
+            range_pattern_ref_2 = re.compile(r'(#REF!):([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+)')
+            range_pattern_ref_3 = re.compile(r'(#REF!):(#REF!)')
 
-                def update_range_1(match):
-                    start_col = match.group(1)
-                    start_row = int(match.group(2))
-                    return f'{start_col}{start_row}:{name_of_cell_to_remove[0]}{int(name_of_cell_to_remove[1]) - 1}'
+            name_of_cell_to_remove = cell.name
 
-                def update_range_2(match):
-                    end_col = match.group(2)
-                    end_row = int(match.group(3))
-                    return f'{name_of_cell_to_remove}:{end_col}{end_row}'
+            def update_range_1(match):
+                start_col = match.group(1)
+                start_row = int(match.group(2))
+                return f'{start_col}{start_row}:{name_of_cell_to_remove[0]}{int(name_of_cell_to_remove[1]) - 1}'
 
-                def update_range_3(match):
-                    self.set_error(ErrorType.REF)
-                    return f'{match.group(1)}:{match.group(2)}'
+            def update_range_2(match):
+                end_col = match.group(2)
+                end_row = int(match.group(3))
+                return f'{name_of_cell_to_remove}:{end_col}{end_row}'
 
-                self.formula = self.formula.replace(f'{name_of_cell_to_remove}', f'{ErrorType.REF.value[0]}')
-                self.formula = range_pattern_ref_1.sub(update_range_1, self.formula)
-                self.formula = range_pattern_ref_2.sub(update_range_2, self.formula)
-                self.formula = range_pattern_ref_3.sub(update_range_3, self.formula)
+            def update_range_3(match):
+                self.set_error(ErrorType.REF)
+                return f'{match.group(1)}:{match.group(2)}'
 
-            del self.items_that_i_depend_on[cell.name]
+            self.formula = self.formula.replace(f'{name_of_cell_to_remove}', f'{ErrorType.REF.value[0]}')
+            self.formula = range_pattern_ref_1.sub(update_range_1, self.formula)
+            self.formula = range_pattern_ref_2.sub(update_range_2, self.formula)
+            self.formula = range_pattern_ref_3.sub(update_range_3, self.formula)
+
+        del self.items_that_i_depend_on[cell.name]
 
     @property
     def name(self):
-        return f"{index_to_letter(self.column())}{self.row() + 1}"
+        return f"{self.spreadsheet_name}!{index_to_letter(self.column())}{self.row() + 1}"
 
     def update_dependencies(self, new_dependencies: List['SpreadsheetCell']):
         def remove_all_dependencies():
@@ -169,97 +165,15 @@ class SpreadsheetCell(Item, QTableWidgetItem):
                 stack.extend(cell.items_that_dependents_on_me)
         return False
 
-    def evaluate_cell_formula(self):
-        try:
-            if self.formula.startswith('='):
-                self.error = None
-                self.make_python_formula()
-                self.value = str(eval(self.python_formula))
-            else:
-                self.error = None
-                self.value = self.formula
-        except ZeroDivisionError:
-            self.set_error(ErrorType.DIV)
-        except ValueError:
-            self.set_error(ErrorType.VALUE)
-        except (SyntaxError, NameError):
-            self.set_error(ErrorType.NAME)
-        except Exception:
-            self.set_error(ErrorType.NAME)
-
-    def make_python_formula(self):
-        """Create a Python formula based on the cell's formula and dependencies."""
-
-        def convert_cell_reference(match):
-            column_letter, row_number = match.groups()
-            column_index = letter_to_index(column_letter)
-            row_index = int(row_number) - 1  # Excel is 1-based, Python is 0-based
-            cell_ref = f'float(self.get_cell({row_index}, {column_index}).value)'
-            return cell_ref
-
-        def convert_range_reference(match):
-            start_col_letter, start_row, end_col_letter, end_row = match.groups()
-            start_col_index = letter_to_index(start_col_letter)
-            start_row_index = int(start_row) - 1
-            end_col_index = letter_to_index(end_col_letter)
-            end_row_index = int(end_row) - 1
-            cell_range_ref = f'self._get_range({start_row_index}, {start_col_index}, {end_row_index}, {end_col_index})'
-            return cell_range_ref
-
-        def convert_function(match):
-            func_name = match.group(1).upper()
-            if func_name == 'SUM':
-                return 'self.sum'
-            # Add more conversions if needed
-            return func_name
-
-        # Remove leading '=' if present
-        formula = self.formula.lstrip('=')
-
-        # Replace range references (e.g., A1:B10) with Python code
-        formula = re.sub(r'([A-Z]+)(\d+):([A-Z]+)(\d+)', convert_range_reference, formula)
-
-        # Replace cell references (e.g., A1) with Python code
-        formula = re.sub(r'([A-Z]+)(\d+)', convert_cell_reference, formula)
-
-        # Replace function names (e.g., SUM) with Python functions
-        formula = re.sub(r'\b([A-Z]+)\b', convert_function, formula)
-
-        # Handle mathematical operations and other special cases
-        # Ensure formula is safe for evaluation
-        self.python_formula = formula
-
-    def get_cell(self, row: int, column: int) -> 'SpreadsheetCell':
-        return self.items_that_i_depend_on.get(f'{index_to_letter(column)}{row + 1}')
-
-    def _get_range(self, start_row: int, start_col: int, end_row: int, end_col: int) -> List['SpreadsheetCell']:
-        return [self.get_cell(row, col) for row in range(start_row, end_row + 1) for col in
-                range(start_col, end_col + 1)]
-
-    @staticmethod
-    def sum(cells: List['SpreadsheetCell']) -> float:
-        """Sum the values of a list of cells."""
-        total = 0.0
-        for cell in cells:
-            if is_convertible_to_float(cell.value):
-                total += float(cell.value)
-            else:
-                # Handle non-numeric values if needed
-                pass
-        return total
-
 
 class Spreadsheet:
-    def __init__(self, table: QTableWidget):
+    def __init__(self, table: QTableWidget, name: str):
         self.table_widget = table
         self.row_count = 0
         self.COLUMNS_COUNT = self.table_widget.columnCount()
         self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell() for _ in range(self.COLUMNS_COUNT)] for _ in
                                                        range(0)]
-        self.dirty_cells: Set[SpreadsheetCell] = set()
-
-    def get_cell(self, row: int, column: int) -> SpreadsheetCell:
-        return self.worksheet[row][column]
+        self.spreadsheet_name = name
 
     def add_row(self, index: int):
         if index < 0 or index > self.row_count:
@@ -270,7 +184,8 @@ class Spreadsheet:
         self.table_widget.insertRow(index)
 
         for col in range(self.COLUMNS_COUNT):
-            cell = self.get_cell(index, col)
+            cell = self.worksheet[index][col]
+            cell.spreadsheet_name = self.spreadsheet_name
             self.table_widget.setItem(index, col, cell)
         # self.reference_changed()
 
@@ -285,7 +200,7 @@ class Spreadsheet:
                 dependent.remove_dependent(cell_to_remove)
 
         for cell_to_remove in cells_to_remove:
-            for name, dependent in cell_to_remove.items_that_i_depend_on:
+            for name, dependent in cell_to_remove.items_that_i_depend_on.items():
                 dependent.items_that_dependents_on_me.remove(cell_to_remove)
 
         self.worksheet.pop(index)
@@ -293,115 +208,8 @@ class Spreadsheet:
         self.table_widget.removeRow(index)
         # self.reference_changed()
 
-    def _get_range(self, start_row: int, start_col: int, end_row: int, end_col: int) -> List[SpreadsheetCell]:
-        return [self.get_cell(row, col) for row in range(start_row, end_row + 1) for col in
-                range(start_col, end_col + 1)]
-
-    ##################################################################################
-
-    def set_cell_formula(self, row: int, column: int, formula_from_user: str):
-        cell = self.get_cell(row, column)
-        cell.formula = formula_from_user
-        cell.set_error()
-        cell.update_dependencies(self.parse_formula_for_dependencies(cell.formula))
-        self.mark_dirty(cell)
-        self.calculate_table()
-
-    def mark_dirty(self, cell: SpreadsheetCell):
-        """Mark a cell as dirty and propagate this state to its dependents."""
-        if cell not in self.dirty_cells:
-            self.dirty_cells.add(cell)
-            to_process = deque([cell])
-            processed = set()
-
-            while to_process:
-                current_cell = to_process.popleft()
-                if current_cell not in processed:
-                    processed.add(current_cell)
-                    for dep in current_cell.items_that_dependents_on_me:
-                        if dep not in self.dirty_cells:
-                            self.dirty_cells.add(dep)
-                        if dep not in processed:
-                            to_process.append(dep)
-
-    def calculate_table(self):
-        """Calculate and update the values of all dirty cells."""
-        if not self.dirty_cells:
-            return
-        non_error_cells = []
-
-        # Detect circular dependencies
-        for cell in self.dirty_cells:
-            for dependent in cell.items_that_dependents_on_me:
-                if cell.check_circular_dependency(dependent):
-                    cell.set_error(ErrorType.CIRCULAR)
-            if cell.error is None:
-                non_error_cells.append(cell)
-
-        if non_error_cells:
-            order = self.topological_sort(non_error_cells)
-            for cell in order:
-                if cell in self.dirty_cells:
-                    cell.evaluate_cell_formula()
-                    cell.apply_formatting_to_display_value()
-                    self.dirty_cells.discard(cell)
-
-        self.dirty_cells = {cell for cell in self.dirty_cells if not cell.error}
-        assert not self.dirty_cells, "Some cells are still marked as dirty after calculation."
-
-    @staticmethod
-    def topological_sort(cells: List[SpreadsheetCell]) -> List[SpreadsheetCell]:
-        """Perform a topological sort of the cells based on their dependencies, excluding cells with errors."""
-        # Filter out cells with errors
-        cells = [cell for cell in cells if cell.error is None]
-
-        if not cells:
-            return []
-
-        # Initialize in-degree count for each cell
-        in_degree = defaultdict(int)
-        for cell in cells:
-            for dependent in cell.items_that_dependents_on_me:
-                if dependent in cells:
-                    in_degree[dependent] += 1
-
-        # Initialize queue with cells that have zero in-degree
-        zero_in_degree = deque(cell for cell in cells if in_degree[cell] == 0)
-        topological_order = []
-
-        while zero_in_degree:
-            cell = zero_in_degree.popleft()
-            topological_order.append(cell)
-            for dependent in cell.items_that_dependents_on_me:
-                if dependent in cells:
-                    in_degree[dependent] -= 1
-                    if in_degree[dependent] == 0:
-                        zero_in_degree.append(dependent)
-
-        if len(topological_order) != len(cells):
-            raise RuntimeError("Cyclic dependency detected")
-        return topological_order
-
-    def parse_formula_for_dependencies(self, formula: str) -> List['SpreadsheetCell']:
-        """Parse formula and return a list of dependent cells."""
-        dependencies = []
-        cell_ref_pattern = re.compile(r'([A-Z]+)(\d+)')
-        range_pattern = re.compile(r'([A-Z]+)(\d+):([A-Z]+)(\d+)')
-
-        for match in cell_ref_pattern.finditer(formula):
-            ref_column = letter_to_index(match.group(1))
-            ref_row = int(match.group(2)) - 1
-            dependencies.append(self.get_cell(ref_row, ref_column))
-
-        for match in range_pattern.finditer(formula):
-            start_col = letter_to_index(match.group(1))
-            start_row = int(match.group(2)) - 1
-            end_col = letter_to_index(match.group(3))
-            end_row = int(match.group(4)) - 1
-            range_cells = self._get_range(start_row, start_col, end_row, end_col)
-            dependencies.extend(range_cells)
-
-        return dependencies
+    def get_cell(self,row,column):
+        return self.worksheet[row][column]
 
 
 class SpreadsheetManager:
@@ -410,13 +218,15 @@ class SpreadsheetManager:
         self._active_spreadsheet_name: Optional[str] = None
         self._active_spreadsheet: Optional[Spreadsheet] = None
 
-    def add_spreadsheet(self, name: str, spreadsheet_to_add: Spreadsheet):
+        self.dirty_cells: Set[SpreadsheetCell] = set()
+
+    def add_spreadsheet(self, name: str, spreadsheet_to_add: QTableWidget):
         """Add a new spreadsheet table with the given name."""
         if name in self.spreadsheets:
             raise ValueError(f"Spreadsheet with name '{name}' already exists.")
-        if not isinstance(spreadsheet_to_add, Spreadsheet):
-            raise TypeError("table_to_add must be an instance of Spreadsheet.")
-        self.spreadsheets[name] = spreadsheet_to_add
+        if not isinstance(spreadsheet_to_add, QTableWidget):
+            raise TypeError("table_to_add must be an instance of QTableWidget.")
+        self.spreadsheets[name] = Spreadsheet(spreadsheet_to_add,name)
         if self._active_spreadsheet is None:
             self.active_spreadsheet_name = name  # Set initial active spreadsheet
 
@@ -466,14 +276,240 @@ class SpreadsheetManager:
 
     ####################################################################
 
-    def get_cell(self, row, column, name_of_spreadsheet):
-        return self.spreadsheets[name_of_spreadsheet].get_cell(row, column)
+    def get_cell(self, row, column, name_of_spreadsheet) -> Optional[SpreadsheetCell]:
+        if name_of_spreadsheet in self.spreadsheets:
+            return self.spreadsheets[name_of_spreadsheet].get_cell(row, column)
+        return None
 
-    def set_cell(self, row, column, name_of_spreadsheet, formula):
+    def set_cell(self, row, column, formula, name_of_spreadsheet=None):
+        if name_of_spreadsheet is None:
+            name_of_spreadsheet = self.active_spreadsheet_name
         cell_to_set = self.get_cell(row, column, name_of_spreadsheet)
-        cell_to_set.formula = formula
+        if cell_to_set is not None:
+            cell_to_set.formula = formula
+            cell_to_set.set_error()
+            cell_to_set.update_dependencies(self.parse_formula_for_dependencies(cell_to_set.formula))
 
-        cell_to_set.set_error()
-        cell_to_set.update_dependencies(self.parse_formula_for_dependencies(cell_to_set.formula))
-        self.mark_dirty(cell_to_set)
-        self.calculate_table()
+            self.mark_dirty(cell_to_set)
+            self.calculate_spreadsheets()
+
+    def mark_dirty(self, cell: SpreadsheetCell):
+        """Mark a cell as dirty and propagate this state to its dependents."""
+        if cell not in self.dirty_cells:
+            self.dirty_cells.add(cell)
+            to_process = deque([cell])
+            processed = set()
+
+            while to_process:
+                current_cell = to_process.popleft()
+                if current_cell not in processed:
+                    processed.add(current_cell)
+                    for dep in current_cell.items_that_dependents_on_me:
+                        if dep not in self.dirty_cells:
+                            self.dirty_cells.add(dep)
+                        if dep not in processed:
+                            to_process.append(dep)
+
+    ####################################################################
+
+    def _get_range(self, start_row: int, start_col: int, end_row: int, end_col: int, sheet_name: str) -> List[SpreadsheetCell]:
+        return [self.get_cell(row, col, sheet_name) for row in range(start_row, end_row + 1) for col in range(start_col, end_col + 1)]
+
+    def calculate_spreadsheets(self):
+        """Calculate and update the values of all dirty cells."""
+        if not self.dirty_cells:
+            return
+        non_error_cells = []
+
+        # Detect circular dependencies
+        for cell in self.dirty_cells:
+            for dependent in cell.items_that_dependents_on_me:
+                if cell.check_circular_dependency(dependent):
+                    cell.set_error(ErrorType.CIRCULAR)
+            if cell.error is None:
+                non_error_cells.append(cell)
+
+        if non_error_cells:
+            order = self.topological_sort(non_error_cells)
+            for cell in order:
+                if cell in self.dirty_cells:
+                    self.evaluate_cell_formula(cell)
+                    cell.apply_formatting_to_display_value()
+                    self.dirty_cells.discard(cell)
+
+        self.dirty_cells = {cell for cell in self.dirty_cells if not cell.error}
+        assert not self.dirty_cells, "Some cells are still marked as dirty after calculation."
+
+    @staticmethod
+    def topological_sort(cells: List[SpreadsheetCell]) -> List[SpreadsheetCell]:
+        """Perform a topological sort of the cells based on their dependencies, excluding cells with errors."""
+        # Filter out cells with errors
+        cells = [cell for cell in cells if cell.error is None]
+
+        if not cells:
+            return []
+
+        # Initialize in-degree count for each cell
+        in_degree = defaultdict(int)
+        for cell in cells:
+            for dependent in cell.items_that_dependents_on_me:
+                if dependent in cells:
+                    in_degree[dependent] += 1
+
+        # Initialize queue with cells that have zero in-degree
+        zero_in_degree = deque(cell for cell in cells if in_degree[cell] == 0)
+        topological_order = []
+
+        while zero_in_degree:
+            cell = zero_in_degree.popleft()
+            topological_order.append(cell)
+            for dependent in cell.items_that_dependents_on_me:
+                if dependent in cells:
+                    in_degree[dependent] -= 1
+                    if in_degree[dependent] == 0:
+                        zero_in_degree.append(dependent)
+
+        if len(topological_order) != len(cells):
+            raise RuntimeError("Cyclic dependency detected")
+        return topological_order
+
+    ####################################################################
+
+    def evaluate_cell_formula(self, cell:SpreadsheetCell):
+        try:
+            if cell.formula.startswith('='):
+                cell.error = None
+                self.make_python_formula(cell)
+                cell.value = str(eval(cell.python_formula))
+            else:
+                cell.error = None
+                cell.value = cell.formula
+        except ZeroDivisionError:
+            cell.set_error(ErrorType.DIV)
+        except ValueError:
+            cell.set_error(ErrorType.VALUE)
+        except (SyntaxError, NameError):
+            cell.set_error(ErrorType.NAME)
+        except Exception:
+            cell.set_error(ErrorType.NAME)
+
+    def parse_formula_for_dependencies(self, formula: str) -> List[SpreadsheetCell]:
+        """Parse formula and return a list of dependent cells."""
+        dependencies = []
+
+        # Regular expression to match cell references (e.g., =Sheet1!C3)
+        cell_ref_pattern = re.compile(r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+)')
+        # Regular expression to match range references (e.g., Sheet2!A1:Sheet2!A6)
+        range_ref_pattern = re.compile(
+            r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+):([A-Z]+)(\d+)')
+        # Regular expression to match function calls (e.g., SUM(Sheet2!A1:Sheet2!A6))
+        func_call_pattern = re.compile(r'\bSUM?\b\s*\(([^)]+)\)')
+
+        # Extract cell references
+        for match in cell_ref_pattern.finditer(formula):
+            sheet_name = match.group(1)
+            col_letter = match.group(2)
+            row_number = match.group(3)
+            cell_name = f"{col_letter}{row_number}"
+            cell = self.get_spreadsheet_by_name(sheet_name).get_cell(int(row_number) - 1, letter_to_index(col_letter))
+            if cell:
+                dependencies.append(cell)
+
+        # Extract range references
+        for match in range_ref_pattern.finditer(formula):
+            sheet_name = match.group(1)
+            start_col_letter = match.group(2)
+            start_row_number = match.group(3)
+            end_col_letter = match.group(4)
+            end_row_number = match.group(5)
+
+            start_col = letter_to_index(start_col_letter)
+            end_col = letter_to_index(end_col_letter)
+            start_row = int(start_row_number) - 1
+            end_row = int(end_row_number) - 1
+
+            for row in range(start_row, end_row + 1):
+                for col in range(start_col, end_col + 1):
+                    cell = self.get_spreadsheet_by_name(sheet_name).get_cell(row, col)
+                    if cell:
+                        dependencies.append(cell)
+
+        # Extract function calls (if the function contains cell or range references)
+        for match in func_call_pattern.finditer(formula):
+            inner_formula = match.group(1)
+            # Recursive call to handle nested formulas
+            dependencies.extend(self.parse_formula_for_dependencies(inner_formula))
+
+        return dependencies
+
+    def make_python_formula(self, cell: SpreadsheetCell):
+        """Create a Python formula based on the cell's formula"""
+        # E.G.
+        # "=Pozycje!A1" -> "float(self.get_cell(0,0,Pozycje).value)"
+        # "=SUM(Pozycje!A1:A6)" -> "self.sum(self._get_range(0,0,5,0,Pozycje))"
+        # "=SUM(Pozycje!A1:Pozycje!A6)+Arkusz2!A1" -> "self.sum(self._get_range(0,0,5,0,Pozycje))+float(self.get_cell(0,0,Arkusz2).value)"
+        # etc..
+
+        formula = cell.formula
+
+        # Remove the '=' at the start of the formula
+        formula = formula[1:]
+
+        # Regular expressions for different types of references
+        cell_ref_pattern = re.compile(r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+)')
+        range_ref_pattern = re.compile(
+            r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+):([A-Z]+)(\d+)')
+        func_call_pattern = re.compile(r'\bSUM?\b\s*\(([^)]+)\)')
+
+        def replace_cell_ref(match):
+            sheet_name = match.group(1)
+            col_letter = match.group(2)
+            row_number = match.group(3)
+            cell_index = letter_to_index(col_letter)
+            return f"float(self.get_cell({int(row_number) - 1}, {cell_index}, '{sheet_name}').value)"
+
+        def replace_range_ref(match):
+            sheet_name = match.group(1)
+            start_col_letter = match.group(2)
+            start_row_number = match.group(3)
+            end_col_letter = match.group(4)
+            end_row_number = match.group(5)
+
+            start_col = letter_to_index(start_col_letter)
+            end_col = letter_to_index(end_col_letter)
+            start_row = int(start_row_number) - 1
+            end_row = int(end_row_number) - 1
+
+            return f"self._get_range({start_row}, {start_col}, {end_row}, {end_col}, '{sheet_name}')"
+
+        def replace_func_call(match):
+            inner_formula = match.group(1)
+            return f"self.sum({inner_formula})"  # Note: Assumes function calls need further parsing
+
+
+        # Convert range references
+        formula = range_ref_pattern.sub(replace_range_ref, formula)
+
+        # Convert cell references
+        formula = cell_ref_pattern.sub(replace_cell_ref, formula)
+
+
+
+        # Convert function calls
+        formula = func_call_pattern.sub(replace_func_call, formula)
+
+
+        cell.python_formula = formula
+
+    @staticmethod
+    def sum(cells: List['SpreadsheetCell']) -> float:
+        """Sum the values of a list of cells."""
+        total = 0.0
+        for cell in cells:
+            if is_convertible_to_float(cell.value):
+                total += float(cell.value)
+            else:
+                # Handle non-numeric values if needed
+                pass
+        return total
+

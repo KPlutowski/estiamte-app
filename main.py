@@ -55,8 +55,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def init_tables(self):
         """Initialize spreadsheet tables and connect signals."""
-        self.spreadsheet_manager.add_spreadsheet(self.tabWidget.tabText(0), Spreadsheet(self.PositonsTableWidget))
-        self.spreadsheet_manager.add_spreadsheet(self.tabWidget.tabText(1), Spreadsheet(self.PropertiesTableWidget))
+        self.spreadsheet_manager.add_spreadsheet(self.tabWidget.tabText(0), self.PositonsTableWidget)
+        self.spreadsheet_manager.add_spreadsheet(self.tabWidget.tabText(1), self.PropertiesTableWidget)
         for name, spreadsheet in self.spreadsheet_manager.spreadsheets.items():
             table_widget = spreadsheet.table_widget
             table_widget.setItemDelegate(self.delegate)
@@ -130,7 +130,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def handle_line_edit_editing_finished(self):
         """Handle the event when editing in the formula bar is finished."""
         if self.current_row is not None and self.current_column is not None:
-            self.spreadsheet_manager.active_spreadsheet.set_cell_formula(self.current_row, self.current_column, self.edited_text)
+            self.spreadsheet_manager.set_cell(self.current_row, self.current_column, self.edited_text)
             self.original_text = self.edited_text
 
     def handle_cell_editing(self, text: str):
@@ -142,7 +142,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def handle_cell_editing_finished(self):
         """Handle the event when cell editing via delegate is finished."""
         if self.current_row is not None and self.current_column is not None:
-            self.spreadsheet_manager.active_spreadsheet.set_cell_formula(self.current_row, self.current_column, self.edited_text)
+            self.spreadsheet_manager.set_cell(self.current_row, self.current_column, self.edited_text)
             self.original_text = self.edited_text
 
     def handle_cell_revert(self):
