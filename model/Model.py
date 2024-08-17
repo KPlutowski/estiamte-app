@@ -1,10 +1,12 @@
 import re
-from typing import List, Optional, Dict, Set
+from typing import List, Optional, Dict, Set, Union
 from collections import deque, defaultdict
+
+from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget
 from enum import Enum
-from utilities import *
-from parser import Parser
+from resources.utils import *
+from resources.parser import Parser
 
 
 class ErrorType(Enum):
@@ -18,17 +20,27 @@ class ErrorType(Enum):
     CIRCULAR = ('#CIRCULAR!', 'Circular reference detected.')
 
 
+class FormulaType(Enum):
+    NUMBER = 'NUMBER'
+    STRING = 'STRING'
+    EXPRESSION = 'EXPRESSION'
+    NO_TYPE = 'NO_TYPE'
+
+
 class SpreadsheetCell(QTableWidgetItem):
-    def __init__(self,*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         QTableWidgetItem.__init__(self, *args, **kwargs)
-        self.spreadsheet_name = ""
-        self.value = ''
+        self.sheet_name = ""
+        self._value = ''
+        self.formula_type: FormulaType = FormulaType.NO_TYPE
         self.error: Optional[ErrorType] = None
         self.items_that_dependents_on_me = []
 
-        self.items_that_i_depend_on: Dict[str, SpreadsheetCell] = {}  # dependent items and their representation in formula
-        self.formula = ''
+        self.items_that_i_depend_on: Dict[
+            str, SpreadsheetCell] = {}  # dependent items and their representation in formula
+        self._formula = ''
         self.python_formula = ''
+        self.row()
 
     def set_error(self, error: Optional[ErrorType] = None):
         """Update the error state of this cell and propagate the change to dependent cells. """
@@ -49,7 +61,7 @@ class SpreadsheetCell(QTableWidgetItem):
     def apply_formatting_to_display_value(self):
         if self.error:
             self.value = self.error.value[0]
-        self.setText(self.value)
+        self.setText(str(self.value))
 
     def __hash__(self):
         # Define a unique hash for each cell, e.g., based on its row and column
@@ -79,8 +91,10 @@ class SpreadsheetCell(QTableWidgetItem):
 
     def remove_dependent(self, cell: 'SpreadsheetCell'):
         if self.formula.find(cell.name) != -1:
-            range_pattern_ref_1 = re.compile(r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+):(#REF!)')
-            range_pattern_ref_2 = re.compile(r'(#REF!):([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+)')
+            range_pattern_ref_1 = re.compile(
+                r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+):(#REF!)')
+            range_pattern_ref_2 = re.compile(
+                r'(#REF!):([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+)')
             range_pattern_ref_3 = re.compile(r'(#REF!):(#REF!)')
 
             name_of_cell_to_remove = cell.name
@@ -108,7 +122,7 @@ class SpreadsheetCell(QTableWidgetItem):
 
     @property
     def name(self):
-        return f"{self.spreadsheet_name}!{index_to_letter(self.column())}{self.row() + 1}"
+        return f"{self.sheet_name}!{index_to_letter(self.column())}{self.row() + 1}"
 
     def update_dependencies(self, new_dependencies: List['SpreadsheetCell']):
         def remove_all_dependencies():
@@ -141,6 +155,31 @@ class SpreadsheetCell(QTableWidgetItem):
                 stack.extend(cell.items_that_dependents_on_me)
         return False
 
+    @property
+    def formula(self):
+        return self._formula
+
+    @formula.setter
+    def formula(self, formula):
+        self._formula = formula
+        self.set_error()
+        if formula.startswith('='):
+            self.formula_type = FormulaType.EXPRESSION
+        elif is_convertible_to_float(formula):
+            self.formula_type = FormulaType.NUMBER
+        else:
+            self.formula_type = FormulaType.STRING
+
+    @property
+    def value(self):
+        if is_convertible_to_float(self._value):
+            return float(self._value)
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+
 
 class Spreadsheet:
     def __init__(self, table: QTableWidget, name: str):
@@ -149,7 +188,7 @@ class Spreadsheet:
         self.COLUMNS_COUNT = self.table_widget.columnCount()
         self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell() for _ in range(self.COLUMNS_COUNT)] for _ in
                                                        range(0)]
-        self.spreadsheet_name = name
+        self.name = name
 
     def add_row(self, index: int):
         if index < 0 or index > self.row_count:
@@ -161,7 +200,7 @@ class Spreadsheet:
 
         for col in range(self.COLUMNS_COUNT):
             cell = self.worksheet[index][col]
-            cell.spreadsheet_name = self.spreadsheet_name
+            cell.sheet_name = self.name
             self.table_widget.setItem(index, col, cell)
         # self.reference_changed()
 
@@ -184,17 +223,22 @@ class Spreadsheet:
         self.table_widget.removeRow(index)
         # self.reference_changed()
 
-    def get_cell(self,row,column):
+    def get_cell(self, row, column):
         return self.worksheet[row][column]
 
 
-class SpreadsheetManager:
+class Model(QObject):
     def __init__(self):
+        super().__init__()
         self.spreadsheets: Dict[str, Spreadsheet] = {}
         self._active_spreadsheet_name: Optional[str] = None
-        self._active_spreadsheet: Optional[Spreadsheet] = None
         self.dirty_cells: Set[SpreadsheetCell] = set()
         self.parser = Parser(self)
+        self._current_cell: Optional[SpreadsheetCell] = None
+
+        # for undo
+        self.original_text = ""
+        self.edited_text = ""
 
     def add_spreadsheet(self, name: str, spreadsheet_to_add: QTableWidget):
         """Add a new spreadsheet table with the given name."""
@@ -202,9 +246,7 @@ class SpreadsheetManager:
             raise ValueError(f"Spreadsheet with name '{name}' already exists.")
         if not isinstance(spreadsheet_to_add, QTableWidget):
             raise TypeError("table_to_add must be an instance of QTableWidget.")
-        self.spreadsheets[name] = Spreadsheet(spreadsheet_to_add,name)
-        if self._active_spreadsheet is None:
-            self.active_spreadsheet_name = name  # Set initial active spreadsheet
+        self.spreadsheets[name] = Spreadsheet(spreadsheet_to_add, name)
 
     def remove_spreadsheet(self, name: str):
         """Remove the spreadsheet table with the given name."""
@@ -213,7 +255,6 @@ class SpreadsheetManager:
         # If the table to be removed is the active table, clear the active table
         if name == self._active_spreadsheet_name:
             self._active_spreadsheet_name = None
-            self._active_spreadsheet = None
         del self.spreadsheets[name]
 
     def get_spreadsheet_by_name(self, name: str) -> Optional[Spreadsheet]:
@@ -224,18 +265,29 @@ class SpreadsheetManager:
 
     @property
     def active_spreadsheet(self) -> Optional[Spreadsheet]:
-        return self._active_spreadsheet
+        if self._active_spreadsheet_name is None:
+            return None
+        return self.spreadsheets[self._active_spreadsheet_name]
 
-    @active_spreadsheet.setter
-    def active_spreadsheet(self, name: Optional[str]):
-        if name is None:
-            self._active_spreadsheet_name = None
-            self._active_spreadsheet = None
-        elif name not in self.spreadsheets:
-            raise KeyError(f"No spreadsheet found with name '{name}'.")
-        else:
-            self._active_spreadsheet_name = name
-            self._active_spreadsheet = self.get_spreadsheet_by_name(name)
+    @property
+    def active_table(self) -> Optional[QTableWidget]:
+        return self.active_spreadsheet.table_widget
+
+    @property
+    def current_row(self) -> int:
+        return self.current_cell.row()
+
+    @property
+    def current_column(self) -> int:
+        return self.current_cell.column()
+
+    @property
+    def current_cell(self) -> SpreadsheetCell:
+        return self._current_cell
+
+    @current_cell.setter
+    def current_cell(self, cell):
+        self._current_cell = cell
 
     @property
     def active_spreadsheet_name(self) -> Optional[str]:
@@ -243,19 +295,54 @@ class SpreadsheetManager:
 
     @active_spreadsheet_name.setter
     def active_spreadsheet_name(self, name: Optional[str]):
-        if name is None:
-            self.active_spreadsheet = None
-        elif name not in self.spreadsheets:
+        if name not in self.spreadsheets:
             raise KeyError(f"No spreadsheet found with name '{name}'.")
         else:
-            self.active_spreadsheet = name
+            self._active_spreadsheet_name = name
 
     ####################################################################
 
-    def get_cell(self, row, column, name_of_spreadsheet) -> Optional[SpreadsheetCell]:
-        if name_of_spreadsheet in self.spreadsheets:
-            return self.spreadsheets[name_of_spreadsheet].get_cell(row, column)
+    def get_cell(self, row_or_address: Union[int, str], column: Optional[int] = None,
+                 name_of_spreadsheet: Optional[str] = None) -> Optional[SpreadsheetCell]:
+        # If column is not None, it means we're using row and column parameters
+        if column is not None and name_of_spreadsheet is not None:
+            if name_of_spreadsheet in self.spreadsheets:
+                return self.spreadsheets[name_of_spreadsheet].get_cell(row_or_address, column)
+
+        # If column is None, we assume we're using the address format
+        elif isinstance(row_or_address, str):
+            sheet_name, row_number, col_number = parse_cell_address(row_or_address)
+            if sheet_name in self.spreadsheets:
+                if 0 <= row_number < self.spreadsheets[sheet_name].row_count:
+                    if 0 <= col_number < self.spreadsheets[sheet_name].COLUMNS_COUNT:
+                        return self.spreadsheets[sheet_name].get_cell(row_number, col_number)
+
         return None
+
+    def get_range(self, start_row_or_range: Union[int, str], start_col: Optional[int] = None,
+                  end_row: Optional[int] = None, end_col: Optional[int] = None,
+                  sheet_name: Optional[str] = None) -> List[SpreadsheetCell]:
+        # If end_row and end_col are provided, assume we're using explicit start and end coordinates
+        if end_row is not None and end_col is not None and sheet_name is not None:
+            return [
+                self.get_cell(row, col, sheet_name)
+                for row in range(start_row_or_range, end_row + 1)
+                for col in range(start_col, end_col + 1)
+            ]
+
+        # If end_row and end_col are not provided, assume start_row_or_range is a range string
+        elif isinstance(start_row_or_range, str):
+            sheet_name, start_row, start_col, end_row, end_col = parse_cell_address_range(start_row_or_range)
+            return [
+                self.get_cell(row, col, sheet_name)
+                for row in range(start_row, end_row + 1)
+                for col in range(start_col, end_col + 1)
+            ]
+
+        # Return an empty list if inputs are not valid
+        return []
+
+    ####################################################################
 
     def set_cell(self, row, column, formula, name_of_spreadsheet=None):
         if name_of_spreadsheet is None:
@@ -263,9 +350,8 @@ class SpreadsheetManager:
         cell_to_set = self.get_cell(row, column, name_of_spreadsheet)
         if cell_to_set is not None:
             cell_to_set.formula = formula
-            cell_to_set.set_error()
-            cell_to_set.update_dependencies(self.parser.parse_formula_for_dependencies(cell_to_set.formula))
-
+            new_dependencies = self.parser.parse_formula_for_dependencies(cell_to_set.formula)
+            cell_to_set.update_dependencies(new_dependencies)
             self.mark_dirty(cell_to_set)
             self.calculate_spreadsheets()
 
@@ -285,11 +371,6 @@ class SpreadsheetManager:
                             self.dirty_cells.add(dep)
                         if dep not in processed:
                             to_process.append(dep)
-
-    ####################################################################
-
-    def _get_range(self, start_row: int, start_col: int, end_row: int, end_col: int, sheet_name: str) -> List[SpreadsheetCell]:
-        return [self.get_cell(row, col, sheet_name) for row in range(start_row, end_row + 1) for col in range(start_col, end_col + 1)]
 
     def calculate_spreadsheets(self):
         """Calculate and update the values of all dirty cells."""
@@ -351,11 +432,14 @@ class SpreadsheetManager:
 
     ####################################################################
 
-    def evaluate_cell_formula(self, cell:SpreadsheetCell):
+    def evaluate_cell_formula(self, cell: SpreadsheetCell):
         try:
-            if cell.formula.startswith('='):
+            if cell.formula_type == FormulaType.EXPRESSION:
                 cell.error = None
-                self.parser.make_python_formula(cell)
+                cell.python_formula = self.parser.make_python_formula(cell)
+
+                # res = self.get_cell("W³aœciwoœci!A2").value+self.sum(self.get_range("W³aœciwoœci!A2:B16"))
+
                 cell.value = str(eval(cell.python_formula))
             else:
                 cell.error = None
@@ -370,7 +454,7 @@ class SpreadsheetManager:
             cell.set_error(ErrorType.NAME)
 
     @staticmethod
-    def sum(cells: List['SpreadsheetCell']) -> float:
+    def sum_function(cells: List['SpreadsheetCell']) -> float:
         """Sum the values of a list of cells."""
         total = 0.0
         for cell in cells:
@@ -381,3 +465,9 @@ class SpreadsheetManager:
                 pass
         return total
 
+    def if_function(self,logical_test, value_if_true, value_if_false):
+        # "self.if_function(self.get_cell('Sheet1!A1').value>10,self.get_cell('Sheet1!B1').value,5)"
+        if logical_test:
+            return value_if_true
+        else:
+            return value_if_false
