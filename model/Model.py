@@ -227,6 +227,10 @@ class Spreadsheet:
         return self.worksheet[row][column]
 
 
+class SpreadsheetManager:
+    pass
+
+
 class Model(QObject):
     def __init__(self):
         super().__init__()
@@ -437,9 +441,6 @@ class Model(QObject):
             if cell.formula_type == FormulaType.EXPRESSION:
                 cell.error = None
                 cell.python_formula = self.parser.make_python_formula(cell)
-
-                # res = self.get_cell("W³aœciwoœci!A2").value+self.sum(self.get_range("W³aœciwoœci!A2:B16"))
-
                 cell.value = str(eval(cell.python_formula))
             else:
                 cell.error = None
@@ -466,7 +467,6 @@ class Model(QObject):
         return total
 
     def if_function(self,logical_test, value_if_true, value_if_false):
-        # "self.if_function(self.get_cell('Sheet1!A1').value>10,self.get_cell('Sheet1!B1').value,5)"
         if logical_test:
             return value_if_true
         else:

@@ -1,12 +1,10 @@
-# MainController.py
-
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QMenu, QStyledItemDelegate, QLineEdit
 
-from model import Model
-from views import MainView
-from views.NewEstimateView import NewEstimateView
+from controlers.NewEstimateController import NewEstimateController
+from model.Model import Model
+from views.MainView.MainView import MainView
 
 
 class ItemDelegate(QStyledItemDelegate):
@@ -40,44 +38,53 @@ class ItemDelegate(QStyledItemDelegate):
 
 
 class MainController(QObject):
-    def __init__(self, model: Model, view: MainView):
+    def __init__(self):
         super().__init__()
-        self._model = model
-        self.view = view
+        self._model = Model()
+        self.view = MainView()
         self.delegate = ItemDelegate(self)
         self.setup_connections()
+        self.default_data()
+
+    def default_data(self):
+        self._model.add_spreadsheet(self.view.tabWidget.tabText(0), self.view.PositonsTableWidget)
+        self._model.add_spreadsheet(self.view.tabWidget.tabText(1), self.view.PropertiesTableWidget)
+        for name, spreadsheet in self._model.spreadsheets.items():
+            for i in range(20):
+                spreadsheet.add_row(i)
+        self.on_tab_changed(self.view.tabWidget.currentIndex())
 
     def setup_connections(self):
         # Tab widget
-        self.view.ui.tabWidget.currentChanged.connect(self.on_tab_changed)
+        self.view.tabWidget.currentChanged.connect(self.on_tab_changed)
 
         # Formula bar
-        self.view.ui.Formula_bar.editingFinished.connect(self.on_formula_bar_editing_finished)
-        self.view.ui.Formula_bar.textEdited.connect(self.on_formula_bar_text_edited)
+        self.view.Formula_bar.editingFinished.connect(self.on_formula_bar_editing_finished)
+        self.view.Formula_bar.textEdited.connect(self.on_formula_bar_text_edited)
 
         # Table Widgets
-        self.view.ui.PositonsTableWidget.customContextMenuRequested.connect(self.show_context_menu)
-        self.view.ui.PropertiesTableWidget.customContextMenuRequested.connect(self.show_context_menu)
-        self.view.ui.PositonsTableWidget.cellDoubleClicked.connect(self.on_cell_double_clicked)
-        self.view.ui.PropertiesTableWidget.cellDoubleClicked.connect(self.on_cell_double_clicked)
-        self.view.ui.PositonsTableWidget.currentCellChanged.connect(self.on_current_cell_changed)
-        self.view.ui.PropertiesTableWidget.currentCellChanged.connect(self.on_current_cell_changed)
+        self.view.PositonsTableWidget.customContextMenuRequested.connect(self.show_context_menu)
+        self.view.PropertiesTableWidget.customContextMenuRequested.connect(self.show_context_menu)
+        self.view.PositonsTableWidget.cellDoubleClicked.connect(self.on_cell_double_clicked)
+        self.view.PropertiesTableWidget.cellDoubleClicked.connect(self.on_cell_double_clicked)
+        self.view.PositonsTableWidget.currentCellChanged.connect(self.on_current_cell_changed)
+        self.view.PropertiesTableWidget.currentCellChanged.connect(self.on_current_cell_changed)
 
         # Delegate
         self.delegate.cellTextChanged.connect(self.on_cell_text_changed)
         self.delegate.cellRevert.connect(self.on_cell_revert)
         self.delegate.closeEditor.connect(self.on_cell_editing_finished)
-        self.view.ui.PositonsTableWidget.setItemDelegate(self.delegate)
-        self.view.ui.PropertiesTableWidget.setItemDelegate(self.delegate)
+        self.view.PositonsTableWidget.setItemDelegate(self.delegate)
+        self.view.PropertiesTableWidget.setItemDelegate(self.delegate)
 
         # Actions
-        self.view.ui.actionNew.triggered.connect(self.on_action_new_triggered)
+        self.view.actionNew.triggered.connect(self.on_action_new_triggered)
 
     @pyqtSlot(int)
     def on_tab_changed(self, index: int):
         """Update active spreadsheet when tab is changed."""
         self.on_cell_editing_finished()
-        tab_name = self.view.ui.tabWidget.tabText(index)
+        tab_name = self.view.tabWidget.tabText(index)
         self._model.active_spreadsheet_name = tab_name
 
     @pyqtSlot(int, int)
@@ -131,7 +138,7 @@ class MainController(QObject):
                 self._model.current_cell.setText(self._model.edited_text)
 
     def show_context_menu(self, pos: QtCore.QPoint):
-        index = self.view.ui.PositonsTableWidget.indexAt(pos) or self.view.ui.PropertiesTableWidget.indexAt(pos)
+        index = self.view.PositonsTableWidget.indexAt(pos) or self.view.PropertiesTableWidget.indexAt(pos)
         if not index.isValid():
             return
 
@@ -140,7 +147,7 @@ class MainController(QObject):
         menu.addSeparator()
         delete_action = menu.addAction('Delete Row')
 
-        action = menu.exec(self.view.ui.PositonsTableWidget.mapToGlobal(pos))
+        action = menu.exec(self.view.PositonsTableWidget.mapToGlobal(pos))
         if not action:
             return
 
@@ -151,5 +158,5 @@ class MainController(QObject):
             self._model.active_spreadsheet.remove_row(row)
 
     def on_action_new_triggered(self):
-        self.new_estimate_view = NewEstimateView()
-        self.new_estimate_view.show()
+        self.new_estimate_cntr = NewEstimateController(self._model)
+

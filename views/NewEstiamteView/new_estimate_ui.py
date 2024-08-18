@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'NewEstimate.ui'
+# Form implementation generated from reading ui file 'resources\designer\NewEstimate.ui'
 #
 # Created by: PyQt6 UI code generator 6.7.1
 #
@@ -74,6 +74,9 @@ class Ui_new_cost_estimate_window(object):
         self.checkBox_is_the_attic_usable = QtWidgets.QCheckBox(parent=new_cost_estimate_window)
         self.checkBox_is_the_attic_usable.setObjectName("checkBox_is_the_attic_usable")
         self.verticalLayout.addWidget(self.checkBox_is_the_attic_usable)
+        self.checkBox_has_chimney = QtWidgets.QCheckBox(parent=new_cost_estimate_window)
+        self.checkBox_has_chimney.setObjectName("checkBox_has_chimney")
+        self.verticalLayout.addWidget(self.checkBox_has_chimney)
         self.buttonBox = QtWidgets.QDialogButtonBox(parent=new_cost_estimate_window)
         self.buttonBox.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.StandardButton.Cancel|QtWidgets.QDialogButtonBox.StandardButton.Ok)
@@ -88,8 +91,6 @@ class Ui_new_cost_estimate_window(object):
         self.label_7.setBuddy(self.SpinBox_first_floor_wall_height)
 
         self.retranslateUi(new_cost_estimate_window)
-        self.buttonBox.accepted.connect(new_cost_estimate_window.accept) # type: ignore
-        self.buttonBox.rejected.connect(new_cost_estimate_window.reject) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(new_cost_estimate_window)
         new_cost_estimate_window.setTabOrder(self.SpinBox_building_length, self.SpinBox_building_width)
         new_cost_estimate_window.setTabOrder(self.SpinBox_building_width, self.spinBox_number_of_footings)
@@ -112,3 +113,4 @@ class Ui_new_cost_estimate_window(object):
         self.label_7.setText(_translate("new_cost_estimate_window", "Wysokość ścian parteru"))
         self.checkBox_is_the_house_over_70m2.setText(_translate("new_cost_estimate_window", "Czy dom powyżej 70m2?"))
         self.checkBox_is_the_attic_usable.setText(_translate("new_cost_estimate_window", "Czy poddasze użytkowe?"))
+        self.checkBox_has_chimney.setText(_translate("new_cost_estimate_window", "Czy komin?"))
