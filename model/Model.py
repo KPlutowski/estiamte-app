@@ -6,7 +6,7 @@ from PyQt6.QtCore import QObject
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget
 from enum import Enum
 from resources.utils import *
-from resources.parser import Parser
+from resources.parser import Parser, Tokenizer, ValueType, TokenType
 
 
 class ErrorType(Enum):
@@ -28,9 +28,10 @@ class FormulaType(Enum):
 
 
 class SpreadsheetCell(QTableWidgetItem):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, formula="", manager=None, *args, **kwargs):
         QTableWidgetItem.__init__(self, *args, **kwargs)
         self.sheet_name = ""
+        self.manager = manager
         self._value = ''
         self.formula_type: FormulaType = FormulaType.NO_TYPE
         self.error: Optional[ErrorType] = None
@@ -38,9 +39,8 @@ class SpreadsheetCell(QTableWidgetItem):
 
         self.items_that_i_depend_on: Dict[
             str, SpreadsheetCell] = {}  # dependent items and their representation in formula
-        self._formula = ''
+        self._formula = formula
         self.python_formula = ''
-        self.row()
 
     def set_error(self, error: Optional[ErrorType] = None):
         """Update the error state of this cell and propagate the change to dependent cells. """
@@ -90,35 +90,8 @@ class SpreadsheetCell(QTableWidgetItem):
         self.items_that_i_depend_on[reference_name] = cell
 
     def remove_dependent(self, cell: 'SpreadsheetCell'):
-        if self.formula.find(cell.name) != -1:
-            range_pattern_ref_1 = re.compile(
-                r'([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+):(#REF!)')
-            range_pattern_ref_2 = re.compile(
-                r'(#REF!):([A-Za-z_\u00C0-\u017F][A-Za-z0-9_\u00C0-\u017F]*)!([A-Z]+)(\d+)')
-            range_pattern_ref_3 = re.compile(r'(#REF!):(#REF!)')
-
-            name_of_cell_to_remove = cell.name
-
-            def update_range_1(match):
-                start_col = match.group(1)
-                start_row = int(match.group(2))
-                return f'{start_col}{start_row}:{name_of_cell_to_remove[0]}{int(name_of_cell_to_remove[1]) - 1}'
-
-            def update_range_2(match):
-                end_col = match.group(2)
-                end_row = int(match.group(3))
-                return f'{name_of_cell_to_remove}:{end_col}{end_row}'
-
-            def update_range_3(match):
-                self.set_error(ErrorType.REF)
-                return f'{match.group(1)}:{match.group(2)}'
-
-            self.formula = self.formula.replace(f'{name_of_cell_to_remove}', f'{ErrorType.REF.value[0]}')
-            self.formula = range_pattern_ref_1.sub(update_range_1, self.formula)
-            self.formula = range_pattern_ref_2.sub(update_range_2, self.formula)
-            self.formula = range_pattern_ref_3.sub(update_range_3, self.formula)
-
-        del self.items_that_i_depend_on[cell.name]
+        if cell.name in self.items_that_i_depend_on:
+            del self.items_that_i_depend_on[cell.name]
 
     @property
     def name(self):
@@ -180,29 +153,90 @@ class SpreadsheetCell(QTableWidgetItem):
     def value(self, value):
         self._value = value
 
+    # TODO
+    def update_formula(self):
+        # should update the cell formula after removing, moving, adding row, moving cell etc...
+        # e.g. "=Sheet1!A1" after removing row A1 in Sheet1 -> "=#REF!"
+        # "=Sheet1!A5"  after removing row A1 in Sheet1 -> "=Sheet1!A4"
+        # "=SUM(Sheet1!A1:A10)" after removing row A1 in Sheet1 -> "=SUM(Sheet1!A1:A9)"
+        # "=SUM(Sheet1!A1:A10)" after removing row A5 in Sheet1 -> "=SUM(Sheet1!A1:A9)"
+        # "=SUM(Sheet1!A1:A10)" after removing row A10 in Sheet1 -> "=SUM(Sheet1!A1:A9)"
+        # "=SUM(Sheet1!A1:A10)" after add row A5 in Sheet1 -> "=SUM(Sheet1!A1:A11)"
+        # "=SUM(Sheet1!A1:A1)" after removing row A1 in Sheet1 -> "=SUM(#REF!)"
+
+        # self.items_that_i_depend_on: Dict[str, SpreadsheetCell] = {}  # dependent items and their representation in formula
+        if not self._formula.startswith('='):
+            return
+        new_formula = ""
+        original_formula = self._formula
+        tokenizer = Tokenizer()
+        tokens = tokenizer.tokenize(original_formula)
+
+        def adjust_cell_reference(cell_ref: str) -> str:
+            # cell_ref eg "Sheet1!A5"
+            if cell_ref not in self.items_that_i_depend_on:
+                return f'#REF!'
+            return self.items_that_i_depend_on.get(cell_ref).name
+
+            # sheet_name_old, row_index_old, col_index_old = parse_cell_reference(cell_ref)
+            # for dependent in self.items_that_i_depend_on.values():
+            #     if cell_ref in dependent.items_that_i_depend_on:
+            #         pass
+            # adjusted_cell_ref = f"{sheet_name}!{index_to_letter(new_col)}{new_row + 1}"
+
+        # TODO
+        def adjust_cell_range_reference(cell_ref: str):
+            return cell_ref
+
+        for token in tokens:
+            if token.token_type == TokenType.VALUE and token.subtype == ValueType.IDENTIFIER:
+                if is_valid_cell_reference(token.value):
+                    acr = adjust_cell_reference(token.value)
+                    if acr == "#REF!":
+                        self.set_error(ErrorType.REF)
+                    new_formula += acr
+                elif is_valid_cell_range(token.value):
+                    new_formula += adjust_cell_range_reference(token.value)
+                else:
+                    new_formula += token.value
+            else:
+                # For other token types (operators, functions, etc.)
+                new_formula += token.value
+
+        self._formula = new_formula
+
 
 class Spreadsheet:
-    def __init__(self, table: QTableWidget, name: str):
+    def __init__(self, table: QTableWidget, name: str, manager):
         self.table_widget = table
+        self.manager = manager
         self.row_count = 0
         self.COLUMNS_COUNT = self.table_widget.columnCount()
         self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell() for _ in range(self.COLUMNS_COUNT)] for _ in
                                                        range(0)]
         self.name = name
 
-    def add_row(self, index: int):
+    def add_row(self, index: Optional[int] = None, text: Optional[List[str]] = None):
+        if text is None:
+            text = []
+        if index is None:
+            index = self.table_widget.rowCount()
         if index < 0 or index > self.row_count:
             raise IndexError("Index out of range")
 
-        self.worksheet.insert(index, [SpreadsheetCell() for _ in range(self.COLUMNS_COUNT)])
+        # Insert a new row into the worksheet and table widget
+        self.worksheet.insert(index, [SpreadsheetCell(manager=self.manager) for _ in range(self.COLUMNS_COUNT)])
         self.row_count += 1
         self.table_widget.insertRow(index)
 
+        # Set the text for each cell if provided
         for col in range(self.COLUMNS_COUNT):
             cell = self.worksheet[index][col]
-            cell.sheet_name = self.name
             self.table_widget.setItem(index, col, cell)
-        # self.reference_changed()
+            cell.sheet_name = self.name
+            if col < len(text):
+                cell.manager.set_cell(cell.row(), cell.column(), text[col], cell.sheet_name)
+        self.reference_changed()
 
     def remove_row(self, index: int):
         if index < 0 or index >= self.row_count:
@@ -213,6 +247,7 @@ class Spreadsheet:
         for cell_to_remove in cells_to_remove:
             for dependent in cell_to_remove.items_that_dependents_on_me:
                 dependent.remove_dependent(cell_to_remove)
+                dependent.update_formula()
 
         for cell_to_remove in cells_to_remove:
             for name, dependent in cell_to_remove.items_that_i_depend_on.items():
@@ -221,61 +256,46 @@ class Spreadsheet:
         self.worksheet.pop(index)
         self.row_count -= 1
         self.table_widget.removeRow(index)
-        # self.reference_changed()
+        self.reference_changed()
 
     def get_cell(self, row, column):
         return self.worksheet[row][column]
 
+    def reference_changed(self):
+        for row in self.worksheet:
+            for cell in row:
+                cell.update_formula()
+
 
 class SpreadsheetManager:
-    pass
-
-
-class Model(QObject):
     def __init__(self):
-        super().__init__()
-        self.spreadsheets: Dict[str, Spreadsheet] = {}
-        self._active_spreadsheet_name: Optional[str] = None
-        self.dirty_cells: Set[SpreadsheetCell] = set()
-        self.parser = Parser(self)
-        self._current_cell: Optional[SpreadsheetCell] = None
+        self._spreadsheets: Dict[str, Spreadsheet] = {}
+        self._active_spreadsheet: Optional[Spreadsheet] = None
+        self._dirty_cells: Set[SpreadsheetCell] = set()
+        self._parser = Parser(self)
+        self.current_cell: Optional[SpreadsheetCell] = None
 
-        # for undo
-        self.original_text = ""
-        self.edited_text = ""
+    ###############################################################
 
-    def add_spreadsheet(self, name: str, spreadsheet_to_add: QTableWidget):
+    def add_spreadsheet(self, name: str, table_to_add: QTableWidget):
         """Add a new spreadsheet table with the given name."""
-        if name in self.spreadsheets:
+        if name in self._spreadsheets:
             raise ValueError(f"Spreadsheet with name '{name}' already exists.")
-        if not isinstance(spreadsheet_to_add, QTableWidget):
+        if not isinstance(table_to_add, QTableWidget):
             raise TypeError("table_to_add must be an instance of QTableWidget.")
-        self.spreadsheets[name] = Spreadsheet(spreadsheet_to_add, name)
+        self._spreadsheets[name] = Spreadsheet(table_to_add, name, self)
+        self.active_spreadsheet = name
 
     def remove_spreadsheet(self, name: str):
         """Remove the spreadsheet table with the given name."""
-        if name not in self.spreadsheets:
+        if name not in self._spreadsheets:
             raise KeyError(f"No spreadsheet found with name '{name}'.")
         # If the table to be removed is the active table, clear the active table
-        if name == self._active_spreadsheet_name:
-            self._active_spreadsheet_name = None
-        del self.spreadsheets[name]
+        if name == self._active_spreadsheet.name:
+            self._active_spreadsheet = None
+        del self._spreadsheets[name]
 
-    def get_spreadsheet_by_name(self, name: str) -> Optional[Spreadsheet]:
-        """Retrieve the spreadsheet table with the given name."""
-        if name not in self.spreadsheets:
-            raise KeyError(f"No spreadsheet found with name '{name}'.")
-        return self.spreadsheets[name]
-
-    @property
-    def active_spreadsheet(self) -> Optional[Spreadsheet]:
-        if self._active_spreadsheet_name is None:
-            return None
-        return self.spreadsheets[self._active_spreadsheet_name]
-
-    @property
-    def active_table(self) -> Optional[QTableWidget]:
-        return self.active_spreadsheet.table_widget
+    ###############################################################
 
     @property
     def current_row(self) -> int:
@@ -285,24 +305,19 @@ class Model(QObject):
     def current_column(self) -> int:
         return self.current_cell.column()
 
-    @property
-    def current_cell(self) -> SpreadsheetCell:
-        return self._current_cell
-
-    @current_cell.setter
-    def current_cell(self, cell):
-        self._current_cell = cell
+    ###############################################################
 
     @property
-    def active_spreadsheet_name(self) -> Optional[str]:
-        return self._active_spreadsheet_name
+    def active_spreadsheet(self) -> Optional[Spreadsheet]:
+        return self._active_spreadsheet
 
-    @active_spreadsheet_name.setter
-    def active_spreadsheet_name(self, name: Optional[str]):
-        if name not in self.spreadsheets:
+    @active_spreadsheet.setter
+    def active_spreadsheet(self, name: Optional[str]):
+        if name not in self._spreadsheets:
             raise KeyError(f"No spreadsheet found with name '{name}'.")
         else:
-            self._active_spreadsheet_name = name
+            self._active_spreadsheet = self._spreadsheets[name]
+            self.current_cell = None
 
     ####################################################################
 
@@ -310,16 +325,16 @@ class Model(QObject):
                  name_of_spreadsheet: Optional[str] = None) -> Optional[SpreadsheetCell]:
         # If column is not None, it means we're using row and column parameters
         if column is not None and name_of_spreadsheet is not None:
-            if name_of_spreadsheet in self.spreadsheets:
-                return self.spreadsheets[name_of_spreadsheet].get_cell(row_or_address, column)
+            if name_of_spreadsheet in self._spreadsheets:
+                return self._spreadsheets[name_of_spreadsheet].get_cell(row_or_address, column)
 
         # If column is None, we assume we're using the address format
         elif isinstance(row_or_address, str):
-            sheet_name, row_number, col_number = parse_cell_address(row_or_address)
-            if sheet_name in self.spreadsheets:
-                if 0 <= row_number < self.spreadsheets[sheet_name].row_count:
-                    if 0 <= col_number < self.spreadsheets[sheet_name].COLUMNS_COUNT:
-                        return self.spreadsheets[sheet_name].get_cell(row_number, col_number)
+            sheet_name, row_number, col_number = parse_cell_reference(row_or_address)
+            if sheet_name in self._spreadsheets:
+                if 0 <= row_number < self._spreadsheets[sheet_name].row_count:
+                    if 0 <= col_number < self._spreadsheets[sheet_name].COLUMNS_COUNT:
+                        return self._spreadsheets[sheet_name].get_cell(row_number, col_number)
 
         return None
 
@@ -336,7 +351,7 @@ class Model(QObject):
 
         # If end_row and end_col are not provided, assume start_row_or_range is a range string
         elif isinstance(start_row_or_range, str):
-            sheet_name, start_row, start_col, end_row, end_col = parse_cell_address_range(start_row_or_range)
+            sheet_name, start_row, start_col, end_row, end_col = parse_cell_range(start_row_or_range)
             return [
                 self.get_cell(row, col, sheet_name)
                 for row in range(start_row, end_row + 1)
@@ -350,19 +365,19 @@ class Model(QObject):
 
     def set_cell(self, row, column, formula, name_of_spreadsheet=None):
         if name_of_spreadsheet is None:
-            name_of_spreadsheet = self.active_spreadsheet_name
+            name_of_spreadsheet = self.active_spreadsheet.name
         cell_to_set = self.get_cell(row, column, name_of_spreadsheet)
         if cell_to_set is not None:
             cell_to_set.formula = formula
-            new_dependencies = self.parser.parse_formula_for_dependencies(cell_to_set.formula)
+            new_dependencies = self._parser.parse_formula_for_dependencies(cell_to_set.formula)
             cell_to_set.update_dependencies(new_dependencies)
             self.mark_dirty(cell_to_set)
             self.calculate_spreadsheets()
 
     def mark_dirty(self, cell: SpreadsheetCell):
         """Mark a cell as dirty and propagate this state to its dependents."""
-        if cell not in self.dirty_cells:
-            self.dirty_cells.add(cell)
+        if cell not in self._dirty_cells:
+            self._dirty_cells.add(cell)
             to_process = deque([cell])
             processed = set()
 
@@ -371,19 +386,19 @@ class Model(QObject):
                 if current_cell not in processed:
                     processed.add(current_cell)
                     for dep in current_cell.items_that_dependents_on_me:
-                        if dep not in self.dirty_cells:
-                            self.dirty_cells.add(dep)
+                        if dep not in self._dirty_cells:
+                            self._dirty_cells.add(dep)
                         if dep not in processed:
                             to_process.append(dep)
 
     def calculate_spreadsheets(self):
         """Calculate and update the values of all dirty cells."""
-        if not self.dirty_cells:
+        if not self._dirty_cells:
             return
         non_error_cells = []
 
         # Detect circular dependencies
-        for cell in self.dirty_cells:
+        for cell in self._dirty_cells:
             for dependent in cell.items_that_dependents_on_me:
                 if cell.check_circular_dependency(dependent):
                     cell.set_error(ErrorType.CIRCULAR)
@@ -393,13 +408,13 @@ class Model(QObject):
         if non_error_cells:
             order = self.topological_sort(non_error_cells)
             for cell in order:
-                if cell in self.dirty_cells:
+                if cell in self._dirty_cells:
                     self.evaluate_cell_formula(cell)
                     cell.apply_formatting_to_display_value()
-                    self.dirty_cells.discard(cell)
+                    self._dirty_cells.discard(cell)
 
-        self.dirty_cells = {cell for cell in self.dirty_cells if not cell.error}
-        assert not self.dirty_cells, "Some cells are still marked as dirty after calculation."
+        self._dirty_cells = {cell for cell in self._dirty_cells if not cell.error}
+        assert not self._dirty_cells, "Some cells are still marked as dirty after calculation."
 
     @staticmethod
     def topological_sort(cells: List[SpreadsheetCell]) -> List[SpreadsheetCell]:
@@ -440,7 +455,7 @@ class Model(QObject):
         try:
             if cell.formula_type == FormulaType.EXPRESSION:
                 cell.error = None
-                cell.python_formula = self.parser.make_python_formula(cell)
+                cell.python_formula = self._parser.make_python_formula(cell)
                 cell.value = str(eval(cell.python_formula))
             else:
                 cell.error = None
@@ -466,8 +481,17 @@ class Model(QObject):
                 pass
         return total
 
-    def if_function(self,logical_test, value_if_true, value_if_false):
+    @staticmethod
+    def if_function(logical_test, value_if_true, value_if_false):
         if logical_test:
             return value_if_true
         else:
             return value_if_false
+
+    def add_row(self, index=None, text: Optional[List[str]] = None):
+        self.active_spreadsheet.add_row(index, text)
+
+
+class Model(QObject, SpreadsheetManager):
+    def __init__(self):
+        super().__init__()

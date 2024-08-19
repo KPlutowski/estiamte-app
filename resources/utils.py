@@ -34,8 +34,17 @@ def is_convertible_to_float(value: str) -> bool:
         return False
 
 
-def parse_column_row(part: str) -> tuple[int, int]:
-    """Parse a column and row from a reference part."""
+def parse_reference_part(part: str) -> tuple[int, int]:
+    """
+    Parse a column and row from a cell reference part (e.g., 'A12').
+
+    Args:
+        reference_part (str): Part of the cell reference containing the column letter(s) and row number.
+
+    Returns:
+        tuple[int, int]: Zero-based row and column indices.
+        (None, None): If the input is invalid or parsing fails.
+    """
     if not isinstance(part, str):
         return None, None  # Invalid input type
     col_letter = ''.join(filter(str.isalpha, part))
@@ -59,8 +68,17 @@ def parse_column_row(part: str) -> tuple[int, int]:
     return row_number - 1, col_index
 
 
-def parse_cell_address(cell_address) -> tuple[str, int, int]:
-    # address like Sheet1!A2
+def parse_cell_reference(cell_address) -> tuple[str, int, int]:
+    """
+    Parse a cell reference with a sheet name (e.g., 'Sheet1!A2').
+
+    Args:
+        cell_reference (str): Cell reference in the format 'SheetName!ColumnLetterRowNumber'.
+
+    Returns:
+        tuple[str, int, int]: Sheet name, zero-based row index, and zero-based column index.
+        (None, None, None): If the input is invalid or parsing fails.
+    """
     if not isinstance(cell_address, str) or '!' not in cell_address:
         return None, None, None  # Invalid input
 
@@ -69,15 +87,25 @@ def parse_cell_address(cell_address) -> tuple[str, int, int]:
         return None, None, None  # Invalid cell address format
 
     sheet_name, cell_part = parts
-    row_number, col_number = parse_column_row(cell_part)
+    row_number, col_number = parse_reference_part(cell_part)
     if row_number is None or col_number is None:
         return None, None, None  # Parsing failed
 
     return sheet_name, row_number, col_number
 
 
-def parse_cell_address_range(cell_range) -> tuple[str, int, int, int, int]:
-    # address like Sheet1!A2:B3
+def parse_cell_range(cell_range: str) -> tuple[str, int, int, int, int]:
+    """
+    Parse a cell range with a sheet name (e.g., 'Sheet1!A2:B3').
+
+    Args:
+        cell_range (str): Cell range in the format 'SheetName!StartColumnLetterStartRowNumber:EndColumnLetterEndRowNumber'.
+
+    Returns:
+        tuple[str, int, int, int, int]: Sheet name, zero-based start row index, zero-based start column index,
+                                         zero-based end row index, and zero-based end column index.
+        (None, None, None, None, None): If the input is invalid or parsing fails.
+    """
     if not isinstance(cell_range, str) or '!' not in cell_range or ':' not in cell_range:
         return None, None, None, None, None  # Invalid input
 
@@ -88,8 +116,8 @@ def parse_cell_address_range(cell_range) -> tuple[str, int, int, int, int]:
     sheet_name, range_part = parts
     start_part, end_part = range_part.split(':', 1)
 
-    start_row_number, start_col_number = parse_column_row(start_part)
-    end_row_number, end_col_number = parse_column_row(end_part)
+    start_row_number, start_col_number = parse_reference_part(start_part)
+    end_row_number, end_col_number = parse_reference_part(end_part)
 
     if (start_row_number is None or start_col_number is None or
             end_row_number is None or end_col_number is None):
@@ -98,8 +126,16 @@ def parse_cell_address_range(cell_range) -> tuple[str, int, int, int, int]:
     return sheet_name, start_row_number, start_col_number, end_row_number, end_col_number
 
 
-def is_cell_reference(cell_reference: str) -> bool:
-    """Check if the given string is a valid cell reference."""
+def is_valid_cell_reference(cell_reference: str) -> bool:
+    """
+    Check if the given string is a valid cell reference.
+
+    Args:
+        cell_reference (str): String to check.
+
+    Returns:
+        bool: True if the string is a valid cell reference, otherwise False.
+    """
     if not isinstance(cell_reference, str):
         return False
 
@@ -108,8 +144,16 @@ def is_cell_reference(cell_reference: str) -> bool:
     return bool(re.match(pattern, cell_reference, re.UNICODE))
 
 
-def is_cell_range(cell_range: str) -> bool:
-    """Check if the given string is a valid cell range."""
+def is_valid_cell_range(cell_range: str) -> bool:
+    """
+    Check if the given string is a valid cell range.
+
+    Args:
+        cell_range (str): String to check.
+
+    Returns:
+        bool: True if the string is a valid cell range, otherwise False.
+    """
     if not isinstance(cell_range, str):
         return False
 

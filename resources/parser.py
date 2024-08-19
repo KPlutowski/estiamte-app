@@ -119,11 +119,11 @@ class Parser:
         for token in tokens:
             if token.token_type == TokenType.VALUE:
                 if token.subtype == ValueType.IDENTIFIER:
-                    if is_cell_reference(token.value):
+                    if is_valid_cell_reference(token.value):
                         cell = self._get_cell_reference(token)
                         if cell:
                             dependencies.add(cell)
-                    elif is_cell_range(token.value):
+                    elif is_valid_cell_range(token.value):
                         cells = self._get_range_reference(token)
                         dependencies.update(cells)
                     else:
@@ -156,9 +156,9 @@ class Parser:
         def convert_token(token: Token) -> str:
             if token.token_type == TokenType.VALUE:
                 if token.subtype == ValueType.IDENTIFIER:
-                    if is_cell_reference(token.value):
+                    if is_valid_cell_reference(token.value):
                         return f"self.get_cell('{token.value}').value"
-                    elif is_cell_range(token.value):
+                    elif is_valid_cell_range(token.value):
                         return f"self.get_range('{token.value}')"
                     else:
                         return token.value

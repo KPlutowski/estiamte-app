@@ -11,7 +11,7 @@ class MainView(QMainWindow, Ui_MainWindow):
         self.show()
 
     def initUI(self):
-        self.PositonsTableWidget.setRowCount(0)
+        self.PositionsTableWidget.setRowCount(0)
         self.PropertiesTableWidget.setRowCount(0)
 
     def update_formula_bar(self, value):
