@@ -3,9 +3,10 @@ from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QMenu, QStyledItemDelegate, QLineEdit
 
 from controlers.NewEstimateController import NewEstimateController
-from model.Model import Model
+from model.Model import Model, SpreadsheetCell
 from views.MainView.MainView import MainView
 import resources.constants as constants
+
 
 class ItemDelegate(QStyledItemDelegate):
     text_edited_signal = pyqtSignal(str)
@@ -41,15 +42,17 @@ class MainController(QObject):
         self.default_data()
 
     def default_data(self):
-        self._model.add_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.indexOf(self.view.position_tab)), self.view.PositionsTableWidget)
-        self._model.add_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.indexOf(self.view.properties_tab)), self.view.PropertiesTableWidget)
+        self._model.add_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.indexOf(self.view.position_tab)),
+                                    self.view.PositionsTableWidget)
+        self._model.add_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.indexOf(self.view.properties_tab)),
+                                    self.view.PropertiesTableWidget)
         self.on_tab_changed(self.view.tabWidget.currentIndex())
 
         for i in constants.SPREADSHEET_PROPERTY_DEFAULTS:
             self._model.add_row(text=i, name=constants.SPREADSHEET_PROPERTY_TABLE_NAME)
 
-        for i,row in enumerate(constants.SPREADSHEET_POSITIONS_DEFAULTS):
-            row.append(f'=Pozycje!D{i+1}*Pozycje!E{i+1}')
+        for i, row in enumerate(constants.SPREADSHEET_POSITIONS_DEFAULTS):
+            row[5] = f'=Pozycje!D{i + 1}*Pozycje!E{i + 1}'
             self._model.add_row(text=row, name=constants.SPREADSHEET_POSITION_TABLE_NAME)
 
     def setup_connections(self):
@@ -99,7 +102,8 @@ class MainController(QObject):
         """Handle the event when cell editing via delegate is finished."""
         if self._model.current_cell:
             text = self.view.Formula_bar.text()
-            self._model.set_cell(self._model.current_row, self._model.current_column, text, self._model.current_cell.sheet_name)
+            self._model.set_cell(self._model.current_row, self._model.current_column, text,
+                                 self._model.current_cell.sheet_name)
 
     def show_context_menu(self, pos: QtCore.QPoint):
         index = self._model.active_spreadsheet.table_widget.indexAt(pos)
@@ -130,5 +134,5 @@ class MainController(QObject):
         self._model.active_spreadsheet = tab_name
 
     # TODO
-    def reset_spreadsheet(self,name):
+    def reset_spreadsheet(self, name):
         pass

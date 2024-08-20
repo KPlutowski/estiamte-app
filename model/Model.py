@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Set, Union
 from collections import deque, defaultdict
 
 from PyQt6.QtCore import QObject
-from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget
+from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QWidget
 from enum import Enum
 from resources.utils import *
 from resources.parser import Parser, Tokenizer, ValueType, TokenType
@@ -27,64 +27,47 @@ class FormulaType(Enum):
     NO_TYPE = 'NO_TYPE'
 
 
-class SpreadsheetCell(QTableWidgetItem):
-    def __init__(self, formula="", manager=None, *args, **kwargs):
-        QTableWidgetItem.__init__(self, *args, **kwargs)
-        self.sheet_name = ""
-        self.manager = manager
+class Item:
+    def __init__(self):
+        super().__init__()
         self._value = ''
-        self.formula_type: FormulaType = FormulaType.NO_TYPE
-        self.error: Optional[ErrorType] = None
-        self.items_that_dependents_on_me = []
 
-        self.items_that_i_depend_on: Dict[
-            str, SpreadsheetCell] = {}  # dependent items and their representation in formula
+        # after changing value this items should be updated
+        self.items_that_dependents_on_me: ['ItemWithFormula'] = []
+
+    @property
+    def value(self):
+        if is_convertible_to_float(self._value):
+            return float(self._value)
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+
+
+class ItemWithFormula(Item):
+    def __init__(self, formula="", manager=None, *args, **kwargs):
+        super().__init__()
+        self.manager = manager
+
+        self.items_that_i_depend_on: Dict[str, SpreadsheetCell] = {}  # items and their representation in formula
+
+        self.formula_type: FormulaType = FormulaType.NO_TYPE
         self._formula = formula
         self.python_formula = ''
 
+        self.error: Optional[ErrorType] = None
+
     def set_error(self, error: Optional[ErrorType] = None):
         """Update the error state of this cell and propagate the change to dependent cells. """
+        self.error = error
         if error is not None:
-            # Set error
-            self.error = error
-            for cell in self.items_that_dependents_on_me:
-                if cell.error is None:
-                    cell.set_error(error)
-        else:
-            # Reset error
-            self.error = None
-            for cell in self.items_that_dependents_on_me:
-                if cell.error is not None:
-                    cell.set_error(None)
-        self.apply_formatting_to_display_value()
-
-    def apply_formatting_to_display_value(self):
-        if self.error:
             self.value = self.error.value[0]
-        self.setText(str(self.value))
 
-    def __hash__(self):
-        # Define a unique hash for each cell, e.g., based on its row and column
-        return hash((self.row(), self.column()))
-
-    def __eq__(self, other):
-        # Two cells are considered equal if they have the same row and column
-        if isinstance(other, SpreadsheetCell):
-            return self.name == other.name
-        return False
-
-    def __str__(self) -> str:
-        return (
-            f"{'-' * 80}\n"
-            f"Cell at: row = {self.row()}, column = {self.column()}, Name: {self.name}\n"
-            f"self: {hex(id(self))}\n"
-            f"Value: {self.value}, Formula: {self.formula}\n"
-            f"Python_formula: {self.python_formula}\n"
-            f"cells_that_i_dependents_on_and_names: {self.items_that_i_depend_on}\n"
-            f"cells_that_dependents_on_me: {self.items_that_dependents_on_me}\n"
-            f"Error Message: {self.error}, Python Formula: {self.python_formula}\n"
-            f"{'-' * 80}"
-        )
+        for cell in self.items_that_dependents_on_me:
+            if cell.error is not error:
+                cell.set_error(error)
 
     def add_dependent(self, cell: 'SpreadsheetCell', reference_name: str):
         self.items_that_i_depend_on[reference_name] = cell
@@ -92,27 +75,6 @@ class SpreadsheetCell(QTableWidgetItem):
     def remove_dependent(self, cell: 'SpreadsheetCell'):
         if cell.name in self.items_that_i_depend_on:
             del self.items_that_i_depend_on[cell.name]
-
-    @property
-    def name(self):
-        return f"{self.sheet_name}!{index_to_letter(self.column())}{self.row() + 1}"
-
-    def update_dependencies(self, new_dependencies: List['SpreadsheetCell']):
-        def remove_all_dependencies():
-            for name, dep in self.items_that_i_depend_on.items():
-                dep.items_that_dependents_on_me.remove(self)
-            self.items_that_i_depend_on.clear()
-
-        def add_dependencies(dependencies: List['SpreadsheetCell']):
-            for dep_cell in dependencies:
-                if self not in dep_cell.items_that_dependents_on_me:
-                    dep_cell.items_that_dependents_on_me.append(self)
-                self.add_dependent(dep_cell, dep_cell.name)
-
-        remove_all_dependencies()
-
-        if self.formula.startswith('='):
-            add_dependencies(new_dependencies)
 
     def check_circular_dependency(self, target_cell: 'SpreadsheetCell') -> bool:
         """Check if there is a circular dependency from target_cell to start_cell."""
@@ -143,18 +105,63 @@ class SpreadsheetCell(QTableWidgetItem):
         else:
             self.formula_type = FormulaType.STRING
 
-    @property
-    def value(self):
-        if is_convertible_to_float(self._value):
-            return float(self._value)
-        return self._value
 
-    @value.setter
-    def value(self, value):
-        self._value = value
+class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
+    def __init__(self, formula="", manager=None, *args, **kwargs):
+        super().__init__(formula, manager, *args, **kwargs)
+        self.sheet_name = ""
+
+    def __hash__(self):
+        # Define a unique hash for each cell, e.g., based on its row and column
+        return hash((self.row(), self.column()))
+
+    def __eq__(self, other):
+        # Two cells are considered equal if they have the same row and column
+        if isinstance(other, SpreadsheetCell):
+            return self.name == other.name
+        return False
+
+    def __str__(self) -> str:
+        return (
+            f"{'-' * 80}\n"
+            f"Cell at: row = {self.row()}, column = {self.column()}, Name: {self.name}\n"
+            f"self: {hex(id(self))}\n"
+            f"Value: {self.value}, Formula: {self.formula}\n"
+            f"Python_formula: {self.python_formula}\n"
+            f"cells_that_i_dependents_on_and_names: {self.items_that_i_depend_on}\n"
+            f"cells_that_dependents_on_me: {self.items_that_dependents_on_me}\n"
+            f"Error Message: {self.error}, Python Formula: {self.python_formula}\n"
+            f"{'-' * 80}"
+        )
+
+    @property
+    def name(self):
+        return f"{self.sheet_name}!{index_to_letter(self.column())}{self.row() + 1}"
+
+    def apply_formatting_to_display_value(self):
+        if self.error:
+            self.value = self.error.value[0]
+        self.setText(str(self.value))
+
+    def update_dependencies(self, new_dependencies: List['SpreadsheetCell']):
+        def remove_all_dependencies():
+            for name, dep in self.items_that_i_depend_on.items():
+                dep.items_that_dependents_on_me.remove(self)
+            self.items_that_i_depend_on.clear()
+
+        def add_dependencies(dependencies: List['SpreadsheetCell']):
+            for dep_cell in dependencies:
+                if self not in dep_cell.items_that_dependents_on_me:
+                    dep_cell.items_that_dependents_on_me.append(self)
+                self.add_dependent(dep_cell, dep_cell.name)
+
+        remove_all_dependencies()
+
+        if self.formula.startswith('='):
+            add_dependencies(new_dependencies)
 
     # TODO
-    def update_formula(self):
+    def update_formula_after_moving(self):
         # should update the cell formula after removing, moving, adding row, moving cell etc...
         # e.g. "=Sheet1!A1" after removing row A1 in Sheet1 -> "=#REF!"
         # "=Sheet1!A5"  after removing row A1 in Sheet1 -> "=Sheet1!A4"
@@ -234,7 +241,10 @@ class Spreadsheet:
             cell = self.worksheet[index][col]
             self.table_widget.setItem(index, col, cell)
             cell.sheet_name = self.name
+
+        for col in range(self.COLUMNS_COUNT):
             if col < len(text):
+                cell = self.worksheet[index][col]
                 cell.manager.set_cell(cell.row(), cell.column(), text[col], cell.sheet_name)
         self.reference_changed()
 
@@ -247,7 +257,7 @@ class Spreadsheet:
         for cell_to_remove in cells_to_remove:
             for dependent in cell_to_remove.items_that_dependents_on_me:
                 dependent.remove_dependent(cell_to_remove)
-                dependent.update_formula()
+                dependent.update_formula_after_moving()
 
         for cell_to_remove in cells_to_remove:
             for name, dependent in cell_to_remove.items_that_i_depend_on.items():
@@ -264,11 +274,12 @@ class Spreadsheet:
     def reference_changed(self):
         for row in self.worksheet:
             for cell in row:
-                cell.update_formula()
+                cell.update_formula_after_moving()
 
     def reset(self):
         self.row_count = 0
         self.table_widget.setRowCount(0)
+
 
 class SpreadsheetManager:
     def __init__(self):
@@ -317,7 +328,8 @@ class SpreadsheetManager:
     @active_spreadsheet.setter
     def active_spreadsheet(self, name: Optional[str]):
         if name not in self._spreadsheets:
-            raise KeyError(f"No spreadsheet found with name '{name}'.")
+            self._active_spreadsheet = None
+            self.current_cell = None
         else:
             self._active_spreadsheet = self._spreadsheets[name]
             self.current_cell = None
@@ -405,6 +417,7 @@ class SpreadsheetManager:
             for dependent in cell.items_that_dependents_on_me:
                 if cell.check_circular_dependency(dependent):
                     cell.set_error(ErrorType.CIRCULAR)
+                    cell.apply_formatting_to_display_value()
             if cell.error is None:
                 non_error_cells.append(cell)
 
