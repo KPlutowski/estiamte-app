@@ -266,6 +266,9 @@ class Spreadsheet:
             for cell in row:
                 cell.update_formula()
 
+    def reset(self):
+        self.row_count = 0
+        self.table_widget.setRowCount(0)
 
 class SpreadsheetManager:
     def __init__(self):
@@ -488,8 +491,13 @@ class SpreadsheetManager:
         else:
             return value_if_false
 
-    def add_row(self, index=None, text: Optional[List[str]] = None):
-        self.active_spreadsheet.add_row(index, text)
+    def add_row(self, index=None, text: Optional[List[str]] = None,name=None):
+        if name in self._spreadsheets:
+            self._spreadsheets[name].add_row(index, text)
+
+    def reset_spreadsheet(self,name):
+        if name in self._spreadsheets:
+            self._spreadsheets[name].reset()
 
 
 class Model(QObject, SpreadsheetManager):

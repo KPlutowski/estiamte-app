@@ -74,7 +74,6 @@ class Ui_MainWindow(object):
         self.PropertiesTableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.PropertiesTableWidget.setAlternatingRowColors(True)
         self.PropertiesTableWidget.setTextElideMode(QtCore.Qt.TextElideMode.ElideLeft)
-        self.PropertiesTableWidget.setGridStyle(QtCore.Qt.PenStyle.NoPen)
         self.PropertiesTableWidget.setObjectName("PropertiesTableWidget")
         self.PropertiesTableWidget.setColumnCount(2)
         self.PropertiesTableWidget.setRowCount(0)

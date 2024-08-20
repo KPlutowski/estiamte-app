@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QMenu, QStyledItemDelegate, QLineEdit
 from controlers.NewEstimateController import NewEstimateController
 from model.Model import Model
 from views.MainView.MainView import MainView
-
+import resources.constants as constants
 
 class ItemDelegate(QStyledItemDelegate):
     text_edited_signal = pyqtSignal(str)
@@ -41,11 +41,16 @@ class MainController(QObject):
         self.default_data()
 
     def default_data(self):
-        for i, table in enumerate([self.view.PositionsTableWidget,self.view.PropertiesTableWidget]):
-            self._model.add_spreadsheet(self.view.tabWidget.tabText(i), table)
-            for _ in range(20):
-                self._model.add_row()
+        self._model.add_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.indexOf(self.view.position_tab)), self.view.PositionsTableWidget)
+        self._model.add_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.indexOf(self.view.properties_tab)), self.view.PropertiesTableWidget)
         self.on_tab_changed(self.view.tabWidget.currentIndex())
+
+        for i in constants.SPREADSHEET_PROPERTY_DEFAULTS:
+            self._model.add_row(text=i, name=constants.SPREADSHEET_PROPERTY_TABLE_NAME)
+
+        for i,row in enumerate(constants.SPREADSHEET_POSITIONS_DEFAULTS):
+            row.append(f'=Pozycje!D{i+1}*Pozycje!E{i+1}')
+            self._model.add_row(text=row, name=constants.SPREADSHEET_POSITION_TABLE_NAME)
 
     def setup_connections(self):
         # Tab widget
@@ -97,9 +102,7 @@ class MainController(QObject):
             self._model.set_cell(self._model.current_row, self._model.current_column, text, self._model.current_cell.sheet_name)
 
     def show_context_menu(self, pos: QtCore.QPoint):
-        index = self.view.PositionsTableWidget.indexAt(pos) or self.view.PropertiesTableWidget.indexAt(pos)
-        if not index.isValid():
-            return
+        index = self._model.active_spreadsheet.table_widget.indexAt(pos)
 
         menu = QMenu()
         add_position_action = menu.addAction('Add Row')
@@ -125,3 +128,7 @@ class MainController(QObject):
         self.text_editing_finished()
         tab_name = self.view.tabWidget.tabText(index)
         self._model.active_spreadsheet = tab_name
+
+    # TODO
+    def reset_spreadsheet(self,name):
+        pass
