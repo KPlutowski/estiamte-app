@@ -43,7 +43,7 @@ class Ui_MainWindow(object):
         self.position_tab.setObjectName("position_tab")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.position_tab)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.PositionsTableWidget = QtWidgets.QTableWidget(parent=self.position_tab)
+        self.PositionsTableWidget = Spreadsheet(parent=self.position_tab)
         self.PositionsTableWidget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.PositionsTableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.PositionsTableWidget.setAlternatingRowColors(True)
@@ -69,7 +69,7 @@ class Ui_MainWindow(object):
         self.properties_tab.setObjectName("properties_tab")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.properties_tab)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.PropertiesTableWidget = QtWidgets.QTableWidget(parent=self.properties_tab)
+        self.PropertiesTableWidget = Spreadsheet(parent=self.properties_tab)
         self.PropertiesTableWidget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.PropertiesTableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.PropertiesTableWidget.setAlternatingRowColors(True)
@@ -109,6 +109,12 @@ class Ui_MainWindow(object):
         self.doubleSpinBox_3 = QtWidgets.QDoubleSpinBox(parent=self.tab)
         self.doubleSpinBox_3.setObjectName("doubleSpinBox_3")
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.ItemRole.FieldRole, self.doubleSpinBox_3)
+        self.label_4 = QtWidgets.QLabel(parent=self.tab)
+        self.label_4.setObjectName("label_4")
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.LabelRole, self.label_4)
+        self.spinn_box_ilosc = SpinnBoxCell(parent=self.tab)
+        self.spinn_box_ilosc.setObjectName("spinn_box_ilosc")
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.FieldRole, self.spinn_box_ilosc)
         self.horizontalLayout_2.addLayout(self.formLayout)
         self.tabWidget.addTab(self.tab, "")
         self.verticalLayout_3.addWidget(self.tabWidget)
@@ -162,7 +168,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -189,6 +195,7 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "szer"))
         self.label_2.setText(_translate("MainWindow", "długość"))
         self.label_3.setText(_translate("MainWindow", "obw"))
+        self.label_4.setText(_translate("MainWindow", "ilość"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Page"))
         self.menuFile.setTitle(_translate("MainWindow", "Plik"))
         self.menuImport.setTitle(_translate("MainWindow", "Import"))
@@ -211,3 +218,4 @@ class Ui_MainWindow(object):
         self.actionExport_xlsx.setText(_translate("MainWindow", "Plik XLSX"))
         self.actionImportCsv.setText(_translate("MainWindow", "*.csv"))
         self.actionExportCsv.setText(_translate("MainWindow", "*.csv"))
+from model.Model import SpinnBoxCell, Spreadsheet

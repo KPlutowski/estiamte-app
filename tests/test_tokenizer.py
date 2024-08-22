@@ -3,9 +3,6 @@ from resources.parser import Tokenizer, Token, TokenType, ValueType
 
 
 class TestTokenizer(unittest.TestCase):
-    def setUp(self):
-        self.tokenizer = Tokenizer()
-
     def assertTokenListEqual(self, actual, expected):
         self.assertEqual(
             [(token.value, token.token_type, token.subtype) for token in actual],
@@ -19,7 +16,7 @@ class TestTokenizer(unittest.TestCase):
             Token('+', TokenType.OPERATOR, None),
             Token('B2', TokenType.VALUE, ValueType.IDENTIFIER)
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_function_call(self):
         formula = "SUM(sheet1!A1:A10)"
@@ -29,7 +26,7 @@ class TestTokenizer(unittest.TestCase):
             Token('sheet1!A1:A10', TokenType.VALUE, ValueType.IDENTIFIER),
             Token(')', TokenType.PARENTHESIS, 'CLOSE')
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_function_with_parameters(self):
         formula = "IF(sheet1!A1=1, sheet1!B2, sheet1!C3)"
@@ -45,8 +42,7 @@ class TestTokenizer(unittest.TestCase):
             Token('sheet1!C3', TokenType.VALUE, ValueType.IDENTIFIER),
             Token(')', TokenType.PARENTHESIS, 'CLOSE')
         ]
-        TOKEN = self.tokenizer.tokenize(formula)
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_cell_reference_with_sheet(self):
         formula = "Pozycje!A1 + Właściwości!B2"
@@ -55,7 +51,7 @@ class TestTokenizer(unittest.TestCase):
             Token('+', TokenType.OPERATOR, None),
             Token('Właściwości!B2', TokenType.VALUE, ValueType.IDENTIFIER)
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_nested_function_1(self):
         formula = "AVERAGE(SUM(sheet1!A1:A10), MAX(sheet1!B1:B10))"
@@ -73,14 +69,14 @@ class TestTokenizer(unittest.TestCase):
             Token(')', TokenType.PARENTHESIS, 'CLOSE'),
             Token(')', TokenType.PARENTHESIS, 'CLOSE')
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_string_literal(self):
         formula = '"Hello World"'
         expected = [
             Token('Hello World', TokenType.VALUE, ValueType.STRING)
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_expression_with_strings(self):
         formula = 'IF(sheet1!A1="Yes", "Confirmed", "Pending")'
@@ -96,7 +92,7 @@ class TestTokenizer(unittest.TestCase):
             Token('Pending', TokenType.VALUE, ValueType.STRING),
             Token(')', TokenType.PARENTHESIS, 'CLOSE')
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_complex_expression(self):
         formula = 'IF(AND(sheet1!A1>1, sheet1!B2<5), "In Range", "Out of Range")'
@@ -119,7 +115,7 @@ class TestTokenizer(unittest.TestCase):
             Token('Out of Range', TokenType.VALUE, ValueType.STRING),
             Token(')', TokenType.PARENTHESIS, 'CLOSE')
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_nested_function_2(self):
         formula = "IF(SUM(sheet1!A1:B2)==1; SUM(sheet1!A1:A2);9999)"
@@ -142,7 +138,7 @@ class TestTokenizer(unittest.TestCase):
             Token('9999', TokenType.VALUE, ValueType.NUMBER),
             Token(')', TokenType.PARENTHESIS, 'CLOSE')
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_multiple_operators(self):
         formula = 'A1+B2-C3*D4/E5'
@@ -157,12 +153,12 @@ class TestTokenizer(unittest.TestCase):
             Token('/', TokenType.OPERATOR, None),
             Token('E5', TokenType.VALUE, ValueType.IDENTIFIER)
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_empty_formula(self):
         formula = ""
         expected = []
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_spaces_around_operators(self):
         formula = ' A1  +   B2 '
@@ -171,7 +167,7 @@ class TestTokenizer(unittest.TestCase):
             Token('+', TokenType.OPERATOR, None),
             Token('B2', TokenType.VALUE, ValueType.IDENTIFIER)
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
     def test_parentheses_edge_cases(self):
         formula = "(A1 + (B2 - C3))"
@@ -186,7 +182,7 @@ class TestTokenizer(unittest.TestCase):
             Token(')', TokenType.PARENTHESIS, 'CLOSE'),
             Token(')', TokenType.PARENTHESIS, 'CLOSE')
         ]
-        self.assertTokenListEqual(self.tokenizer.tokenize(formula), expected)
+        self.assertTokenListEqual(Tokenizer.tokenize(formula), expected)
 
 
 if __name__ == '__main__':

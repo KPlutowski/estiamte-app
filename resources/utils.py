@@ -121,9 +121,28 @@ def parse_cell_range(cell_range: str) -> tuple[str, int, int, int, int]:
 
     if (start_row_number is None or start_col_number is None or
             end_row_number is None or end_col_number is None):
-        return None, None, None, None, None  # Parsing failed
+        return None, None, None, None, None
 
     return sheet_name, start_row_number, start_col_number, end_row_number, end_col_number
+
+
+def is_valid_properties_field(text):
+    """
+    Check if the given string is a valid properties field.
+
+    Args:
+        text (str): String to check.
+
+    Returns:
+        bool: True if the string is a valid properties field, otherwise False.
+    """
+    if not isinstance(text, str):
+        return False
+
+    # Regex pattern to match the required format: PROPERTIES!{name}
+    pattern = r'^PROPERTIES![^\s]*$'
+
+    return bool(re.match(pattern, text))
 
 
 def is_valid_cell_reference(cell_reference: str) -> bool:

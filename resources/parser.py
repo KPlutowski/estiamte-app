@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from resources.utils import *
 
 
@@ -29,11 +29,14 @@ class Token:
 
 class Tokenizer:
     def __init__(self):
-        self.operators = {'+', '-', '*', '/', '=', '<', '>', '(', ')'}
-        self.delimiters = {',', ';'}
-        self.functions = {'IF', 'SUM', 'AVERAGE', 'MAX', 'MIN', 'AND', 'OR'}
+        pass
 
-    def tokenize(self, formula: str) -> List[Token]:
+    @staticmethod
+    def tokenize(formula: str) -> List[Token]:
+        operators = {'+', '-', '*', '/', '=', '<', '>', '(', ')'}
+        delimiters = {',', ';'}
+        functions = {'IF', 'SUM', 'AVERAGE', 'MAX', 'MIN', 'AND', 'OR'}
+
         tokens = []
         token = ''
         inside_parentheses = 0
@@ -55,7 +58,7 @@ class Tokenizer:
                 if char == '(':
                     if token:
                         # Handle function names and identifiers
-                        if token.strip() in self.functions:
+                        if token.strip() in functions:
                             add_token(token, TokenType.FUNCTION)
                         else:
                             add_token(token, TokenType.VALUE, ValueType.IDENTIFIER)
@@ -70,7 +73,7 @@ class Tokenizer:
                     token = ''
                     tokens.append(Token(char, TokenType.PARENTHESIS, 'CLOSE'))
                     inside_parentheses -= 1
-                elif char in self.operators:
+                elif char in operators:
                     if token:
                         if token.replace('.', '', 1).isdigit():
                             add_token(token, TokenType.VALUE, ValueType.NUMBER)
@@ -78,7 +81,7 @@ class Tokenizer:
                             add_token(token, TokenType.VALUE, ValueType.IDENTIFIER)
                         token = ''
                     tokens.append(Token(char, TokenType.OPERATOR))
-                elif char in self.delimiters:
+                elif char in delimiters:
                     if token:
                         if is_convertible_to_float(token):
                             add_token(token, TokenType.VALUE, ValueType.NUMBER)
@@ -92,7 +95,7 @@ class Tokenizer:
                     token += char
 
         if token:
-            if token in self.functions:
+            if token in functions:
                 add_token(token, TokenType.FUNCTION)
             elif token.replace('.', '', 1).isdigit():
                 add_token(token, TokenType.VALUE, ValueType.NUMBER)
@@ -103,29 +106,34 @@ class Tokenizer:
 
 
 class Parser:
-    def __init__(self, spreadsheet_manager):
-        self._model: 'Model' = spreadsheet_manager
-        self.tokenizer = Tokenizer()
+    def __init__(self):
+        pass
 
-    def parse_formula_for_dependencies(self, formula: str) -> List['SpreadsheetCell']:
+    @staticmethod
+    def parse_formula_for_dependencies(formula: str) -> List['ItemWithFormula']:
         """Parse formula and return a list of dependent cells."""
+        from model.Model import Model
         if formula.startswith('='):
             formula = formula[1:]
         else:
             return list()
         dependencies = set()
-        tokens = self.tokenizer.tokenize(formula)
+        tokens = Tokenizer.tokenize(formula)
 
         for token in tokens:
             if token.token_type == TokenType.VALUE:
                 if token.subtype == ValueType.IDENTIFIER:
                     if is_valid_cell_reference(token.value):
-                        cell = self._get_cell_reference(token)
+                        cell = Model.get_cell(token.value)
                         if cell:
                             dependencies.add(cell)
                     elif is_valid_cell_range(token.value):
-                        cells = self._get_range_reference(token)
+                        cells = Model.get_range(token.value)
                         dependencies.update(cells)
+                    elif is_valid_properties_field(token.value):
+                        _property = Model.get_property(token.value)
+                        if _property:
+                            dependencies.add(_property)
                     else:
                         pass
             elif token.token_type == TokenType.FUNCTION:
@@ -135,31 +143,26 @@ class Parser:
 
     ####################################################################
 
-    def _get_cell_reference(self, token: Token) -> Optional['SpreadsheetCell']:
-        """Parse a cell reference token."""
-        return self._model.get_cell(token.value)
-
-    def _get_range_reference(self, token: Token) -> List['SpreadsheetCell']:
-        """Parse a range reference token."""
-        return self._model.get_range(token.value)
-
-    def make_python_formula(self, cell: 'SpreadsheetCell') -> str:
+    @staticmethod
+    def make_python_formula(item: 'ItemWithFormula') -> str:
         """Convert a spreadsheet formula to a Python expression."""
 
-        formula = cell.formula
+        formula = item.formula
         if formula.startswith('='):
             formula = formula[1:]
         else:
             return ''
-        tokens = self.tokenizer.tokenize(formula)
+        tokens = Tokenizer.tokenize(formula)
 
         def convert_token(token: Token) -> str:
             if token.token_type == TokenType.VALUE:
                 if token.subtype == ValueType.IDENTIFIER:
                     if is_valid_cell_reference(token.value):
-                        return f"self.get_cell('{token.value}').value"
+                        return f"Model.get_cell('{token.value}').value"
                     elif is_valid_cell_range(token.value):
-                        return f"self.get_range('{token.value}')"
+                        return f"Model.get_range('{token.value}')"
+                    elif is_valid_properties_field(token.value):
+                        return f"Model.get_property('{token.value}').value"
                     else:
                         return token.value
                 elif token.subtype == ValueType.NUMBER:
@@ -194,3 +197,5 @@ class Parser:
         python_expression = ''.join(convert_token(token) for token in tokens)
 
         return python_expression
+
+

@@ -1,9 +1,9 @@
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, QModelIndex, QEvent, Qt
-from PyQt6.QtWidgets import QMenu, QStyledItemDelegate, QLineEdit
+from PyQt6.QtWidgets import QMenu, QStyledItemDelegate
 
 from controlers.NewEstimateController import NewEstimateController
-from model.Model import Model, SpreadsheetCell
+from model.Model import Model, Spreadsheet
 from views.MainView.MainView import MainView
 import resources.constants as constants
 
@@ -35,25 +35,23 @@ class ItemDelegate(QStyledItemDelegate):
 class MainController(QObject):
     def __init__(self):
         super().__init__()
-        self._model = Model()
         self.view = MainView()
         self.delegate = ItemDelegate(self)
         self.setup_connections()
         self.default_data()
+        Model.set_active_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.currentIndex()))
 
     def default_data(self):
-        self._model.add_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.indexOf(self.view.position_tab)),
-                                    self.view.PositionsTableWidget)
-        self._model.add_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.indexOf(self.view.properties_tab)),
-                                    self.view.PropertiesTableWidget)
-        self.on_tab_changed(self.view.tabWidget.currentIndex())
+        Model.add_item(self.view.PositionsTableWidget)
+        Model.add_item(self.view.PropertiesTableWidget)
+        Model.add_item(self.view.spinn_box_ilosc)
 
         for i in constants.SPREADSHEET_PROPERTY_DEFAULTS:
-            self._model.add_row(text=i, name=constants.SPREADSHEET_PROPERTY_TABLE_NAME)
+            Model.add_row(text=i, name=constants.PROPERTY_TABLE_WIDGET_NAME)
 
         for i, row in enumerate(constants.SPREADSHEET_POSITIONS_DEFAULTS):
             row[5] = f'=Pozycje!D{i + 1}*Pozycje!E{i + 1}'
-            self._model.add_row(text=row, name=constants.SPREADSHEET_POSITION_TABLE_NAME)
+            Model.add_row(text=row, name=constants.POSITION_TABLE_WIDGET_NAME)
 
     def setup_connections(self):
         # Tab widget
@@ -74,65 +72,79 @@ class MainController(QObject):
 
         # real-time synchronization between formula bar and cell
         self.delegate.text_edited_signal.connect(self.view.update_formula_bar)
-        self.view.Formula_bar.textEdited.connect(
-            lambda text: self._model.current_cell.setText(text) if self._model.current_cell else None)
+        self.view.Formula_bar.textEdited.connect(self.formula_bar_edited)
 
         # accept new formula
         self.delegate.commitData.connect(self.text_editing_finished)
         self.view.Formula_bar.editingFinished.connect(self.text_editing_finished)
 
-    @pyqtSlot(int, int)
-    def on_current_cell_changed(self, row: int, column: int):
+        #Spinn Bob
+        self.view.spinn_box_ilosc.textChanged.connect(self.view.spinn_box_ilosc.set_item)
+
+    @pyqtSlot(str)
+    def formula_bar_edited(self,text):
+        if Model.get_active_spreadsheet():
+            if Model.get_active_spreadsheet().currentItem():
+                Model.get_active_spreadsheet().currentItem().setText(text)
+
+    @pyqtSlot()
+    def on_current_cell_changed(self):
         """Handle the event when the current cell changes."""
-        if self._model.active_spreadsheet and 0 <= row < self._model.active_spreadsheet.row_count:
-            self._model.current_cell = self._model.get_cell(row, column, self._model.active_spreadsheet.name)
-            cell = self._model.current_cell
-            self.view.update_formula_bar(cell.formula)
-            self.view.update_name_box(cell.name)
-            print(cell)
+        item = Model.get_active_spreadsheet()
+        if item is not None:
+            item = item.currentItem()
+            if item is not None:
+                self.view.update_formula_bar(item.formula)
+                self.view.update_name_box(item.name)
+                print(item)
+            else:
+                pass
+        else:
+            self.view.update_formula_bar("")
+            self.view.update_name_box("")
 
     @pyqtSlot(int, int)
     def on_cell_double_clicked(self, row: int, column: int):
         """Handle the event when a cell is double-clicked."""
-        cell = self._model.current_cell
-        cell.setText(cell.formula)
-        self.view.update_formula_bar(cell.formula)
+        item = Model.get_active_spreadsheet().currentItem()
+        item.setText(item.formula)
+        self.view.update_formula_bar(item.formula)
 
     def text_editing_finished(self):
         """Handle the event when cell editing via delegate is finished."""
-        if self._model.current_cell:
-            text = self.view.Formula_bar.text()
-            self._model.set_cell(self._model.current_row, self._model.current_column, text,
-                                 self._model.current_cell.sheet_name)
+        if Model.get_active_spreadsheet():
+            if Model.get_active_spreadsheet().currentItem():
+                text = self.view.Formula_bar.text()
+                Model.get_active_spreadsheet().currentItem().set_item(text)
 
     def show_context_menu(self, pos: QtCore.QPoint):
-        index = self._model.active_spreadsheet.table_widget.indexAt(pos)
+        widget = Model.get_active_spreadsheet()
+
+        if not isinstance(widget, Spreadsheet):
+            return
+        index = widget.indexAt(pos)
 
         menu = QMenu()
         add_position_action = menu.addAction('Add Row')
         menu.addSeparator()
         delete_action = menu.addAction('Delete Row')
 
-        action = menu.exec(self.view.PositionsTableWidget.mapToGlobal(pos))
+        action = menu.exec(widget.mapToGlobal(pos))
         if not action:
             return
 
         row = index.row()
         if action == add_position_action:
-            self._model.active_spreadsheet.add_row(row + 1)
+            Model.add_row(row + 1, name=widget.objectName())
         elif action == delete_action:
-            self._model.active_spreadsheet.remove_row(row)
+            Model.remove_row(row, name=widget.objectName())
 
     def on_action_new_triggered(self):
-        self.new_estimate_cntr = NewEstimateController(self._model)
+        self.new_estimate_cntr = NewEstimateController(Model)
 
     @pyqtSlot(int)
     def on_tab_changed(self, index: int):
         """Update active spreadsheet when tab is changed."""
         self.text_editing_finished()
-        tab_name = self.view.tabWidget.tabText(index)
-        self._model.active_spreadsheet = tab_name
-
-    # TODO
-    def reset_spreadsheet(self, name):
-        pass
+        Model.set_active_spreadsheet(self.view.tabWidget.tabText(index))
+        self.on_current_cell_changed()
