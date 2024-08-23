@@ -95,7 +95,7 @@ class MainController(QObject):
         self.delegate.commitData.connect(self.text_editing_finished)
         self.view.Formula_bar.editingFinished.connect(self.text_editing_finished)
 
-        # Spinn Box
+        # SPINN BOX
         Model.add_item(self.view.gridArea)
         Model.add_item(self.view.buildingLength)
         Model.add_item(self.view.buildingWidth)
@@ -112,11 +112,16 @@ class MainController(QObject):
         self.view.roofLength.textChanged.connect(self.view.roofLength.set_item)
         self.view.kneeWallHeight.textChanged.connect(self.view.kneeWallHeight.set_item)
         self.view.groundFloorHeight.textChanged.connect(self.view.groundFloorHeight.set_item)
+
         # CHECKBOX
+        Model.add_item(self.view.attic)
+        Model.add_item(self.view.largeHouse)
+        Model.add_item(self.view.chimney)
+        self.view.attic.stateChanged.connect(self.view.attic.set_item)
+        self.view.largeHouse.stateChanged.connect(self.view.largeHouse.set_item)
+        self.view.chimney.stateChanged.connect(self.view.chimney.set_item)
 
         # LINEEDIT
-
-
 
     @pyqtSlot(str)
     def formula_bar_edited(self, text):

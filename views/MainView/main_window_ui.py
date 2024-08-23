@@ -91,13 +91,13 @@ class Ui_MainWindow(object):
         self.groundFloorHeight = DoubleSpinnBoxItem(parent=self.properties_tab)
         self.groundFloorHeight.setObjectName("groundFloorHeight")
         self.formLayout.setWidget(7, QtWidgets.QFormLayout.ItemRole.FieldRole, self.groundFloorHeight)
-        self.attic = QtWidgets.QCheckBox(parent=self.properties_tab)
+        self.attic = CheckBoxItem(parent=self.properties_tab)
         self.attic.setObjectName("attic")
         self.formLayout.setWidget(8, QtWidgets.QFormLayout.ItemRole.LabelRole, self.attic)
-        self.largeHouse = QtWidgets.QCheckBox(parent=self.properties_tab)
+        self.largeHouse = CheckBoxItem(parent=self.properties_tab)
         self.largeHouse.setObjectName("largeHouse")
         self.formLayout.setWidget(9, QtWidgets.QFormLayout.ItemRole.LabelRole, self.largeHouse)
-        self.chimney = QtWidgets.QCheckBox(parent=self.properties_tab)
+        self.chimney = CheckBoxItem(parent=self.properties_tab)
         self.chimney.setObjectName("chimney")
         self.formLayout.setWidget(10, QtWidgets.QFormLayout.ItemRole.LabelRole, self.chimney)
         self.label_9 = QtWidgets.QLabel(parent=self.properties_tab)
@@ -272,4 +272,4 @@ class Ui_MainWindow(object):
         self.actionExport_xlsx.setText(_translate("MainWindow", "Plik XLSX"))
         self.actionImportCsv.setText(_translate("MainWindow", "*.csv"))
         self.actionExportCsv.setText(_translate("MainWindow", "*.csv"))
-from model.Model import DoubleSpinnBoxItem, SpinnBoxItem
+from model.Model import CheckBoxItem, DoubleSpinnBoxItem, SpinnBoxItem

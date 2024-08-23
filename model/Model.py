@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, Set, Union
 from collections import deque, defaultdict
 
 from PyQt6 import QtWidgets, QtCore
-from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QWidget, QSpinBox, QTabWidget, QDoubleSpinBox
+from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QWidget, QSpinBox, QTabWidget, QDoubleSpinBox, QCheckBox
 from enum import Enum
 
 from resources import constants
@@ -39,6 +39,8 @@ class Item:
     def value(self):
         if is_convertible_to_float(self._value):
             return float(self._value)
+        if self._value is None:
+            return 0
         return self._value
 
     @value.setter
@@ -249,7 +251,6 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
             self._value = self.error.value[0]
         self.setText(str(self.value))
 
-    # TODO
     def update_formula_after_moving(self):
         # should update the cell formula after removing, moving, adding row, moving cell etc...
         # e.g. "=Sheet1!A1" after removing row A1 in Sheet1 -> "=#REF!"
@@ -330,6 +331,31 @@ class DoubleSpinnBoxItem(Item, QDoubleSpinBox):
     @property
     def name(self):
         return self.objectName()
+
+
+class CheckBoxItem(Item, QCheckBox):
+    def __init__(self, parent):
+        super().__init__()
+
+    def __repr__(self):
+        return f"CheckBoxItem(name={self.objectName()})"
+
+    def __str__(self):
+        return f"CheckBoxItem(name={self.objectName()})"
+
+    @property
+    def name(self):
+        return self.objectName()
+
+    @property
+    def value(self):
+        if self._value == 2:
+            return True
+        return False
+
+    @value.setter
+    def value(self, value):
+        self._value = value
 
 
 class Spreadsheet(QTableWidget):
