@@ -12,15 +12,7 @@ class MainView(QMainWindow, Ui_MainWindow):
         self.show()
 
     def initUI(self):
-        self.PositionsTableWidget.setRowCount(0)
-        self.PropertiesTableWidget.setRowCount(0)
-
-        self.PositionsTableWidget.setObjectName(constants.POSITION_TABLE_WIDGET_NAME)
-        self.PropertiesTableWidget.setObjectName(constants.PROPERTY_TABLE_WIDGET_NAME)
-
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.properties_tab),
-                                  constants.PROPERTY_TABLE_WIDGET_NAME)
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.position_tab), constants.POSITION_TABLE_WIDGET_NAME)
+        pass
 
     def update_formula_bar(self, value):
         self.Formula_bar.setText(f'{value}')

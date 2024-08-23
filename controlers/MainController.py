@@ -1,9 +1,12 @@
+import csv
+
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QMenu, QStyledItemDelegate
 
 from controlers.NewEstimateController import NewEstimateController
 from model.Model import Model, Spreadsheet
+from resources.utils import letter_to_index
 from views.MainView.MainView import MainView
 import resources.constants as constants
 
@@ -37,35 +40,52 @@ class MainController(QObject):
         super().__init__()
         self.view = MainView()
         self.delegate = ItemDelegate(self)
-        self.setup_connections()
         self.default_data()
+        self.setup_connections()
         Model.set_active_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.currentIndex()))
 
     def default_data(self):
-        Model.add_item(self.view.PositionsTableWidget)
-        Model.add_item(self.view.PropertiesTableWidget)
+        def load_default(csv_path, sp_name):
+            with open(csv_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                for i, row in enumerate(reader):
+                    # Calculate the NET_VALUE_COLUMN based on the formula
+                    row[letter_to_index(constants.NET_VALUE_COLUMN[1])] = (
+                        f'={sp_name}!'
+                        f'{constants.QUANTITY_COLUMN[1]}{i + 1}*'
+                        f'{sp_name}!'
+                        f'{constants.PRICE_COLUMN[1]}{i + 1}'
+                    )
+                    # Add the modified row to the spreadsheet
+                    Model.add_row(text=row, name=sp_name)
+
+        Model.add_spreadsheet(constants.POSITION_SPREADSHEET_NAME, self.view.tabWidget)
+        Model.add_spreadsheet(constants.ROOF_SPREADSHEET_NAME, self.view.tabWidget)
+        Model.add_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
+        Model.add_spreadsheet(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
+
+        # adding properties to db TODO
         Model.add_item(self.view.spinn_box_ilosc)
 
-        for i in constants.SPREADSHEET_PROPERTY_DEFAULTS:
-            Model.add_row(text=i, name=constants.PROPERTY_TABLE_WIDGET_NAME)
-
-        for i, row in enumerate(constants.SPREADSHEET_POSITIONS_DEFAULTS):
-            row[5] = f'=Pozycje!D{i + 1}*Pozycje!E{i + 1}'
-            Model.add_row(text=row, name=constants.POSITION_TABLE_WIDGET_NAME)
+        load_default(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
+        load_default(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
+        load_default(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
+        load_default(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
 
     def setup_connections(self):
+        def set_spreadsheet_connections(tab):
+            tab.setItemDelegate(self.delegate)
+            tab.customContextMenuRequested.connect(self.show_context_menu)
+            tab.cellDoubleClicked.connect(self.on_cell_double_clicked)
+            tab.currentCellChanged.connect(self.on_current_cell_changed)
+
         # Tab widget
         self.view.tabWidget.currentChanged.connect(self.on_tab_changed)
 
-        # Table Widgets
-        self.view.PositionsTableWidget.customContextMenuRequested.connect(self.show_context_menu)
-        self.view.PropertiesTableWidget.customContextMenuRequested.connect(self.show_context_menu)
-        self.view.PositionsTableWidget.cellDoubleClicked.connect(self.on_cell_double_clicked)
-        self.view.PropertiesTableWidget.cellDoubleClicked.connect(self.on_cell_double_clicked)
-        self.view.PositionsTableWidget.currentCellChanged.connect(self.on_current_cell_changed)
-        self.view.PropertiesTableWidget.currentCellChanged.connect(self.on_current_cell_changed)
-        self.view.PositionsTableWidget.setItemDelegate(self.delegate)
-        self.view.PropertiesTableWidget.setItemDelegate(self.delegate)
+        set_spreadsheet_connections(Model.get_spreadsheet(constants.POSITION_SPREADSHEET_NAME))
+        set_spreadsheet_connections(Model.get_spreadsheet(constants.ROOF_SPREADSHEET_NAME))
+        set_spreadsheet_connections(Model.get_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME))
+        set_spreadsheet_connections(Model.get_spreadsheet(constants.INSULATION_SPREADSHEET_NAME))
 
         # Actions
         self.view.actionNew.triggered.connect(self.on_action_new_triggered)
@@ -78,11 +98,11 @@ class MainController(QObject):
         self.delegate.commitData.connect(self.text_editing_finished)
         self.view.Formula_bar.editingFinished.connect(self.text_editing_finished)
 
-        #Spinn Bob
+        # Spinn Box
         self.view.spinn_box_ilosc.textChanged.connect(self.view.spinn_box_ilosc.set_item)
 
     @pyqtSlot(str)
-    def formula_bar_edited(self,text):
+    def formula_bar_edited(self, text):
         if Model.get_active_spreadsheet():
             if Model.get_active_spreadsheet().currentItem():
                 Model.get_active_spreadsheet().currentItem().setText(text)

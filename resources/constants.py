@@ -1,5 +1,12 @@
-PROPERTY_TABLE_WIDGET_NAME = "Właściwości"
-POSITION_TABLE_WIDGET_NAME = "Pozycje"
+POSITION_SPREADSHEET_NAME = "Pozycje"
+ROOF_SPREADSHEET_NAME = "Dach"
+FOUNDATION_SPREADSHEET_NAME = "Fundament"
+INSULATION_SPREADSHEET_NAME = "Ocieplenie"
+
+DEFAULT_POSITION_CSV_PATH = "resources/pozycje.csv"
+DEFAULT_ROOF_CSV_PATH = "resources/dach.csv"
+DEFAULT_FOUNDATION_CSV_PATH = "resources/fundamenty.csv"
+DEFAULT_INSULATION_CSV_PATH = "resources/ocieplenie.csv"
 
 SPREADSHEET_PROPERTY_DEFAULTS = \
     [["pow.siatki", "=2.15*5"],
@@ -27,100 +34,20 @@ SPREADSHEET_PROPERTY_DEFAULTS = \
      ["DŁUGOŚĆ WYPUSTU", "=IF(Właściwości!B2>7;0.8;0.6)"],
      ]
 
-SPREADSHEET_POSITIONS_DEFAULTS = \
-    [
-    ["SIATKA 20x20", "","szt.","45","10", ""],
-    ["XPS 5","","m3","45","10", ""],
-    ["XPS 8","","m3","45","10", ""],
-    ["PRĘT FI8","","mb","45","10", ""],
-    ["KOBYŁKI","","szt.","45","10", ""],
-    ["DYSTANSE","","szt.","45","10", ""],
-    ["GLIDEX","","","45","10", ""],
-    ["DYSPERBIT","","","45","10", ""],
-    ["DRUT WIĄZAŁKOWY","dajemy 5kg","kg","45","10", ""],
-    ["BLOCZKI BETONOWE","","szt.","45","10", ""],
-    ["BETON C25","","m3","45","10", ""],
-    ["KOPARKA","nie zamawiamy powyżej 150zł / h","godz.","45","10", ""],
-    ["PIASEK","","","45","10", ""],
-    ["TRÓJNIK  110","","szt.","45","10", ""],
-    ["KOLANO 110","","szt.","45","10", ""],
-    ["KOLANO 110","","szt.","45","10", ""],
-    ["KOLANO 110","","szt.","45","10", ""],
-    ["RURA 110 - 0, 5m","","szt.","45","10", ""],
-    ["RURA 110 - 1M","","szt.","45","10", ""],
-    ["RURA 110 - 2m","","szt.","45","10", ""],
-    ["REDUKCJA 16","","szt.","45","10", ""],
-    ["RURA 160 - 1M","","szt.","45","10", ""],
-    ["RURA 160 - 2M","","szt.","45","10", ""],
-    ["KOLANO 160 90 * ","","szt.","45","10", ""],
-    ["TARCZA 230M","","szt.","45","10", ""],
-    ["KOREK PCV","","szt.","45","10", ""],
-    ["KOLANO 160","","szt.","45","10", ""],
-    ["EPS 100   5CM","","m3","45","10", ""],
-    ["KLEJ DO MUROWANIA","","szt.","45","10", ""],
-    ["FOLIA BUDOWLANA CZARNA POD PŁYTĘ","","m2","45","10", ""],
-    ["WYLEWKA","PRZY M2  PŁYTY POWYŻEJ 65M2 ODLICZAMY 15 % ","m2","45","10", ""],
-    ["FOLIA BUDOWLANA POD WYLEWKĘ","","","45","10", ""],
-    ["MATERIAŁ","","J.M","45","10", ""],
-    ["XPS 2","","m3","45","10", ""],
-    ["KLEJ W PIANIE","SPRAWDZIC Z PAWLEM WYDAJNOSC","","45","10", ""],
-    ["FOLIA  PODWALINOWA","","mb","45","10", ""],
-    ["PAPA SAMOPRZYLEPNA ","1 ROLKA - 28MB","mb","45","10", ""],
-    ["KP1","","szt.","45","10", ""],
-    ["KOTWA MONTAŻOWA FI12x80","","szt.","45","10", ""],
-    ["WKRĘT 7, 5X132 STOŻEK","","szt.","45","10", ""],
-    ["WKRĘT 5X100 STOŻEK","","szt.","45","10", ""],
-    ["WKRĘTY 6X60","","szt.","45","10", ""],
-    ["WKRĘTY 8X80","","szt.","45","10", ""],
-    ["WKRĘTY 8X120","","szt.","45","10", ""],
-    ["WKRĘTY 8X160","","szt.","45","10", ""],
-    ["WKRĘTY 8X200","","szt.","45","10", ""],
-    ["WKRĘTY 8X240","POWYZEJ 6M SZEROKOSCI X4","szt.","45","10", ""],
-    ["WKRĘTY 8X260","","","45","10", ""],
-    ["WKRĘTY 8X300","","","45","10", ""],
-    ["ZSZYWKI TAKER MŁOT G8","","szt.","45","10", ""],
-    ["GAZ DO GWOŹDZIARKI","zweryfikowac z pawlem zuzycie","","45","10", ""],
-    ["GWOŹDZIE GWOŻDZIARKA 50mm","","szt.","45","10", ""],
-    ["GWOŹDZIE GWOŻDZIARKA 70mm","","","45","10", ""],
-    ["GWOŹDZIE GWOŹDZIARKA 90mm","","szt.","45","10", ""],
-    ["PIANA PISTOLETOWA","","","45","10", ""],
-    ["SĘKI FI15","","","45","10", ""],
-    ["SĘKI FI30","","","45","10", ""],
-    ["DESKA PODŁOGOWA","","m2","45","10", ""],
-    ["MEMBRANA","","m2","45","10", ""],
-    ["ŁATY","","mb","45","10", ""],
-    ["KONTRŁATY","","mb","45","10", ""],
-    ["PODBITKA","","m2","45","10", ""],
-    ["MATERIAŁ","","J.M","45","10", ""],
-    ["BLACHODACHÓWKA ","","m2","45","10", ""],
-    ["GĄSIOR","","m2","45","10", ""],
-    ["WKRĘTY FARMERSKIE","","szt.","45","10", ""],
-    ["BLACHA PŁASKA OPIERZENIE","","szt.","45","10", ""],
-    ["BLACHA PŁASKA WIATROWNICA","","szt.","45","10", ""],
-    ["ŁAWA KOMINIARSKA","","","45","10", ""],
-    ["STOPNIE KOMINIARSKIE","","","45","10", ""],
-    ["OPASKA","","","45","10", ""],
-    ["WAKAFLEX","","","45","10", ""],
-    ["MATERIAŁ","","J.M","45","10", ""],
-    ["STELAŻ 145x45 ZEW","DO DOMU 70M 145 STELAŻ, POWYŻEJ DO SCIAN ZEWNETRZYNCH 195","MB","45","10", ""],
-    ["STELAŻ 195x45 ZEW","","MB","45","10", ""],
-    ["STELAZ 95X45 WEW","","M3","45","10", ""],
-    ["ZSZYWKI DO STEICO","","SZT","45","10", ""],
-    ["STEICO","","M2","45","10", ""],
-    ["SIATKA PODTYNKOWA","","M2","45","10", ""],
-    ["KLEJ","","KG","45","10", ""],
-    ["TYNK","","KG","45","10", ""],
-    ["PŁYTA OSB 15MM","","M2","45","10", ""],
-    ["WEŁNA","ODJAC POZNIEJ OKNA","M3","45","10", ""],
-    ["FOLIA WIATROIZOLACYJNA","","M2","45","10", ""],
-    ["KONTRŁATY","","MB","45","10", ""],
-    ["ZSZYWKI DO FOLII","","SZT.","45","10", ""],
-    ["GWOŻDZIE DO KONTRŁAT","","SZT.","45","10", ""],
-    ["DESKA ELEWACYJNA","","M2","45","10", ""],
-    ["WKRĘTY 5X100","","SZT.","45","10", ""],
-    ["KOŁKI FI15","","SZT.","45","10", ""],
-    ["WKRĘTY 5X100","JEŻELI DOM DO 70M2 DWA WKRĘTY Z GÓRY, POWYŻEJ 3","SZT.","45","10", ""],
-    ["FARBA REMMERS","","L","45","10", ""],
-    ["FARBA TEKNOS","","L","45","10", ""],
-    ["IMPREGNAT","","L","45","10", ""],
-    ]
+MATERIAL_COLUMN = ("MATERIAŁ", "A")
+ID_COLUMN = ("ID", "B")
+DESCRIPTION_COLUMN = ("OPIS", "C")
+UOM_COLUMN = ("J.M.", "D")
+QUANTITY_COLUMN = ("ILOŚĆ", "E")
+PRICE_COLUMN = ("CENA", "F")
+NET_VALUE_COLUMN = ("WARTOŚĆ NETTO", "G")
+
+COLUMNS = [
+    MATERIAL_COLUMN,
+    ID_COLUMN,
+    DESCRIPTION_COLUMN,
+    UOM_COLUMN,
+    QUANTITY_COLUMN,
+    PRICE_COLUMN,
+    NET_VALUE_COLUMN
+]

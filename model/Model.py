@@ -1,8 +1,11 @@
 from typing import List, Optional, Dict, Set, Union
 from collections import deque, defaultdict
 
-from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QWidget, QSpinBox
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QWidget, QSpinBox, QTabWidget
 from enum import Enum
+
+from resources import constants
 from resources.utils import *
 from resources.parser import Parser, Tokenizer, ValueType, TokenType
 
@@ -459,6 +462,46 @@ class Model:
         if name not in db:
             raise KeyError(f"No spreadsheet found with name '{name}'.")
         del db[name]
+
+    @staticmethod
+    def add_spreadsheet(name: str,view: QTabWidget):
+        def create_table_widget(name: str, parent: QtWidgets.QWidget) -> QtWidgets.QTableWidget:
+            table_widget = Spreadsheet(parent=parent)
+            table_widget.setObjectName(name)
+            table_widget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+            table_widget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+            table_widget.setAlternatingRowColors(True)
+            table_widget.setColumnCount(len(constants.COLUMNS))
+            table_widget.horizontalHeader().setStretchLastSection(True)
+            table_widget.setRowCount(0)
+            return table_widget
+
+        def set_column_headers(table_widget: QtWidgets.QTableWidget):
+            for index, (header_name, _) in enumerate(constants.COLUMNS):
+                item = QtWidgets.QTableWidgetItem()
+                item.setText(header_name)
+                table_widget.setHorizontalHeaderItem(index, item)
+
+        if name in db:
+            raise KeyError(f"Spreadsheet found with name '{name}'.")
+
+        new_tab = QtWidgets.QWidget()
+        new_tab.setObjectName(name)
+        new_table_widget = create_table_widget(name, new_tab)
+
+        vertical_layout = QtWidgets.QVBoxLayout(new_tab)
+        vertical_layout.addWidget(new_table_widget)
+
+        set_column_headers(new_table_widget)
+
+        view.addTab(new_tab, name)
+        Model.add_item(new_table_widget)
+
+    @staticmethod
+    def get_spreadsheet(name):
+        if name in db:
+            return db[name]
+        return None
 
     @staticmethod
     def add_row(index=None, text: Optional[List[str]] = None, name=None):
