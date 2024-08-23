@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, Set, Union
 from collections import deque, defaultdict
 
 from PyQt6 import QtWidgets, QtCore
-from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QWidget, QSpinBox, QTabWidget
+from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QWidget, QSpinBox, QTabWidget, QDoubleSpinBox
 from enum import Enum
 
 from resources import constants
@@ -302,15 +302,30 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
         self.formula = new_formula
 
 
-class SpinnBoxCell(Item, QSpinBox):
+class SpinnBoxItem(Item, QSpinBox):
     def __init__(self, parent):
         super().__init__()
 
     def __repr__(self):
-        return f"SpinnBoxCell(name={self.objectName()})"
+        return f"SpinnBoxItem(name={self.objectName()})"
 
     def __str__(self):
-        return f"SpinnBoxCell(name={self.objectName()})"
+        return f"SpinnBoxItem(name={self.objectName()})"
+
+    @property
+    def name(self):
+        return self.objectName()
+
+
+class DoubleSpinnBoxItem(Item, QDoubleSpinBox):
+    def __init__(self, parent):
+        super().__init__()
+
+    def __repr__(self):
+        return f"DoubleSpinnBoxItem(name={self.objectName()})"
+
+    def __str__(self):
+        return f"DoubleSpinnBoxItem(name={self.objectName()})"
 
     @property
     def name(self):

@@ -64,9 +64,6 @@ class MainController(QObject):
         Model.add_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
         Model.add_spreadsheet(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
 
-        # adding properties to db TODO
-        Model.add_item(self.view.spinn_box_ilosc)
-
         load_default(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
@@ -99,7 +96,27 @@ class MainController(QObject):
         self.view.Formula_bar.editingFinished.connect(self.text_editing_finished)
 
         # Spinn Box
-        self.view.spinn_box_ilosc.textChanged.connect(self.view.spinn_box_ilosc.set_item)
+        Model.add_item(self.view.gridArea)
+        Model.add_item(self.view.buildingLength)
+        Model.add_item(self.view.buildingWidth)
+        Model.add_item(self.view.glassQuantity)
+        Model.add_item(self.view.groundFloorWalls)
+        Model.add_item(self.view.roofLength)
+        Model.add_item(self.view.kneeWallHeight)
+        Model.add_item(self.view.groundFloorHeight)
+        self.view.gridArea.textChanged.connect(self.view.gridArea.set_item)
+        self.view.buildingLength.textChanged.connect(self.view.buildingLength.set_item)
+        self.view.buildingWidth.textChanged.connect(self.view.buildingWidth.set_item)
+        self.view.glassQuantity.textChanged.connect(self.view.glassQuantity.set_item)
+        self.view.groundFloorWalls.textChanged.connect(self.view.groundFloorWalls.set_item)
+        self.view.roofLength.textChanged.connect(self.view.roofLength.set_item)
+        self.view.kneeWallHeight.textChanged.connect(self.view.kneeWallHeight.set_item)
+        self.view.groundFloorHeight.textChanged.connect(self.view.groundFloorHeight.set_item)
+        # CHECKBOX
+
+        # LINEEDIT
+
+
 
     @pyqtSlot(str)
     def formula_bar_edited(self, text):
