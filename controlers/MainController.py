@@ -23,9 +23,7 @@ class ItemDelegate(QStyledItemDelegate):
         self.editor = super().createEditor(parent, option, index)
         self.editor.installEventFilter(self)
 
-        # connecting signals
         self.editor.textEdited.connect(self.text_edited_signal.emit)
-
         return self.editor
 
     def eventFilter(self, obj: QtWidgets.QWidget, event: QEvent) -> bool:
@@ -95,33 +93,47 @@ class MainController(QObject):
         self.delegate.commitData.connect(self.text_editing_finished)
         self.view.Formula_bar.editingFinished.connect(self.text_editing_finished)
 
-        # SPINN BOX
-        Model.add_item(self.view.gridArea)
-        Model.add_item(self.view.buildingLength)
-        Model.add_item(self.view.buildingWidth)
-        Model.add_item(self.view.glassQuantity)
-        Model.add_item(self.view.groundFloorWalls)
-        Model.add_item(self.view.roofLength)
-        Model.add_item(self.view.kneeWallHeight)
-        Model.add_item(self.view.groundFloorHeight)
-        self.view.gridArea.textChanged.connect(self.view.gridArea.set_item)
-        self.view.buildingLength.textChanged.connect(self.view.buildingLength.set_item)
-        self.view.buildingWidth.textChanged.connect(self.view.buildingWidth.set_item)
-        self.view.glassQuantity.textChanged.connect(self.view.glassQuantity.set_item)
-        self.view.groundFloorWalls.textChanged.connect(self.view.groundFloorWalls.set_item)
-        self.view.roofLength.textChanged.connect(self.view.roofLength.set_item)
-        self.view.kneeWallHeight.textChanged.connect(self.view.kneeWallHeight.set_item)
-        self.view.groundFloorHeight.textChanged.connect(self.view.groundFloorHeight.set_item)
+        # SPIN BOX
+        spin_boxes = [
+            self.view.gridArea,
+            self.view.buildingLength,
+            self.view.buildingWidth,
+            self.view.glassQuantity,
+            self.view.groundFloorWalls,
+            self.view.roofLength,
+            self.view.kneeWallHeight,
+            self.view.groundFloorHeight
+        ]
+        for spin_box in spin_boxes:
+            Model.add_item(spin_box)
+            spin_box.textChanged.connect(lambda text, sb=spin_box: sb.set_item(text))
 
         # CHECKBOX
-        Model.add_item(self.view.attic)
-        Model.add_item(self.view.largeHouse)
-        Model.add_item(self.view.chimney)
-        self.view.attic.stateChanged.connect(self.view.attic.set_item)
-        self.view.largeHouse.stateChanged.connect(self.view.largeHouse.set_item)
-        self.view.chimney.stateChanged.connect(self.view.chimney.set_item)
+        checkboxes = [
+            self.view.attic,
+            self.view.largeHouse,
+            self.view.chimney
+        ]
+        for checkbox in checkboxes:
+            Model.add_item(checkbox)
+            checkbox.stateChanged.connect(lambda state, cb=checkbox: cb.set_item(state))
 
         # LINEEDIT
+        line_edits = [
+            self.view.perimeter,
+            self.view.foundationArea,
+            self.view.rafterCount,
+            self.view.rafterLength,
+            self.view.groundWallArea,
+            self.view.kneeWallArea,
+            self.view.gableArea,
+            self.view.externalWallArea,
+            self.view.eavesLenght,
+            self.view.spoutLength
+        ]
+        for line_edit in line_edits:
+            Model.add_item(line_edit)
+            # line_edit.editingFinished.connect(lambda le=line_edit: le.set_item(le.text()))
 
     @pyqtSlot(str)
     def formula_bar_edited(self, text):
