@@ -3,17 +3,15 @@ from typing import List, Optional, Dict
 from model.Enums import FormulaType
 from model.Item import Item
 
-
 from resources.parser import Parser
 from resources.utils import is_convertible_to_float
 
 
 class ItemWithFormula(Item):
     def __init__(self, formula="", *args, **kwargs):
-        super().__init__()
+        super().__init__(formula)
         self.items_that_i_depend_on: Dict[str, ItemWithFormula] = {}  # items and their representation in formula
         self.formula_type: FormulaType = FormulaType.NO_TYPE
-        self.formula = formula
         self.python_formula = ''
 
     def __hash__(self):
@@ -67,6 +65,7 @@ class ItemWithFormula(Item):
 
     def evaluate_formula(self):
         from model.Enums import ErrorType
+        from model.Model import Model
         if self.error is not None:
             pass
         try:

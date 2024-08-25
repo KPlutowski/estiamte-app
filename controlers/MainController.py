@@ -6,41 +6,18 @@ from PyQt6.QtWidgets import QMenu, QStyledItemDelegate
 
 from controlers.NewEstimateController import NewEstimateController
 from model.Model import Model, Spreadsheet
+from model.Spreadsheet import SpreadsheetCell
 from resources.utils import letter_to_index
 from views.MainView.MainView import MainView
 import resources.constants as constants
-
-
-class ItemDelegate(QStyledItemDelegate):
-    text_edited_signal = pyqtSignal(str)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.editor = None
-
-    def createEditor(self, parent: QtWidgets.QWidget, option: QtWidgets.QStyleOptionViewItem,
-                     index: QModelIndex) -> QtWidgets.QWidget:
-        self.editor = super().createEditor(parent, option, index)
-        self.editor.installEventFilter(self)
-
-        self.editor.textEdited.connect(self.text_edited_signal.emit)
-        return self.editor
-
-    def eventFilter(self, obj: QtWidgets.QWidget, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Escape:
-            self.closeEditor.emit(self.editor)
-            return True
-        return super().eventFilter(obj, event)
 
 
 class MainController(QObject):
     def __init__(self):
         super().__init__()
         self.view = MainView()
-        self.delegate = ItemDelegate(self)
         self.default_data()
         self.setup_connections()
-        Model.set_active_spreadsheet(self.view.tabWidget.tabText(self.view.tabWidget.currentIndex()))
 
     def default_data(self):
         def load_default(csv_path, sp_name):
@@ -69,31 +46,27 @@ class MainController(QObject):
 
     def setup_connections(self):
         def set_spreadsheet_connections(tab):
-            tab.setItemDelegate(self.delegate)
             tab.customContextMenuRequested.connect(self.show_context_menu)
-            tab.cellDoubleClicked.connect(self.on_cell_double_clicked)
-            tab.currentCellChanged.connect(self.on_current_cell_changed)
-
-        # Tab widget
-        self.view.tabWidget.currentChanged.connect(self.on_tab_changed)
+            tab.textEditedSignal.connect(self.itemWithFormulaTextEdited)
+            tab.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
+            tab.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
+            tab.activeItemChangedSignal.connect(self.activeItemChanged)
 
         set_spreadsheet_connections(Model.get_spreadsheet(constants.POSITION_SPREADSHEET_NAME))
         set_spreadsheet_connections(Model.get_spreadsheet(constants.ROOF_SPREADSHEET_NAME))
         set_spreadsheet_connections(Model.get_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME))
         set_spreadsheet_connections(Model.get_spreadsheet(constants.INSULATION_SPREADSHEET_NAME))
 
+        # Tab widget
+        self.view.tabWidget.currentChanged.connect(self.on_tab_changed)
+
+        # Formula_bar
+        self.view.Formula_bar.textEdited.connect(self.formula_bar_edited)
+        self.view.Formula_bar.editingFinished.connect(self.formula_bar_editing_finished)
+
         # Actions
         self.view.actionNew.triggered.connect(self.on_action_new_triggered)
 
-        # real-time synchronization between formula bar and cell
-        self.delegate.text_edited_signal.connect(self.view.update_formula_bar)
-        self.view.Formula_bar.textEdited.connect(self.formula_bar_edited)
-
-        # accept new formula
-        self.delegate.commitData.connect(self.text_editing_finished)
-        self.view.Formula_bar.editingFinished.connect(self.text_editing_finished)
-
-        # SPIN BOX
         spin_boxes = [
             self.view.gridArea,
             self.view.buildingLength,
@@ -106,9 +79,9 @@ class MainController(QObject):
         ]
         for spin_box in spin_boxes:
             Model.add_item(spin_box)
-            spin_box.textChanged.connect(lambda text, sb=spin_box: sb.set_item(text))
+            spin_box.activeItemChangedSignal.connect(self.activeItemChanged)
+            spin_box.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
 
-        # CHECKBOX
         checkboxes = [
             self.view.attic,
             self.view.largeHouse,
@@ -116,9 +89,9 @@ class MainController(QObject):
         ]
         for checkbox in checkboxes:
             Model.add_item(checkbox)
-            checkbox.stateChanged.connect(lambda state, cb=checkbox: cb.set_item(state))
+            checkbox.activeItemChangedSignal.connect(self.activeItemChanged)
+            checkbox.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
 
-        # LINEEDIT
         line_edits = [
             self.view.perimeter,
             self.view.foundationArea,
@@ -133,49 +106,45 @@ class MainController(QObject):
         ]
         for line_edit in line_edits:
             Model.add_item(line_edit)
-            # line_edit.editingFinished.connect(lambda le=line_edit: le.set_item(le.text()))
+            line_edit.textEditedSignal.connect(self.itemWithFormulaTextEdited)
+            line_edit.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
+            line_edit.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
+            line_edit.activeItemChangedSignal.connect(self.activeItemChanged)
 
-    @pyqtSlot(str)
-    def formula_bar_edited(self, text):
-        if Model.get_active_spreadsheet():
-            if Model.get_active_spreadsheet().currentItem():
-                Model.get_active_spreadsheet().currentItem().setText(text)
+    def itemWithFormulaTextEdited(self, item, edited_text):
+        self.view.update_formula_bar(edited_text)
 
-    @pyqtSlot()
-    def on_current_cell_changed(self):
-        """Handle the event when the current cell changes."""
-        item = Model.get_active_spreadsheet()
+    def itemWithFormulaTextEditedFinished(self, item):
         if item is not None:
-            item = item.currentItem()
-            if item is not None:
-                self.view.update_formula_bar(item.formula)
-                self.view.update_name_box(item.name)
-                print(item)
-            else:
-                pass
-        else:
-            self.view.update_formula_bar("")
-            self.view.update_name_box("")
+            item.set_item(self.view.Formula_bar.text())
 
-    @pyqtSlot(int, int)
-    def on_cell_double_clicked(self, row: int, column: int):
-        """Handle the event when a cell is double-clicked."""
-        item = Model.get_active_spreadsheet().currentItem()
+    def itemWithFormulaDoubleClicked(self, item):
         item.setText(item.formula)
         self.view.update_formula_bar(item.formula)
 
-    def text_editing_finished(self):
-        """Handle the event when cell editing via delegate is finished."""
-        if Model.get_active_spreadsheet():
-            if Model.get_active_spreadsheet().currentItem():
-                text = self.view.Formula_bar.text()
-                Model.get_active_spreadsheet().currentItem().set_item(text)
+    def activeItemChanged(self, item):
+        if item is not None:
+            Model.set_active_item(item)
+            self.view.update_formula_bar(item.formula)
+            self.view.update_name_box(item.name)
+            print(item)
+
+    @pyqtSlot(str)
+    def formula_bar_edited(self, text):
+        if Model.get_active_item():
+            Model.get_active_item().value = text
+
+    @pyqtSlot()
+    def formula_bar_editing_finished(self):
+        if Model.get_active_item():
+            Model.get_active_item().set_item(self.view.Formula_bar.text())
 
     def show_context_menu(self, pos: QtCore.QPoint):
-        widget = Model.get_active_spreadsheet()
+        widget = Model.get_active_item()
 
-        if not isinstance(widget, Spreadsheet):
+        if not isinstance(widget, SpreadsheetCell):
             return
+        widget = widget.tableWidget()
         index = widget.indexAt(pos)
 
         menu = QMenu()
@@ -198,7 +167,4 @@ class MainController(QObject):
 
     @pyqtSlot(int)
     def on_tab_changed(self, index: int):
-        """Update active spreadsheet when tab is changed."""
-        self.text_editing_finished()
-        Model.set_active_spreadsheet(self.view.tabWidget.tabText(index))
-        self.on_current_cell_changed()
+        self.itemWithFormulaTextEditedFinished(Model.get_active_item())

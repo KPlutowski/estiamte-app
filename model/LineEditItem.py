@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import pyqtSlot, QEvent, pyqtSignal
 from PyQt6.QtWidgets import QLineEdit
 
 from model.ItemWithFormula import ItemWithFormula
@@ -6,10 +6,15 @@ from resources.utils import is_convertible_to_float
 
 
 class LineEditItem(ItemWithFormula, QLineEdit):
+    doubleClickedSignal = pyqtSignal(object)
+    textEditedSignal = pyqtSignal(object,str)
+    textEditingFinishedSignal = pyqtSignal(object)
+    activeItemChangedSignal = pyqtSignal(object)
+
     def __init__(self, formula="", *args, **kwargs):
         super().__init__(formula, *args, **kwargs)
-        self.textChanged.connect(self.on_text_changed)
-        self.editingFinished.connect(self.on_editing_finished)
+        self.editingFinished.connect(self.text_editing_finished)
+        self.textEdited.connect(self.text_edited)
 
     def __str__(self) -> str:
         return (
@@ -41,14 +46,20 @@ class LineEditItem(ItemWithFormula, QLineEdit):
         self._value = value
         if self.error:
             self._value = self.error.value[0]
-        self.setText(str(self.value))
+        self.setText(str(self._value))
 
-    @pyqtSlot()
-    def on_text_changed(self):
-        print("on_text_changed")
+    ###############################################
 
-    @pyqtSlot()
-    def on_editing_finished(self):
-        print("on_editing_finished")
-        self.set_item(self.text())
-        print(self)
+    def mouseDoubleClickEvent(self, event: QEvent):
+        super().mouseDoubleClickEvent(event)
+        self.doubleClickedSignal.emit(self)
+
+    def focusInEvent(self, event: QEvent):
+        super().focusInEvent(event)
+        self.activeItemChangedSignal.emit(self)
+
+    def text_edited(self, text):
+        self.textEditedSignal.emit(self, text)
+
+    def text_editing_finished(self):
+        self.textEditingFinishedSignal.emit(self)

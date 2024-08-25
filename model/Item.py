@@ -6,8 +6,9 @@ from resources.utils import is_convertible_to_float
 
 
 class Item:
-    def __init__(self):
+    def __init__(self, formula=""):
         super().__init__()
+        self.formula = formula
         self._value = ''
         self.error: Optional['ErrorType'] = None
         self.items_that_dependents_on_me: ['ItemWithFormula'] = []
@@ -62,6 +63,7 @@ class Item:
         from model.Model import Model
         self.mark_dirty()
         self.value = text
+        self.formula = text
         Model.calculate_dirty_items()
 
     def set_error(self, error: Optional['ErrorType'] = None):

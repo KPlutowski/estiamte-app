@@ -1,11 +1,35 @@
 from typing import List, Optional
 
-from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget
+from PyQt6 import QtWidgets
+from PyQt6.QtCore import pyqtSignal, QModelIndex, QEvent, Qt
+from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
 
 from model.Enums import ErrorType
 from model.ItemWithFormula import ItemWithFormula
 from resources.parser import Tokenizer, TokenType, ValueType
 from resources.utils import index_to_letter, is_convertible_to_float, is_valid_cell_reference, is_valid_cell_range
+
+
+class ItemDelegate(QStyledItemDelegate):
+    text_edited_signal = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.editor = None
+
+    def createEditor(self, parent: QtWidgets.QWidget, option: QtWidgets.QStyleOptionViewItem,
+                     index: QModelIndex) -> QtWidgets.QWidget:
+        self.editor = super().createEditor(parent, option, index)
+        self.editor.installEventFilter(self)
+
+        self.editor.textEdited.connect(self.text_edited_signal.emit)
+        return self.editor
+
+    def eventFilter(self, obj: QtWidgets.QWidget, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Escape:
+            self.closeEditor.emit(self.editor)
+            return True
+        return super().eventFilter(obj, event)
 
 
 class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
@@ -97,10 +121,20 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
 
 
 class Spreadsheet(QTableWidget):
+    doubleClickedSignal = pyqtSignal(object)
+    textEditedSignal = pyqtSignal(object,str)
+    textEditingFinishedSignal = pyqtSignal(object)
+    activeItemChangedSignal = pyqtSignal(object)
+
     def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent)
+        super().__init__(parent, *args, **kwargs)
         self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell() for _ in range(self.columnCount())] for _ in
                                                        range(0)]
+        self.delegate = ItemDelegate(self)
+        self.setItemDelegate(self.delegate)
+        self.delegate.text_edited_signal.connect(self.text_edited)
+        self.delegate.commitData.connect(self.text_editing_finished)
+        self.currentCellChanged.connect(self.active_cell_changed)
 
     def add_row(self, index: Optional[int] = None, text: Optional[List[str]] = None):
         if text is None:
@@ -152,3 +186,22 @@ class Spreadsheet(QTableWidget):
         for row in self.worksheet:
             for cell in row:
                 cell.update_formula_after_moving()
+
+    ###############################################
+
+    def mouseDoubleClickEvent(self, event: QEvent):
+        super().mouseDoubleClickEvent(event)
+        self.doubleClickedSignal.emit(self.currentItem())
+
+    def active_cell_changed(self):
+        self.activeItemChangedSignal.emit(self.currentItem())
+
+    def text_edited(self, text):
+        self.textEditedSignal.emit(self.currentItem(), text)
+
+    def text_editing_finished(self):
+        self.textEditingFinishedSignal.emit(self.currentItem())
+
+    def focusInEvent(self, event: QEvent):
+        super().focusInEvent(event)
+        self.activeItemChangedSignal.emit(self.currentItem())

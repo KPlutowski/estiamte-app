@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QWidget, QTabWidget
 
 from model.Enums import ErrorType
 from model.Item import Item
+from model.ItemWithFormula import ItemWithFormula
 from model.Spreadsheet import Spreadsheet, SpreadsheetCell
 from resources import constants
 from resources.utils import parse_cell_reference, parse_cell_range
@@ -14,14 +15,11 @@ class Model:
     __active_item = None
 
     @staticmethod
-    def set_active_spreadsheet(name):
-        Model.__active_item = None
-        if name in db:
-            if isinstance(db[name], Spreadsheet):
-                Model.__active_item = db[name]
+    def set_active_item(item):
+        Model.__active_item = item
 
     @staticmethod
-    def get_active_spreadsheet() -> Spreadsheet:
+    def get_active_item() -> ItemWithFormula:
         return Model.__active_item
 
     @staticmethod
@@ -101,8 +99,8 @@ class Model:
 
     @staticmethod
     def add_spreadsheet(name: str, view: QTabWidget):
-        def create_table_widget(name: str, parent: QtWidgets.QWidget) -> QtWidgets.QTableWidget:
-            table_widget = Spreadsheet(parent=parent)
+        def create_table_widget(name: str, parent_: QtWidgets.QWidget) -> QtWidgets.QTableWidget:
+            table_widget = Spreadsheet(parent=parent_)
             table_widget.setObjectName(name)
             table_widget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
             table_widget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
@@ -134,9 +132,10 @@ class Model:
         Model.add_item(new_table_widget)
 
     @staticmethod
-    def get_spreadsheet(name):
+    def get_spreadsheet(name) -> Spreadsheet:
         if name in db:
-            return db[name]
+            if isinstance(db[name], Spreadsheet):
+                return db[name]
         return None
 
     @staticmethod
