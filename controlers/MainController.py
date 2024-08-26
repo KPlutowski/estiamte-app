@@ -16,8 +16,8 @@ class MainController(QObject):
     def __init__(self):
         super().__init__()
         self.view = MainView()
-        self.default_data()
         self.setup_connections()
+        self.default_data()
 
     def default_data(self):
         def load_default(csv_path, sp_name):
@@ -34,15 +34,21 @@ class MainController(QObject):
                     # Add the modified row to the spreadsheet
                     Model.add_row(text=row, name=sp_name)
 
-        Model.add_spreadsheet(constants.POSITION_SPREADSHEET_NAME, self.view.tabWidget)
-        Model.add_spreadsheet(constants.ROOF_SPREADSHEET_NAME, self.view.tabWidget)
-        Model.add_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
-        Model.add_spreadsheet(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
-
         load_default(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
+
+        self.view.perimeter.set_item('=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2')
+        self.view.foundationArea.set_item('=PROPERTIES!buildingLength*PROPERTIES!buildingWidth')
+        self.view.rafterCount.set_item('=PROPERTIES!buildingLength/0.6')
+        self.view.rafterLength.set_item('=PROPERTIES!buildingWidth*0.9')
+        self.view.groundWallArea.set_item('=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter')
+        self.view.kneeWallArea.set_item('=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter')
+        self.view.gableArea.set_item('=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight')
+        self.view.externalWallArea.set_item('=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea')
+        self.view.eavesLenght.set_item('=IF(PROPERTIES!buildingWidth>6;0.80;0.60)')
+        self.view.spoutLength.set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
 
     def setup_connections(self):
         def set_spreadsheet_connections(tab):
@@ -51,6 +57,11 @@ class MainController(QObject):
             tab.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
             tab.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
             tab.activeItemChangedSignal.connect(self.activeItemChanged)
+
+        Model.add_spreadsheet(constants.POSITION_SPREADSHEET_NAME, self.view.tabWidget)
+        Model.add_spreadsheet(constants.ROOF_SPREADSHEET_NAME, self.view.tabWidget)
+        Model.add_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
+        Model.add_spreadsheet(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
 
         set_spreadsheet_connections(Model.get_spreadsheet(constants.POSITION_SPREADSHEET_NAME))
         set_spreadsheet_connections(Model.get_spreadsheet(constants.ROOF_SPREADSHEET_NAME))
@@ -74,6 +85,7 @@ class MainController(QObject):
             self.view.glassQuantity,
             self.view.groundFloorWalls,
             self.view.roofLength,
+            self.view.firstFloorWalls,
             self.view.kneeWallHeight,
             self.view.groundFloorHeight
         ]
@@ -81,6 +93,7 @@ class MainController(QObject):
             Model.add_item(spin_box)
             spin_box.activeItemChangedSignal.connect(self.activeItemChanged)
             spin_box.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
+            spin_box.textEditedSignal.connect(self.itemWithFormulaTextEdited)
 
         checkboxes = [
             self.view.attic,

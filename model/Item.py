@@ -34,8 +34,9 @@ class Item:
     def __str__(self) -> str:
         return (
             f"{'-' * 80}\n"
-            f"Item: {self.name}\n"
+            f"Name: {self.name}\n"
             f"self: {hex(id(self))}\n"
+            f"Value: {self.value}, Formula: {self.formula}\n"
             f"cells_that_dependents_on_me: {self.items_that_dependents_on_me}\n"
             f"{'-' * 80}"
         )
@@ -55,6 +56,7 @@ class Item:
                     processed.add(current_cell)
                     for dep in current_cell.items_that_dependents_on_me:
                         if dep not in dirty_items:
+                            dep.set_error()
                             dirty_items.add(dep)
                         if dep not in processed:
                             to_process.append(dep)

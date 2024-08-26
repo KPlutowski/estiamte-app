@@ -4,10 +4,8 @@ from PyQt6 import QtWidgets
 from PyQt6.QtCore import pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
 
-from model.Enums import ErrorType
 from model.ItemWithFormula import ItemWithFormula
-from resources.parser import Tokenizer, TokenType, ValueType
-from resources.utils import index_to_letter, is_convertible_to_float, is_valid_cell_reference, is_valid_cell_range
+from resources.utils import index_to_letter, is_convertible_to_float
 
 
 class ItemDelegate(QStyledItemDelegate):
@@ -68,57 +66,6 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
             self._value = self.error.value[0]
         self.setText(str(self.value))
 
-    def update_formula_after_moving(self):
-        # should update the cell formula after removing, moving, adding row, moving cell etc...
-        # e.g. "=Sheet1!A1" after removing row A1 in Sheet1 -> "=#REF!"
-        # "=Sheet1!A5"  after removing row A1 in Sheet1 -> "=Sheet1!A4"
-        # "=SUM(Sheet1!A1:A10)" after removing row A1 in Sheet1 -> "=SUM(Sheet1!A1:A9)"
-        # "=SUM(Sheet1!A1:A10)" after removing row A5 in Sheet1 -> "=SUM(Sheet1!A1:A9)"
-        # "=SUM(Sheet1!A1:A10)" after removing row A10 in Sheet1 -> "=SUM(Sheet1!A1:A9)"
-        # "=SUM(Sheet1!A1:A10)" after add row A5 in Sheet1 -> "=SUM(Sheet1!A1:A11)"
-        # "=SUM(Sheet1!A1:A1)" after removing row A1 in Sheet1 -> "=SUM(#REF!)"
-
-        # self.items_that_i_depend_on: Dict[str, SpreadsheetCell] = {}  # dependent items and their representation in formula
-        if not self.formula.startswith('='):
-            return
-        new_formula = ""
-        original_formula = self.formula
-        tokenizer = Tokenizer()
-        tokens = tokenizer.tokenize(original_formula)
-
-        def adjust_cell_reference(cell_ref: str) -> str:
-            # cell_ref eg "Sheet1!A5"
-            if cell_ref not in self.items_that_i_depend_on:
-                return f'#REF!'
-            return self.items_that_i_depend_on.get(cell_ref).name
-
-            # sheet_name_old, row_index_old, col_index_old = parse_cell_reference(cell_ref)
-            # for dependent in self.items_that_i_depend_on.values():
-            #     if cell_ref in dependent.items_that_i_depend_on:
-            #         pass
-            # adjusted_cell_ref = f"{sheet_name}!{index_to_letter(new_col)}{new_row + 1}"
-
-        # TODO
-        def adjust_cell_range_reference(cell_ref: str):
-            return cell_ref
-
-        for token in tokens:
-            if token.token_type == TokenType.VALUE and token.subtype == ValueType.IDENTIFIER:
-                if is_valid_cell_reference(token.value):
-                    acr = adjust_cell_reference(token.value)
-                    if acr == "#REF!":
-                        self.set_error(ErrorType.REF)
-                    new_formula += acr
-                elif is_valid_cell_range(token.value):
-                    new_formula += adjust_cell_range_reference(token.value)
-                else:
-                    new_formula += token.value
-            else:
-                # For other token types (operators, functions, etc.)
-                new_formula += token.value
-
-        self.formula = new_formula
-
 
 class Spreadsheet(QTableWidget):
     doubleClickedSignal = pyqtSignal(object)
@@ -156,7 +103,6 @@ class Spreadsheet(QTableWidget):
             if col < len(text):
                 cell = self.worksheet[index][col]
                 cell.set_item(text[col])
-        self.reference_changed()
 
     def remove_row(self, index: int):
         if index < 0 or index >= self.rowCount():
@@ -175,17 +121,11 @@ class Spreadsheet(QTableWidget):
 
         self.worksheet.pop(index)
         self.removeRow(index)
-        self.reference_changed()
 
     def get_cell(self, row, column):
         if 0 <= row < self.rowCount() and 0 <= column < self.columnCount():
             return self.worksheet[row][column]
         return None
-
-    def reference_changed(self):
-        for row in self.worksheet:
-            for cell in row:
-                cell.update_formula_after_moving()
 
     ###############################################
 

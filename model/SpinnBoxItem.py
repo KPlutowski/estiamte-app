@@ -7,16 +7,13 @@ from model.Item import Item
 class SpinnBoxItem(Item, QSpinBox):
     textEditingFinishedSignal = pyqtSignal(object)
     activeItemChangedSignal = pyqtSignal(object)
+    textEditedSignal = pyqtSignal(object, str)
 
     def __init__(self, parent):
         super().__init__()
-        self.editingFinished.connect(self.text_editing_finished)
-
-    def __repr__(self):
-        return f"SpinnBoxItem(name={self.objectName()})"
-
-    def __str__(self):
-        return f"SpinnBoxItem(name={self.objectName()})"
+        self.set_item('0')
+        self.valueChanged.connect(self.text_edited)
+        self.valueChanged.connect(self.text_editing_finished)
 
     @property
     def name(self):
@@ -30,3 +27,6 @@ class SpinnBoxItem(Item, QSpinBox):
 
     def text_editing_finished(self):
         self.textEditingFinishedSignal.emit(self)
+
+    def text_edited(self, text):
+        self.textEditedSignal.emit(self, str(text))
