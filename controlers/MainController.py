@@ -5,6 +5,7 @@ from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QMenu, QStyledItemDelegate
 
 from controlers.NewEstimateController import NewEstimateController
+from model.ItemWithFormula import ItemWithFormula
 from model.Model import Model, Spreadsheet
 from model.Spreadsheet import SpreadsheetCell
 from resources.utils import letter_to_index
@@ -31,8 +32,17 @@ class MainController(QObject):
                         f'{sp_name}!'
                         f'{constants.PRICE_COLUMN[1]}{i + 1}'
                     )
-                    # Add the modified row to the spreadsheet
-                    Model.add_row(text=row, name=sp_name)
+                    for j, value in enumerate(row):
+                        Model.get_cell(i,j,sp_name).set_item(value)
+
+        def add_lines(csv_path, sp_name):
+            for _ in open(csv_path,encoding='utf-8'):
+                Model.add_row(name=sp_name)
+
+        add_lines(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
+        add_lines(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
+        add_lines(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
+        add_lines(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
 
         load_default(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
@@ -56,7 +66,7 @@ class MainController(QObject):
             tab.textEditedSignal.connect(self.itemWithFormulaTextEdited)
             tab.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
             tab.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
-            tab.activeItemChangedSignal.connect(self.activeItemChanged)
+            tab.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
 
         Model.add_spreadsheet(constants.POSITION_SPREADSHEET_NAME, self.view.tabWidget)
         Model.add_spreadsheet(constants.ROOF_SPREADSHEET_NAME, self.view.tabWidget)
@@ -92,8 +102,6 @@ class MainController(QObject):
         for spin_box in spin_boxes:
             Model.add_item(spin_box)
             spin_box.activeItemChangedSignal.connect(self.activeItemChanged)
-            spin_box.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
-            spin_box.textEditedSignal.connect(self.itemWithFormulaTextEdited)
 
         checkboxes = [
             self.view.attic,
@@ -103,7 +111,6 @@ class MainController(QObject):
         for checkbox in checkboxes:
             Model.add_item(checkbox)
             checkbox.activeItemChangedSignal.connect(self.activeItemChanged)
-            checkbox.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
 
         line_edits = [
             self.view.perimeter,
@@ -122,7 +129,7 @@ class MainController(QObject):
             line_edit.textEditedSignal.connect(self.itemWithFormulaTextEdited)
             line_edit.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
             line_edit.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
-            line_edit.activeItemChangedSignal.connect(self.activeItemChanged)
+            line_edit.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
 
     def itemWithFormulaTextEdited(self, item, edited_text):
         self.view.update_formula_bar(edited_text)
@@ -135,22 +142,33 @@ class MainController(QObject):
         item.setText(item.formula)
         self.view.update_formula_bar(item.formula)
 
+    def activeItemWithFormulaChanged(self, item):
+        if item is not None:
+            Model.set_active_item(item)
+            self.view.Formula_bar.setDisabled(False)
+            self.view.update_formula_bar(item.formula)
+            self.view.update_name_box(item.name)
+            print(item)
+
     def activeItemChanged(self, item):
         if item is not None:
             Model.set_active_item(item)
-            self.view.update_formula_bar(item.formula)
+            self.view.Formula_bar.setDisabled(True)
+            self.view.update_formula_bar("")
             self.view.update_name_box(item.name)
             print(item)
 
     @pyqtSlot(str)
     def formula_bar_edited(self, text):
         if Model.get_active_item():
-            Model.get_active_item().value = text
+            if isinstance(Model.get_active_item(),ItemWithFormula):
+                Model.get_active_item().value = text
 
     @pyqtSlot()
     def formula_bar_editing_finished(self):
         if Model.get_active_item():
-            Model.get_active_item().set_item(self.view.Formula_bar.text())
+            if isinstance(Model.get_active_item(),ItemWithFormula):
+                Model.get_active_item().set_item(self.view.Formula_bar.text())
 
     def show_context_menu(self, pos: QtCore.QPoint):
         widget = Model.get_active_item()
@@ -180,4 +198,4 @@ class MainController(QObject):
 
     @pyqtSlot(int)
     def on_tab_changed(self, index: int):
-        self.itemWithFormulaTextEditedFinished(Model.get_active_item())
+        pass

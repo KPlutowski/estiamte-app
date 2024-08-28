@@ -7,13 +7,22 @@ from model.Item import Item
 class DoubleSpinnBoxItem(Item, QDoubleSpinBox):
     textEditingFinishedSignal = pyqtSignal(object)
     activeItemChangedSignal = pyqtSignal(object)
-    textEditedSignal = pyqtSignal(object, str)
 
     def __init__(self, parent):
         super().__init__()
-        self.set_item('0')
-        self.valueChanged.connect(self.text_edited)
-        self.valueChanged.connect(self.text_editing_finished)
+        self.set_item(0.0)
+        self.editingFinished.connect(self.text_editing_finished)
+
+    @property
+    def value(self):
+        if self._value is None:
+            return 0.0
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+        self.setValue(float(self.value))
 
     @property
     def name(self):
@@ -26,7 +35,4 @@ class DoubleSpinnBoxItem(Item, QDoubleSpinBox):
         self.activeItemChangedSignal.emit(self)
 
     def text_editing_finished(self):
-        self.textEditingFinishedSignal.emit(self)
-
-    def text_edited(self, text):
-        self.textEditedSignal.emit(self, str(text))
+        self.set_item(self.valueFromText(self.text()))

@@ -10,13 +10,8 @@ class CheckBoxItem(Item, QCheckBox):
 
     def __init__(self, parent):
         super().__init__()
+        self.set_item(False)
         self.stateChanged.connect(self.text_editing_finished)
-
-    def __repr__(self):
-        return f"CheckBoxItem(name={self.objectName()})"
-
-    def __str__(self):
-        return f"CheckBoxItem(name={self.objectName()})"
 
     @property
     def name(self):
@@ -24,17 +19,20 @@ class CheckBoxItem(Item, QCheckBox):
 
     @property
     def value(self):
-        if self._value == 2:
-            return True
-        return False
+        if self._value is None:
+            return False
+        return self._value
 
     @value.setter
     def value(self, value):
         self._value = value
+        self.setChecked(value)
+
+    ###############################################
 
     def focusInEvent(self, event: QEvent):
         super().focusInEvent(event)
         self.activeItemChangedSignal.emit(self)
 
     def text_editing_finished(self):
-        self.textEditingFinishedSignal.emit(self)
+        self.set_item(self.isChecked())
