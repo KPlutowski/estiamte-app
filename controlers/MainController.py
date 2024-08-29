@@ -26,7 +26,7 @@ class MainController(QObject):
             with open(csv_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 for i, row in enumerate(reader):
-                    line_count+=1
+                    line_count += 1
                     # Calculate the NET_VALUE_COLUMN based on the formula
                     row[letter_to_index(constants.NET_VALUE_COLUMN[1])] = (
                         f'={sp_name}!'
@@ -35,13 +35,14 @@ class MainController(QObject):
                         f'{constants.PRICE_COLUMN[1]}{i + 1}'
                     )
                     for j, value in enumerate(row):
-                        Model.get_cell(i,j,sp_name).set_item(value)
+                        Model.get_cell(i, j, sp_name).set_item(value)
 
-            Model.get_cell(line_count,letter_to_index(constants.PRICE_COLUMN[1]), sp_name).set_item(f'SUMA: ')
-            Model.get_cell(line_count,letter_to_index(constants.NET_VALUE_COLUMN[1]), sp_name).set_item(f'=SUM({sp_name}!{constants.NET_VALUE_COLUMN[1]}1:{constants.NET_VALUE_COLUMN[1]}{line_count})')
+            Model.get_cell(line_count, letter_to_index(constants.PRICE_COLUMN[1]), sp_name).set_item(f'SUMA: ')
+            Model.get_cell(line_count, letter_to_index(constants.NET_VALUE_COLUMN[1]), sp_name).set_item(
+                f'=SUM({sp_name}!{constants.NET_VALUE_COLUMN[1]}1:{constants.NET_VALUE_COLUMN[1]}{line_count})')
 
         def add_lines(csv_path, sp_name):
-            for _ in open(csv_path,encoding='utf-8'):
+            for _ in open(csv_path, encoding='utf-8'):
                 Model.add_row(name=sp_name)
             Model.add_row(name=sp_name)
 
@@ -67,22 +68,24 @@ class MainController(QObject):
         self.view.spoutLength.set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
 
     def setup_connections(self):
-        def set_spreadsheet_connections(tab):
-            tab.customContextMenuRequested.connect(self.show_context_menu)
-            tab.textEditedSignal.connect(self.itemWithFormulaTextEdited)
-            tab.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
-            tab.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
-            tab.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
+        for spreadsheet in self.view.spreadsheets:
+            spreadsheet.customContextMenuRequested.connect(self.show_context_menu)
+            spreadsheet.textEditedSignal.connect(self.itemWithFormulaTextEdited)
+            spreadsheet.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
+            spreadsheet.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
+            spreadsheet.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
 
-        Model.add_spreadsheet(constants.POSITION_SPREADSHEET_NAME, self.view.tabWidget)
-        Model.add_spreadsheet(constants.ROOF_SPREADSHEET_NAME, self.view.tabWidget)
-        Model.add_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
-        Model.add_spreadsheet(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
+        for spin_box in self.view.spin_boxes:
+            spin_box.activeItemChangedSignal.connect(self.activeItemChanged)
 
-        set_spreadsheet_connections(Model.get_spreadsheet(constants.POSITION_SPREADSHEET_NAME))
-        set_spreadsheet_connections(Model.get_spreadsheet(constants.ROOF_SPREADSHEET_NAME))
-        set_spreadsheet_connections(Model.get_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME))
-        set_spreadsheet_connections(Model.get_spreadsheet(constants.INSULATION_SPREADSHEET_NAME))
+        for checkbox in self.view.checkboxes:
+            checkbox.activeItemChangedSignal.connect(self.activeItemChanged)
+
+        for line_edit in self.view.line_edits:
+            line_edit.textEditedSignal.connect(self.itemWithFormulaTextEdited)
+            line_edit.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
+            line_edit.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
+            line_edit.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
 
         # Tab widget
         self.view.tabWidget.currentChanged.connect(self.on_tab_changed)
@@ -93,49 +96,6 @@ class MainController(QObject):
 
         # Actions
         self.view.actionNew.triggered.connect(self.on_action_new_triggered)
-
-        spin_boxes = [
-            self.view.gridArea,
-            self.view.buildingLength,
-            self.view.buildingWidth,
-            self.view.glassQuantity,
-            self.view.groundFloorWalls,
-            self.view.roofLength,
-            self.view.firstFloorWalls,
-            self.view.kneeWallHeight,
-            self.view.groundFloorHeight
-        ]
-        for spin_box in spin_boxes:
-            Model.add_item(spin_box)
-            spin_box.activeItemChangedSignal.connect(self.activeItemChanged)
-
-        checkboxes = [
-            self.view.attic,
-            self.view.largeHouse,
-            self.view.chimney
-        ]
-        for checkbox in checkboxes:
-            Model.add_item(checkbox)
-            checkbox.activeItemChangedSignal.connect(self.activeItemChanged)
-
-        line_edits = [
-            self.view.perimeter,
-            self.view.foundationArea,
-            self.view.rafterCount,
-            self.view.rafterLength,
-            self.view.groundWallArea,
-            self.view.kneeWallArea,
-            self.view.gableArea,
-            self.view.externalWallArea,
-            self.view.eavesLenght,
-            self.view.spoutLength
-        ]
-        for line_edit in line_edits:
-            Model.add_item(line_edit)
-            line_edit.textEditedSignal.connect(self.itemWithFormulaTextEdited)
-            line_edit.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
-            line_edit.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
-            line_edit.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
 
     def itemWithFormulaTextEdited(self, item, edited_text):
         self.view.update_formula_bar(edited_text)
@@ -167,13 +127,13 @@ class MainController(QObject):
     @pyqtSlot(str)
     def formula_bar_edited(self, text):
         if Model.get_active_item():
-            if isinstance(Model.get_active_item(),ItemWithFormula):
+            if isinstance(Model.get_active_item(), ItemWithFormula):
                 Model.get_active_item().value = text
 
     @pyqtSlot()
     def formula_bar_editing_finished(self):
         if Model.get_active_item():
-            if isinstance(Model.get_active_item(),ItemWithFormula):
+            if isinstance(Model.get_active_item(), ItemWithFormula):
                 Model.get_active_item().set_item(self.view.Formula_bar.text())
 
     def show_context_menu(self, pos: QtCore.QPoint):
