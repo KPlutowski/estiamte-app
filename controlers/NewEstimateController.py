@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QObject
 from model import Model
-from views.NewEstiamteView.NewEstimateView import NewEstimateView
+from views.NewEstimateView.NewEstimateView import NewEstimateView
 
 
 class NewEstimateController(QObject):

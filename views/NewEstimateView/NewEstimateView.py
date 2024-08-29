@@ -1,5 +1,5 @@
 from PyQt6 import QtWidgets
-from views.NewEstiamteView.new_estimate_ui import Ui_new_cost_estimate_window
+from views.NewEstimateView.new_estimate_ui import Ui_new_cost_estimate_window
 
 
 class NewEstimateView(QtWidgets.QWidget, Ui_new_cost_estimate_window):

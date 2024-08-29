@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>new_cost_estimate_window</class>
+ <widget class="QDialog" name="new_cost_estimate_window">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>689</width>
+    <height>396</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Nowy kosztorys</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Długość budynku[m]</string>
+       </property>
+       <property name="buddy">
+        <cstring>SpinBox_building_length</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QDoubleSpinBox" name="SpinBox_building_length"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Szerokość budynku[m]</string>
+       </property>
+       <property name="buddy">
+        <cstring>SpinBox_building_width</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QDoubleSpinBox" name="SpinBox_building_width"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Ilość szklanek</string>
+       </property>
+       <property name="buddy">
+        <cstring>spinBox_number_of_footings</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSpinBox" name="spinBox_number_of_footings"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Ścianki działowe na parterze[mb]</string>
+       </property>
+       <property name="buddy">
+        <cstring>SpinBox_first_floor_partitions</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QDoubleSpinBox" name="SpinBox_first_floor_partitions"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Długość połaci</string>
+       </property>
+       <property name="buddy">
+        <cstring>SpinBox_length_of_roof_slope</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QDoubleSpinBox" name="SpinBox_length_of_roof_slope"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Wysokość ścianki kolankowej</string>
+       </property>
+       <property name="buddy">
+        <cstring>SpinBox_knee_wall_height</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QDoubleSpinBox" name="SpinBox_knee_wall_height"/>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Wysokość ścian parteru</string>
+       </property>
+       <property name="buddy">
+        <cstring>SpinBox_first_floor_wall_height</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QDoubleSpinBox" name="SpinBox_first_floor_wall_height"/>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="label_9">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkBox_is_the_house_over_70m2">
+     <property name="text">
+      <string>Czy dom powyżej 70m2?</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkBox_is_the_attic_usable">
+     <property name="text">
+      <string>Czy poddasze użytkowe?</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkBox_has_chimney">
+     <property name="text">
+      <string>Czy komin?</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>SpinBox_building_length</tabstop>
+  <tabstop>SpinBox_building_width</tabstop>
+  <tabstop>spinBox_number_of_footings</tabstop>
+  <tabstop>SpinBox_first_floor_partitions</tabstop>
+  <tabstop>SpinBox_length_of_roof_slope</tabstop>
+  <tabstop>SpinBox_knee_wall_height</tabstop>
+  <tabstop>SpinBox_first_floor_wall_height</tabstop>
+  <tabstop>checkBox_is_the_house_over_70m2</tabstop>
+  <tabstop>checkBox_is_the_attic_usable</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
