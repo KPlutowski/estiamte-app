@@ -1,7 +1,6 @@
 from collections import deque
 from typing import Optional
 
-
 from resources.utils import is_convertible_to_float
 
 

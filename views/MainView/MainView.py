@@ -43,7 +43,6 @@ class MainView(QMainWindow, Ui_MainWindow):
         self.spreadsheets = []
 
         self.initUI()
-        self.add_to_model()
         self.show()
 
     def make_spreadsheet(self, name: str, tab_widget: QTabWidget):
@@ -84,6 +83,8 @@ class MainView(QMainWindow, Ui_MainWindow):
         self.make_spreadsheet(constants.ROOF_SPREADSHEET_NAME, self.tabWidget)
         self.make_spreadsheet(constants.FOUNDATION_SPREADSHEET_NAME, self.tabWidget)
         self.make_spreadsheet(constants.INSULATION_SPREADSHEET_NAME, self.tabWidget)
+
+        self.add_to_model()
 
     def add_to_model(self):
         for spreadsheet in self.spreadsheets:
