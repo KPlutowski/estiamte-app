@@ -9,6 +9,7 @@ DEFAULT_FOUNDATION_CSV_PATH = "resources/fundamenty.csv"
 DEFAULT_INSULATION_CSV_PATH = "resources/ocieplenie.csv"
 
 CURRENCY_SYMBOL = "zł"
+DECIMAL_PLACES = 2
 
 SPREADSHEET_PROPERTY_DEFAULTS = \
     [["pow.siatki", "=2.15*5"],

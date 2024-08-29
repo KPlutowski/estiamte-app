@@ -31,14 +31,16 @@ class NumberFormat(Enum):
     @staticmethod
     def _format_number(value):
         if is_convertible_to_float(value):
-            return str(round(value, 2))
+            return str(round(value, constants.DECIMAL_PLACES))
         return str(value)
 
     @staticmethod
     def _format_accounting(value):
         if is_convertible_to_float(value):
-
-            return f"{round(float(value), 2)} {constants.CURRENCY_SYMBOL}"
+            if float(value) == 0:
+                return f"- {constants.CURRENCY_SYMBOL}"
+            else:
+                return f"{round(float(value), constants.DECIMAL_PLACES)} {constants.CURRENCY_SYMBOL}"
         else:
             return str(value)
 
