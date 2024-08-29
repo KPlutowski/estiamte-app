@@ -51,7 +51,7 @@ class ItemWithFormula(Item):
         self.items_that_i_depend_on: Dict[str, ItemWithFormula] = {}  # items and their representation in formula
         self.formula_type: FormulaType = FormulaType.NO_TYPE
         self.python_formula = ''
-        self.format = NumberFormat.GENERAL
+        self.format = NumberFormat.ACCOUNTING
 
     def __hash__(self):
         return hash(self.name)
