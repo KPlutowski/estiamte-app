@@ -31,14 +31,16 @@ class NumberFormat(Enum):
     @staticmethod
     def _format_number(value):
         if is_convertible_to_float(value):
-            return str(round(value, 2))
+            return str(round(value, constants.DECIMAL_PLACES))
         return str(value)
 
     @staticmethod
     def _format_accounting(value):
         if is_convertible_to_float(value):
-
-            return f"{round(float(value), 2)} {constants.CURRENCY_SYMBOL}"
+            if float(value) == 0:
+                return f"- {constants.CURRENCY_SYMBOL}"
+            else:
+                return f"{round(float(value), constants.DECIMAL_PLACES)} {constants.CURRENCY_SYMBOL}"
         else:
             return str(value)
 
@@ -49,7 +51,7 @@ class ItemWithFormula(Item):
         self.items_that_i_depend_on: Dict[str, ItemWithFormula] = {}  # items and their representation in formula
         self.formula_type: FormulaType = FormulaType.NO_TYPE
         self.python_formula = ''
-        self.format = NumberFormat.GENERAL
+        self.format = NumberFormat.ACCOUNTING
 
     def __hash__(self):
         return hash(self.name)
