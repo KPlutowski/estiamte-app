@@ -8,6 +8,8 @@ DEFAULT_ROOF_CSV_PATH = "resources/dach.csv"
 DEFAULT_FOUNDATION_CSV_PATH = "resources/fundamenty.csv"
 DEFAULT_INSULATION_CSV_PATH = "resources/ocieplenie.csv"
 
+CURRENCY_SYMBOL = "zł"
+
 SPREADSHEET_PROPERTY_DEFAULTS = \
     [["pow.siatki", "=2.15*5"],
      ["DŁUGOŚĆ BUDYNKU W m", "6.47"],

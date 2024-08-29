@@ -1,4 +1,4 @@
-"SIATKA 20x20","","","szt.","=((PROPERTIES!foundationArea*2)*1.15)/PROPERTIES!gridArea","184,64",""
+"SIATKA 20x20","","","szt.","=((PROPERTIES!foundationArea*2)*1.15)/PROPERTIES!gridArea","184.64",""
 "XPS 5","","","m3","=(PROPERTIES!foundationArea*0.1)+(((PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2)*0.8)*0.05","336",""
 "XPS 8","","","m3","=(PROPERTIES!foundationArea*0.1)+(((PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2)*0.8)*0.08","",""
 "PRĘT FI8","","","mb","=(PROPERTIES!perimeter*4)+((PROPERTIES!perimeter/0.4)*1.03)+((PROPERTIES!perimeter/0.3+1)*0.6)+(2.4*4)*4","15.34",""

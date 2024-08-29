@@ -5,7 +5,7 @@ from PyQt6.QtCore import pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
 
 from model.ItemWithFormula import ItemWithFormula
-from resources.utils import index_to_letter, is_convertible_to_float
+from resources.utils import index_to_letter
 
 
 class ItemDelegate(QStyledItemDelegate):
@@ -40,6 +40,7 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
             f"Cell at: row = {self.row()}, column = {self.column()}, Name: {self.name}\n"
             f"self: {hex(id(self))}\n"
             f"Value: {self.value}, Formula: {self.formula}\n"
+            f"Format: {self.format}\n"
             f"Python_formula: {self.python_formula}\n"
             f"cells_that_i_dependents_on_and_names: {self.items_that_i_depend_on}\n"
             f"cells_that_dependents_on_me: {self.items_that_dependents_on_me}\n"
@@ -50,21 +51,6 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
     @property
     def name(self):
         return f"{self.tableWidget().objectName()}!{index_to_letter(self.column())}{self.row() + 1}"
-
-    @property
-    def value(self):
-        if is_convertible_to_float(self._value):
-            return float(self._value)
-        if self._value is None:
-            return 0
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-        if self.error:
-            self._value = self.error.value[0]
-        self.setText(str(self.value))
 
 
 class Spreadsheet(QTableWidget):

@@ -1,8 +1,7 @@
-from PyQt6.QtCore import pyqtSlot, QEvent, pyqtSignal
+from PyQt6.QtCore import QEvent, pyqtSignal
 from PyQt6.QtWidgets import QLineEdit
 
 from model.ItemWithFormula import ItemWithFormula
-from resources.utils import is_convertible_to_float
 
 
 class LineEditItem(ItemWithFormula, QLineEdit):
@@ -32,21 +31,6 @@ class LineEditItem(ItemWithFormula, QLineEdit):
     @property
     def name(self):
         return self.objectName()
-
-    @property
-    def value(self):
-        if is_convertible_to_float(self._value):
-            return float(self._value)
-        if self._value is None:
-            return 0
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-        if self.error:
-            self._value = self.error.value[0]
-        self.setText(str(self._value))
 
     ###############################################
 

@@ -1,10 +1,46 @@
+from enum import Enum, auto
 from typing import List, Optional, Dict
 
 from model.Enums import FormulaType
 from model.Item import Item
+from resources import constants
 
 from resources.parser import Parser
 from resources.utils import is_convertible_to_float
+
+
+class NumberFormat(Enum):
+    GENERAL = auto()
+    NUMBER = auto()
+    ACCOUNTING = auto()
+
+    def format_value(self, value):
+        if self == NumberFormat.GENERAL:
+            return self._format_general(value)
+        elif self == NumberFormat.NUMBER:
+            return self._format_number(value)
+        elif self == NumberFormat.ACCOUNTING:
+            return self._format_accounting(value)
+        else:
+            return value
+
+    @staticmethod
+    def _format_general(value):
+        return str(value)
+
+    @staticmethod
+    def _format_number(value):
+        if is_convertible_to_float(value):
+            return str(round(value, 2))
+        return str(value)
+
+    @staticmethod
+    def _format_accounting(value):
+        if is_convertible_to_float(value):
+
+            return f"{round(float(value), 2)} {constants.CURRENCY_SYMBOL}"
+        else:
+            return str(value)
 
 
 class ItemWithFormula(Item):
@@ -13,13 +49,12 @@ class ItemWithFormula(Item):
         self.items_that_i_depend_on: Dict[str, ItemWithFormula] = {}  # items and their representation in formula
         self.formula_type: FormulaType = FormulaType.NO_TYPE
         self.python_formula = ''
+        self.format = NumberFormat.GENERAL
 
     def __hash__(self):
-        # Define a unique hash for each cell, e.g., based on its row and column
         return hash(self.name)
 
     def __eq__(self, other):
-        # Two cells are considered equal if they have the same row and column
         if isinstance(other, self.__class__):
             return self.name == other.name
         return False
@@ -130,3 +165,20 @@ class ItemWithFormula(Item):
         else:
             self.formula_type = FormulaType.STRING
         Model.calculate_dirty_items()
+
+    @property
+    def value(self):
+        if is_convertible_to_float(self._value):
+            return float(self._value)
+        if self._value is '':
+            return 0
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+        if self.error:
+            self._value = self.error.value[0]
+
+        formatted_value = self.format.format_value(self._value)
+        self.setText(formatted_value)
