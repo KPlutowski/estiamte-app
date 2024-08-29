@@ -22,9 +22,11 @@ class MainController(QObject):
 
     def default_data(self):
         def load_default(csv_path, sp_name):
+            line_count = 0
             with open(csv_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 for i, row in enumerate(reader):
+                    line_count+=1
                     # Calculate the NET_VALUE_COLUMN based on the formula
                     row[letter_to_index(constants.NET_VALUE_COLUMN[1])] = (
                         f'={sp_name}!'
@@ -35,9 +37,13 @@ class MainController(QObject):
                     for j, value in enumerate(row):
                         Model.get_cell(i,j,sp_name).set_item(value)
 
+            Model.get_cell(line_count,letter_to_index(constants.PRICE_COLUMN[1]), sp_name).set_item(f'SUMA: ')
+            Model.get_cell(line_count,letter_to_index(constants.NET_VALUE_COLUMN[1]), sp_name).set_item(f'=SUM({sp_name}!{constants.NET_VALUE_COLUMN[1]}1:{constants.NET_VALUE_COLUMN[1]}{line_count})')
+
         def add_lines(csv_path, sp_name):
             for _ in open(csv_path,encoding='utf-8'):
                 Model.add_row(name=sp_name)
+            Model.add_row(name=sp_name)
 
         add_lines(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         add_lines(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)

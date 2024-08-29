@@ -99,7 +99,6 @@ class Spreadsheet(QTableWidget):
         for cell_to_remove in cells_to_remove:
             for dependent in cell_to_remove.items_that_dependents_on_me:
                 dependent.remove_dependent(cell_to_remove)
-                dependent.update_formula_after_moving()
 
         for cell_to_remove in cells_to_remove:
             for name, dependent in cell_to_remove.items_that_i_depend_on.items():
