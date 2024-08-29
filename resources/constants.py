@@ -1,9 +1,9 @@
-POSITION_SPREADSHEET_NAME = "AAAA"
+POSITION_SPREADSHEET_NAME = "Ekipa"
 ROOF_SPREADSHEET_NAME = "Dach"
 FOUNDATION_SPREADSHEET_NAME = "Fundament"
 INSULATION_SPREADSHEET_NAME = "Ocieplenie"
 
-DEFAULT_POSITION_CSV_PATH = "resources/pozycje.csv"
+DEFAULT_POSITION_CSV_PATH = "resources/ekipa.csv"
 DEFAULT_ROOF_CSV_PATH = "resources/dach.csv"
 DEFAULT_FOUNDATION_CSV_PATH = "resources/fundamenty.csv"
 DEFAULT_INSULATION_CSV_PATH = "resources/ocieplenie.csv"
