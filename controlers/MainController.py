@@ -1,4 +1,6 @@
 import csv
+import pandas as pd
+from xlsxwriter.utility import xl_rowcol_to_cell
 
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, QModelIndex, QEvent, Qt
@@ -19,6 +21,7 @@ class MainController(QObject):
         self.view = MainView()
         self.setup_connections()
         self.default_data()
+        self.data = pd.DataFrame(columns=[ "WidgetName", "Value"])  # Initialize the DataFrame
 
     def default_data(self):
         def load_default(csv_path, sp_name):
@@ -96,6 +99,66 @@ class MainController(QObject):
 
         # Actions
         self.view.actionNew.triggered.connect(self.on_action_new_triggered)
+        self.view.actionExport_xlsx.triggered.connect(self.action_export_xlsx_handler)
+
+    def gather_spinbox_data(self):
+
+        spinbox_data = {}
+        for spin_box in self.view.spin_boxes:
+            spinbox_data[spin_box.objectName()] = spin_box.value
+
+        return spinbox_data
+
+    def gather_checkbox_data(self):
+        checkbox_data = {}
+        for checkbox in self.view.checkboxes:
+            if(checkbox.isChecked()):
+                checkbox_data[checkbox.objectName()] = 'yes'
+            else:
+                checkbox_data[checkbox.objectName()] = 'no'
+
+        return checkbox_data
+
+    def action_export_xlsx_handler(self):
+        print("action_export_xlsx_handler working")
+        spinbox_data = self.gather_spinbox_data()
+        checkbox_data = self.gather_checkbox_data()
+
+        # Store the data in the DataFrame
+        for name, value in spinbox_data.items():
+            self.data = pd.concat(
+                [self.data, pd.DataFrame([[ name, value]], columns=[ "WidgetName", "Value"])],
+                ignore_index=True)
+
+        for name, value in checkbox_data.items():
+            self.data = pd.concat(
+                [self.data, pd.DataFrame([[ name, value]], columns=[ "WidgetName", "Value"])],
+                ignore_index=True)
+
+
+
+        print(self.data)
+        writer = pd.ExcelWriter('output.xlsx',engine='xlsxwriter')
+        self.data.to_excel(writer, index=False, sheet_name='report')
+
+        workbook = writer.book
+        worksheet = writer.sheets['report']
+        worksheet.set_zoom(90)
+        cell_format = workbook.add_format({
+            'align': 'right',  # Center alignment for both strings and numbers
+            'valign': 'vcenter',  # Vertical alignment
+            'bold': True,
+        })
+
+        # Apply formats to columns
+        worksheet.set_column('A:M', 20, cell_format)
+
+        writer._save()
+
+        #with pd.ExcelWriter('output.xlsx') as writer:
+        #    self.data.to_excel(writer, sheet_name='Sheet_1')
+
+
 
     def itemWithFormulaTextEdited(self, item, edited_text):
         self.view.update_formula_bar(edited_text)
