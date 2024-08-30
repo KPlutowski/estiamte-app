@@ -113,9 +113,9 @@ class MainController(QObject):
         checkbox_data = {}
         for checkbox in self.view.checkboxes:
             if(checkbox.isChecked()):
-                checkbox_data[checkbox.objectName()] = 'yes'
+                checkbox_data[checkbox.objectName()] = 'TAK'
             else:
-                checkbox_data[checkbox.objectName()] = 'no'
+                checkbox_data[checkbox.objectName()] = 'NIE'
 
         return checkbox_data
 
@@ -143,20 +143,61 @@ class MainController(QObject):
 
         workbook = writer.book
         worksheet = writer.sheets['report']
-        worksheet.set_zoom(90)
-        cell_format = workbook.add_format({
+        worksheet.set_zoom(130)
+
+        dct_Right = workbook.add_format({
             'align': 'right',  # Center alignment for both strings and numbers
             'valign': 'vcenter',  # Vertical alignment
             'bold': True,
+            'border':1
+        })
+
+        dct_Left = workbook.add_format({
+            'align': 'left',  # Center alignment for both strings and numbers
+            'valign': 'vcenter',  # Vertical alignment
+            'bold': True,
+            'border': 1
+        })
+
+        yellow_cell_format = workbook.add_format({
+            'bg_color':'yellow',
+            'align': 'right',  # Center alignment for both strings and numbers
+            'valign': 'vcenter',  # Vertical alignment
+            'bold': True,
+            'border': 1
+        })
+
+        red_cell_format = workbook.add_format({
+            'bg_color':'red',
+            'align': 'right',  # Center alignment for both strings and numbers
+            'valign': 'vcenter',  # Vertical alignment
+            'bold': True,
+            'border': 1
         })
 
         # Apply formats to columns
-        worksheet.set_column('A:M', 20, cell_format)
+        for row in range(0,9):
+            # Read the current value of the cell
+            cell_value = self.data.iloc[row, 0]  # Assuming the data for column A is in the first column of DataFrame
+            cell_value2 = self.data.iloc[row,1]
+            worksheet.write(row + 1 , 0, cell_value, yellow_cell_format)  # (row, col) is 0-indexed
+            worksheet.write(row + 1 , 1, cell_value2, dct_Right)
+
+
+        for row in range(9,12):
+            cell_value = self.data.iloc[row, 0]  # Assuming the data for column A is in the first column of DataFrame
+            cell_value2 = self.data.iloc[row,1]
+            worksheet.write(row + 1 , 0, cell_value, red_cell_format)  # (row, col) is 0-indexed
+            worksheet.write(row + 1 , 1, cell_value2, dct_Left)
+
+        # Set column A and B to be wider
+        worksheet.set_column('A:A', 17)
+        worksheet.set_column('B:B', 10)
+
+
 
         writer._save()
 
-        #with pd.ExcelWriter('output.xlsx') as writer:
-        #    self.data.to_excel(writer, sheet_name='Sheet_1')
 
 
 
