@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+import pandas as pd
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
@@ -112,6 +113,26 @@ class Spreadsheet(QTableWidget):
             return self.worksheet[row][column]
         return None
 
+    def to_dataframe(self) -> pd.DataFrame:
+        rows = self.rowCount()
+        cols = self.columnCount()
+
+        # Extract the headers
+        headers = [self.horizontalHeaderItem(col).text() if self.horizontalHeaderItem(col) else f'Column {col + 1}' for
+                   col in range(cols)]
+
+        # Extract the data
+        data = []
+        for row in range(rows):
+            row_data = []
+            for col in range(cols):
+                item = self.item(row, col)
+                row_data.append(item.text() if item else '')
+            data.append(row_data)
+
+        # Create a DataFrame
+        df = pd.DataFrame(data, columns=headers)
+        return df
     ###############################################
 
     def mouseDoubleClickEvent(self, event: QEvent):
