@@ -79,7 +79,6 @@ class MainController(QObject):
         for spreadsheet in self.view.spreadsheets:
             spreadsheet.customContextMenuRequested.connect(self.spreadsheet_context_menu)
             spreadsheet.textEditedSignal.connect(self.itemWithFormulaTextEdited)
-            spreadsheet.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
             spreadsheet.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
             spreadsheet.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
 
@@ -91,7 +90,6 @@ class MainController(QObject):
 
         for line_edit in self.view.line_edits:
             line_edit.textEditedSignal.connect(self.itemWithFormulaTextEdited)
-            line_edit.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
             line_edit.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
             line_edit.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
 
@@ -312,10 +310,6 @@ class MainController(QObject):
 
     def itemWithFormulaTextEdited(self, item, edited_text):
         self.view.update_formula_bar(edited_text)
-
-    def itemWithFormulaTextEditedFinished(self, item):
-        if item is not None:
-            item.set_item(self.view.Formula_bar.text())
 
     def itemWithFormulaDoubleClicked(self, item):
         item.setText(item.formula)

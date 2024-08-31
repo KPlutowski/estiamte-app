@@ -1,10 +1,15 @@
+import abc
 from collections import deque
 from typing import Optional
+from PyQt6.QtCore import pyqtSignal, QEvent
 
 from resources.utils import is_convertible_to_float
 
 
 class Item:
+    textEditingFinishedSignal = pyqtSignal(object)
+    activeItemChangedSignal = pyqtSignal(object)
+
     def __init__(self, formula=""):
         super().__init__()
         self.formula = formula
@@ -12,11 +17,19 @@ class Item:
         self.error: Optional['ErrorType'] = None
         self.items_that_dependents_on_me: ['ItemWithFormula'] = []
 
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.name == other.name
+        return False
+
     @property
     def value(self):
         if is_convertible_to_float(self._value):
             return float(self._value)
-        if self._value is None:
+        if self._value == '':
             return 0
         return self._value
 
@@ -29,16 +42,6 @@ class Item:
     @property
     def name(self):
         return ""
-
-    def __str__(self) -> str:
-        return (
-            f"{'-' * 80}\n"
-            f"Name: {self.name}\n"
-            f"self: {hex(id(self))}\n"
-            f"Value: {self.value}, Formula: {self.formula}\n"
-            f"cells_that_dependents_on_me: {self.items_that_dependents_on_me}\n"
-            f"{'-' * 80}"
-        )
 
     def mark_dirty(self):
         """Mark a cell as dirty and propagate this state to its dependents."""
@@ -92,4 +95,11 @@ class Item:
         return False
 
     def evaluate_formula(self):
+        pass
+
+    def focusInEvent(self, event: QEvent):
+        super().focusInEvent(event)
+        self.activeItemChangedSignal.emit(self)
+
+    def editing_finished(self):
         pass

@@ -6,7 +6,7 @@ from PyQt6.QtCore import pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
 
 from model.ItemWithFormula import ItemWithFormula
-from resources.utils import index_to_letter
+from resources.utils import index_to_letter, is_convertible_to_float
 
 
 class ItemDelegate(QStyledItemDelegate):
@@ -52,6 +52,21 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
     @property
     def name(self):
         return f"{self.tableWidget().objectName()}!{index_to_letter(self.column())}{self.row() + 1}"
+
+    @property
+    def value(self):
+        if is_convertible_to_float(self._value):
+            return float(self._value)
+        if self._value == '':
+            return 0
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+        if self.error:
+            self._value = self.error.value[0]
+        self.setText(self.format.format_value(self._value))
 
 
 class Spreadsheet(QTableWidget):
@@ -133,6 +148,7 @@ class Spreadsheet(QTableWidget):
         # Create a DataFrame
         df = pd.DataFrame(data, columns=headers)
         return df
+
     ###############################################
 
     def mouseDoubleClickEvent(self, event: QEvent):
@@ -146,7 +162,7 @@ class Spreadsheet(QTableWidget):
         self.textEditedSignal.emit(self.currentItem(), text)
 
     def text_editing_finished(self):
-        self.textEditingFinishedSignal.emit(self.currentItem())
+        self.currentItem().set_item(self.currentItem().text())
 
     def focusInEvent(self, event: QEvent):
         super().focusInEvent(event)

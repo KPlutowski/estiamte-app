@@ -1,5 +1,7 @@
 from enum import Enum, auto
-from typing import List, Optional, Dict
+from typing import List, Dict
+
+from PyQt6.QtCore import pyqtSignal
 
 from model.Enums import FormulaType
 from model.Item import Item
@@ -53,14 +55,6 @@ class ItemWithFormula(Item):
         self.python_formula = ''
         self.format = NumberFormat.GENERAL
 
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.name == other.name
-        return False
-
     def __str__(self) -> str:
         return (
             f"{'-' * 80}\n"
@@ -74,25 +68,6 @@ class ItemWithFormula(Item):
             f"{'-' * 80}"
         )
 
-    @staticmethod
-    def sum_function(cells: List['SpreadsheetCell']) -> float:
-        """Sum the values of a list of cells."""
-        total = 0.0
-        for cell in cells:
-            if is_convertible_to_float(cell.value):
-                total += float(cell.value)
-            else:
-                # Handle non-numeric values if needed
-                pass
-        return total
-
-    @staticmethod
-    def if_function(logical_test, value_if_true, value_if_false):
-        if logical_test:
-            return value_if_true
-        else:
-            return value_if_false
-
     def add_dependent(self, cell: 'ItemWithFormula', reference_name: str):
         self.items_that_i_depend_on[reference_name] = cell
 
@@ -103,15 +78,15 @@ class ItemWithFormula(Item):
     def evaluate_formula(self):
         from model.Enums import ErrorType
         from model.Model import Model
+
         if self.error is not None:
             pass
+        self.error = None
         try:
             if self.formula_type == FormulaType.EXPRESSION:
-                self.error = None
-                self.python_formula = Parser.make_python_formula(self)
-                self.value = str(eval(self.python_formula))
+                self.python_formula = Parser.make_python_formula(self.formula)
+                self.value = Model.evaluate_formula(self.python_formula)
             else:
-                self.error = None
                 self.value = self.formula
         except ZeroDivisionError:
             self.set_error(ErrorType.DIV)
@@ -121,17 +96,6 @@ class ItemWithFormula(Item):
             self.set_error(ErrorType.NAME)
         except Exception:
             self.set_error(ErrorType.NAME)
-
-    def set_error(self, error: Optional['ErrorType'] = None):
-        """Update the error state of this cell and propagate the change to dependent cells. """
-        self.error = error
-        if error is not None:
-            self.value = self.error.value[0]
-            self.value = self.error.value[0]
-
-        for cell in self.items_that_dependents_on_me:
-            if cell.error is not error:
-                cell.set_error(error)
 
     def update_dependencies(self, new_dependencies: List['ItemWithFormula']):
         def remove_all_dependencies():
@@ -154,33 +118,11 @@ class ItemWithFormula(Item):
 
     def set_item(self, formula):
         from model.Model import Model
+        self.mark_dirty()
         self.formula = formula
         self.python_formula = None
         self.set_error()
         dep = Parser.parse_formula_for_dependencies(self.formula)
         self.update_dependencies(dep)
-        self.mark_dirty()
-        if formula.startswith('='):
-            self.formula_type = FormulaType.EXPRESSION
-        elif is_convertible_to_float(formula):
-            self.formula_type = FormulaType.NUMBER
-        else:
-            self.formula_type = FormulaType.STRING
+        self.formula_type = FormulaType.determine_formula_type(formula)
         Model.calculate_dirty_items()
-
-    @property
-    def value(self):
-        if is_convertible_to_float(self._value):
-            return float(self._value)
-        if self._value == '':
-            return 0
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-        if self.error:
-            self._value = self.error.value[0]
-
-        formatted_value = self.format.format_value(self._value)
-        self.setText(formatted_value)

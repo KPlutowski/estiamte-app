@@ -8,7 +8,7 @@ from model.Item import Item
 from model.ItemWithFormula import ItemWithFormula
 from model.Spreadsheet import Spreadsheet, SpreadsheetCell
 from resources import constants
-from resources.utils import parse_cell_reference, parse_cell_range
+from resources.utils import parse_cell_reference, parse_cell_range, is_convertible_to_float
 
 
 class Model:
@@ -154,6 +154,29 @@ class Model:
         if not name:
             return None
         return db.get(name)
+
+    @staticmethod
+    def evaluate_formula(formula: str) -> str:
+        return str(eval(formula))
+
+    @staticmethod
+    def sum_function(cells: List['SpreadsheetCell']) -> float:
+        """Sum the values of a list of cells."""
+        total = 0.0
+        for cell in cells:
+            if is_convertible_to_float(cell.value):
+                total += float(cell.value)
+            else:
+                # Handle non-numeric values if needed
+                pass
+        return total
+
+    @staticmethod
+    def if_function(logical_test, value_if_true, value_if_false):
+        if logical_test:
+            return value_if_true
+        else:
+            return value_if_false
 
 
 dirty_items: Set[Item] = set()

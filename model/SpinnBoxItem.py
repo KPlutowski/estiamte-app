@@ -13,7 +13,7 @@ class SpinnBoxItem(Item, QSpinBox):
         super().__init__()
         self.set_item('0')
         self.valueChanged.connect(self.text_edited)
-        self.valueChanged.connect(self.text_editing_finished)
+        self.valueChanged.connect(self.editing_finished)
 
     @property
     def name(self):
@@ -25,7 +25,7 @@ class SpinnBoxItem(Item, QSpinBox):
         super().focusInEvent(event)
         self.activeItemChangedSignal.emit(self)
 
-    def text_editing_finished(self):
+    def editing_finished(self):
         self.textEditingFinishedSignal.emit(self)
 
     def text_edited(self, text):

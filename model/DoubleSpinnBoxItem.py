@@ -1,17 +1,13 @@
-from PyQt6.QtCore import pyqtSignal, QEvent
 from PyQt6.QtWidgets import QDoubleSpinBox
 
 from model.Item import Item
 
 
 class DoubleSpinnBoxItem(Item, QDoubleSpinBox):
-    textEditingFinishedSignal = pyqtSignal(object)
-    activeItemChangedSignal = pyqtSignal(object)
-
     def __init__(self, parent):
         super().__init__()
         self.set_item(0.0)
-        self.editingFinished.connect(self.text_editing_finished)
+        self.editingFinished.connect(self.editing_finished)
 
     @property
     def value(self):
@@ -30,9 +26,5 @@ class DoubleSpinnBoxItem(Item, QDoubleSpinBox):
 
     ###############################################
 
-    def focusInEvent(self, event: QEvent):
-        super().focusInEvent(event)
-        self.activeItemChangedSignal.emit(self)
-
-    def text_editing_finished(self):
+    def editing_finished(self):
         self.set_item(self.valueFromText(self.text()))

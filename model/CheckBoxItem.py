@@ -1,17 +1,13 @@
-from PyQt6.QtCore import pyqtSignal, QEvent
 from PyQt6.QtWidgets import QCheckBox
 
 from model.Item import Item
 
 
 class CheckBoxItem(Item, QCheckBox):
-    textEditingFinishedSignal = pyqtSignal(object)
-    activeItemChangedSignal = pyqtSignal(object)
-
     def __init__(self, parent):
         super().__init__()
         self.set_item(False)
-        self.stateChanged.connect(self.text_editing_finished)
+        self.stateChanged.connect(self.editing_finished)
 
     @property
     def name(self):
@@ -30,9 +26,5 @@ class CheckBoxItem(Item, QCheckBox):
 
     ###############################################
 
-    def focusInEvent(self, event: QEvent):
-        super().focusInEvent(event)
-        self.activeItemChangedSignal.emit(self)
-
-    def text_editing_finished(self):
+    def editing_finished(self):
         self.set_item(self.isChecked())
