@@ -1,2 +1,5 @@
 PyQt6==6.7.1
 PyQt6_sip==13.8.0
+
+pandas~=2.2.2
+XlsxWriter~=3.2.0
