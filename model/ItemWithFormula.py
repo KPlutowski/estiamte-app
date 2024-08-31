@@ -1,7 +1,6 @@
+import abc
 from enum import Enum, auto
 from typing import List, Dict
-
-from PyQt6.QtCore import pyqtSignal
 
 from model.Enums import FormulaType
 from model.Item import Item
@@ -126,3 +125,22 @@ class ItemWithFormula(Item):
         self.update_dependencies(dep)
         self.formula_type = FormulaType.determine_formula_type(formula)
         Model.calculate_dirty_items()
+
+    @property
+    def value(self):
+        if is_convertible_to_float(self._value):
+            return float(self._value)
+        if self._value == '':
+            return 0
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+        if self.error:
+            self._value = self.error.value[0]
+        self.set_display_text()
+
+    @abc.abstractmethod
+    def set_display_text(self):
+        pass

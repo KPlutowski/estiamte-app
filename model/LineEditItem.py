@@ -2,7 +2,6 @@ from PyQt6.QtCore import QEvent, pyqtSignal
 from PyQt6.QtWidgets import QLineEdit
 
 from model.ItemWithFormula import ItemWithFormula
-from resources.utils import is_convertible_to_float
 
 
 class LineEditItem(ItemWithFormula, QLineEdit):
@@ -10,7 +9,7 @@ class LineEditItem(ItemWithFormula, QLineEdit):
     textEditedSignal = pyqtSignal(object, str)
 
     def __init__(self, formula="", *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(formula, *args, **kwargs)
         self.editingFinished.connect(self.editing_finished)
         self.textEdited.connect(self.text_edited)
 
@@ -31,19 +30,7 @@ class LineEditItem(ItemWithFormula, QLineEdit):
     def name(self):
         return self.objectName()
 
-    @property
-    def value(self):
-        if is_convertible_to_float(self._value):
-            return float(self._value)
-        if self._value == '':
-            return 0
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-        if self.error:
-            self._value = self.error.value[0]
+    def set_display_text(self):
         self.setText(self.format.format_value(self._value))
 
     ###############################################

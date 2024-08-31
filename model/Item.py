@@ -39,10 +39,6 @@ class Item:
         if self.error:
             self._value = self.error.value[0]
 
-    @property
-    def name(self):
-        return ""
-
     def mark_dirty(self):
         """Mark a cell as dirty and propagate this state to its dependents."""
         from model.Model import dirty_items
@@ -94,12 +90,17 @@ class Item:
                 stack.extend(cell.items_that_dependents_on_me)
         return False
 
-    def evaluate_formula(self):
-        pass
-
     def focusInEvent(self, event: QEvent):
         super().focusInEvent(event)
         self.activeItemChangedSignal.emit(self)
 
     def editing_finished(self):
+        pass
+
+    def evaluate_formula(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def name(self):
         pass
