@@ -1,11 +1,16 @@
 import csv
 
 from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, QModelIndex, QEvent, Qt
-from PyQt6.QtWidgets import QMenu, QStyledItemDelegate
+from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, QModelIndex, QEvent, Qt, QMimeData
+from PyQt6.QtGui import QMouseEvent, QDrag, QDragEnterEvent, QDropEvent
+from PyQt6.QtWidgets import QMenu, QStyledItemDelegate, QVBoxLayout
 
 from controlers.NewEstimateController import NewEstimateController
+from model.CheckBoxItem import CheckBoxItem
+from model.DoubleSpinnBoxItem import DoubleSpinnBoxItem
+from model.GroupBox import MovableWidget
 from model.ItemWithFormula import ItemWithFormula
+from model.LineEditItem import LineEditItem
 from model.Model import Model, Spreadsheet
 from model.Spreadsheet import SpreadsheetCell
 from resources.utils import letter_to_index
@@ -16,9 +21,12 @@ import resources.constants as constants
 class MainController(QObject):
     def __init__(self):
         super().__init__()
+
         self.view = MainView()
         self.setup_connections()
         self.default_data()
+
+
 
     def default_data(self):
         def load_default(csv_path, sp_name):
@@ -69,7 +77,7 @@ class MainController(QObject):
 
     def setup_connections(self):
         for spreadsheet in self.view.spreadsheets:
-            spreadsheet.customContextMenuRequested.connect(self.show_context_menu)
+            spreadsheet.customContextMenuRequested.connect(self.spreadsheet_context_menu)
             spreadsheet.textEditedSignal.connect(self.itemWithFormulaTextEdited)
             spreadsheet.textEditingFinishedSignal.connect(self.itemWithFormulaTextEditedFinished)
             spreadsheet.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
@@ -136,7 +144,7 @@ class MainController(QObject):
             if isinstance(Model.get_active_item(), ItemWithFormula):
                 Model.get_active_item().set_item(self.view.Formula_bar.text())
 
-    def show_context_menu(self, pos: QtCore.QPoint):
+    def spreadsheet_context_menu(self, pos: QtCore.QPoint):
         widget = Model.get_active_item()
 
         if not isinstance(widget, SpreadsheetCell):
