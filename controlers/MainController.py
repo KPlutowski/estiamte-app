@@ -310,8 +310,9 @@ class MainController(QObject):
         self.view.update_formula_bar(edited_text)
 
     def itemWithFormulaDoubleClicked(self, item):
-        item.setText(item.formula)
-        self.view.update_formula_bar(item.formula)
+        if item is not None:
+            item.setText(item.formula)
+            self.view.update_formula_bar(item.formula)
 
     def activeItemWithFormulaChanged(self, item):
         if item is not None:
@@ -320,6 +321,11 @@ class MainController(QObject):
             self.view.update_formula_bar(item.formula)
             self.view.update_name_box(item.name)
             print(item)
+        else:
+            Model.set_active_item(item)
+            self.view.Formula_bar.setDisabled(True)
+            self.view.update_formula_bar("")
+            self.view.update_name_box("")
 
     def activeItemChanged(self, item):
         if item is not None:
@@ -348,11 +354,7 @@ class MainController(QObject):
     ############################################
 
     def spreadsheet_context_menu(self, pos: QtCore.QPoint):
-        widget = Model.get_active_item()
-
-        if not isinstance(widget, SpreadsheetCell):
-            return
-        widget = widget.tableWidget()
+        widget = self.view.tabWidget.currentWidget().findChild(Spreadsheet)
         index = widget.indexAt(pos)
 
         menu = QMenu()
@@ -366,9 +368,9 @@ class MainController(QObject):
 
         row = index.row()
         if action == add_position_action:
-            Model.add_row(row + 1, name=widget.objectName())
+            Model.add_row(row + 1, name=widget.name)
         elif action == delete_action:
-            Model.remove_row(row, name=widget.objectName())
+            Model.remove_row(row, name=widget.name)
 
     def tabWidget_context_menu(self, pos: QtCore.QPoint):
         global_pos = self.view.tabWidget.tabBar().mapToGlobal(pos)
@@ -467,8 +469,7 @@ class MainController(QObject):
 
     def get_index(self, global_pos):
         """Return the index of the widget under the given global position."""
-        current_tab_widget = self.view.tabWidget.currentWidget()
-        current_widget = current_tab_widget.findChild(PropertiesWidget)
+        current_widget = self.view.tabWidget.currentWidget().findChild(PropertiesWidget)
 
         if not isinstance(current_widget, PropertiesWidget):
             return None
