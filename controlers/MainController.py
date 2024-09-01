@@ -9,7 +9,8 @@ from PyQt6.QtGui import QDrag, QDragEnterEvent, QDropEvent
 
 from model.CheckBoxItem import CheckBoxItem
 from model.DoubleSpinnBoxItem import DoubleSpinnBoxItem
-from model.GroupBox import MovableWidget
+from model.GroupBox import GroupBox
+from model.Item import Item
 from model.ItemWithFormula import ItemWithFormula
 from model.LineEditItem import LineEditItem
 from model.Model import Model, Spreadsheet, db
@@ -100,8 +101,8 @@ class MainController(QObject):
             ("Długość Krokwii", "rafterLength", LineEditItem),
             ("Powierzchnia ścian zewnętrznych [m2]", "externalWallArea", LineEditItem)
         ]
-        for c in DEAFULT_PROPERTIES:
-            self.add_property(*c, property_tab)
+        for i, c in enumerate(DEAFULT_PROPERTIES):
+            self.add_property(*c, property_tab, i)
 
         load_default(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
@@ -302,7 +303,12 @@ class MainController(QObject):
 
     def on_action_new_triggered(self):
         from controlers.NewEstimateController import NewEstimateController
-        self.new_estimate_cntr = NewEstimateController(Model)
+        self.new_estimate_cntroller = NewEstimateController(Model)
+
+    def on_action_new_property(self, widget: PropertiesWidget, index: int):
+        from controlers.NewPropertyFormController import NewPropertyController
+        self.controller = NewPropertyController(widget, index)
+        self.controller.property_added.connect(self.add_property)
 
     ############################################
 
@@ -387,26 +393,15 @@ class MainController(QObject):
 
     def properties_context_menu(self, pos: QtCore.QPoint):
         menu = QMenu()
-        add_double_spinn_box_action = menu.addAction('Add DoubleSpinnBox')
-        add_check_box_action = menu.addAction('Add CheckBox')
-        add_line_edit_action = menu.addAction('Add LineEdit')
+        add_new_property_action = menu.addAction('Dodaj właściwość')
 
         current_widget = self.view.tabWidget.currentWidget().findChild(PropertiesWidget)
+        index = self.get_index(current_widget.scroll_area.mapTo(self.view, pos))
 
         action = menu.exec(current_widget.scroll_area.mapToGlobal(pos))
-        if not action:
-            return
 
-        position = 2
-
-        if action == add_double_spinn_box_action:
-            self.add_property("newLabel", "newItemName", DoubleSpinnBoxItem, current_widget)
-        elif action == add_check_box_action:
-            self.add_property("newLabel", "newItemName", CheckBoxItem, current_widget)
-        elif action == add_line_edit_action:
-            self.add_property("newLabel", "newItemName", LineEditItem, current_widget)
-        else:
-            return
+        if action == add_new_property_action:
+            self.on_action_new_property(current_widget, index)
 
     ############################################
 
@@ -438,10 +433,12 @@ class MainController(QObject):
 
         Model.add_item(new_properties_widget)
 
-    def add_property(self, label_text: str, item_name: str, item_type, parent: PropertiesWidget):
+    def add_property(self, label_text: str, item_name: str, item_type, parent: PropertiesWidget, index: int = 0):
         if item_name in db:
             raise KeyError(f"property found with name '{item_name}'.")
-        tmp = MovableWidget(label_text, item_name, item_type, parent.scrollAreaWidgetContents)
+        if item_type is None:
+            return
+        tmp = GroupBox(label_text, item_name, item_type, index, parent.scrollAreaWidgetContents)
 
         if isinstance(tmp.item, (DoubleSpinnBoxItem,CheckBoxItem)):
             tmp.item.activeItemChangedSignal.connect(self.activeItemChanged)

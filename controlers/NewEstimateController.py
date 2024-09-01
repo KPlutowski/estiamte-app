@@ -8,6 +8,7 @@ class NewEstimateController(QObject):
         super().__init__()
         self._model = model
         self._view = NewEstimateView()
+        self.setup_connections()
 
     def setup_connections(self):
         self._view.buttonBox.accepted.connect(self.handle_ok)
