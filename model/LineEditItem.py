@@ -10,6 +10,8 @@ class LineEditItem(ItemWithFormula, QLineEdit):
 
     def __init__(self, formula="", *args, **kwargs):
         super().__init__(formula, *args, **kwargs)
+
+        self.editing_text = ""
         self.editingFinished.connect(self.editing_finished)
         self.textEdited.connect(self.text_edited)
 
@@ -40,7 +42,13 @@ class LineEditItem(ItemWithFormula, QLineEdit):
         self.doubleClickedSignal.emit(self)
 
     def text_edited(self, text):
+        self.editing_text = text
         self.textEditedSignal.emit(self, text)
 
-    def editing_finished(self):
-        self.set_item(self.text())
+    def editing_finished(self,text=""):
+        self.set_item(self.editing_text)
+
+    def focusInEvent(self, event: QEvent):
+        super().focusInEvent(event)
+        self.editing_text = self.formula
+        self.activeItemChangedSignal.emit(self)

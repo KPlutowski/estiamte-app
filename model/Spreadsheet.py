@@ -1,11 +1,12 @@
 from typing import List, Optional
 
 import pandas as pd
-from PyQt6 import QtWidgets
+from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtCore import pyqtSignal, QModelIndex, QEvent, Qt
 from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
 
 from model.ItemWithFormula import ItemWithFormula
+from resources import constants
 from resources.utils import index_to_letter
 
 
@@ -63,15 +64,27 @@ class Spreadsheet(QTableWidget):
     textEditingFinishedSignal = pyqtSignal(object)
     activeItemChangedSignal = pyqtSignal(object)
 
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, name, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell() for _ in range(self.columnCount())] for _ in
                                                        range(0)]
         self.delegate = ItemDelegate(self)
         self.setItemDelegate(self.delegate)
         self.delegate.text_edited_signal.connect(self.text_edited)
-        self.delegate.commitData.connect(self.text_editing_finished)
+        self.delegate.commitData.connect(self.editing_finished)
         self.currentCellChanged.connect(self.active_cell_changed)
+        self.name = name
+        self.initUI()
+
+    def initUI(self):
+        self.setObjectName(self.name)
+        self.parent().layout().addWidget(self)
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        self.setAlternatingRowColors(True)
+        self.setColumnCount(len(constants.COLUMNS))
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setRowCount(0)
 
     def add_row(self, index: Optional[int] = None, text: Optional[List[str]] = None):
         if text is None:
@@ -149,7 +162,7 @@ class Spreadsheet(QTableWidget):
     def text_edited(self, text):
         self.textEditedSignal.emit(self.currentItem(), text)
 
-    def text_editing_finished(self):
+    def editing_finished(self):
         self.currentItem().set_item(self.currentItem().text())
 
     def focusInEvent(self, event: QEvent):

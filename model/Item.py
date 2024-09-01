@@ -94,7 +94,7 @@ class Item:
         super().focusInEvent(event)
         self.activeItemChangedSignal.emit(self)
 
-    def editing_finished(self):
+    def editing_finished(self, text):
         pass
 
     def evaluate_formula(self):

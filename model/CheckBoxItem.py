@@ -26,5 +26,5 @@ class CheckBoxItem(Item, QCheckBox):
 
     ###############################################
 
-    def editing_finished(self):
+    def editing_finished(self,text=""):
         self.set_item(self.isChecked())

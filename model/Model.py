@@ -1,13 +1,10 @@
 from typing import List, Optional, Dict, Set, Union
 from collections import deque, defaultdict
-from PyQt6 import QtWidgets, QtCore
-from PyQt6.QtWidgets import QWidget, QTabWidget
 
 from model.Enums import ErrorType
 from model.Item import Item
 from model.ItemWithFormula import ItemWithFormula
 from model.Spreadsheet import Spreadsheet, SpreadsheetCell
-from resources import constants
 from resources.utils import parse_cell_reference, parse_cell_range, is_convertible_to_float
 
 
@@ -23,12 +20,11 @@ class Model:
         return Model.__active_item
 
     @staticmethod
-    def add_item(widget: QWidget):
-        if widget.objectName() not in db:
-            name = widget.objectName()
-            db[name] = widget
+    def add_item(item):
+        if item.name not in db:
+            db[item.name] = item
         else:
-            raise NameError(f'!!ERROR AT Model.add_item, name:{widget.objectName()}!!')
+            raise NameError(f'!!ERROR AT Model.add_item, name:{item.objectName()}!!')
 
     @staticmethod
     def calculate_dirty_items():
