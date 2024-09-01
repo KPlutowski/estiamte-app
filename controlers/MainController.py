@@ -128,6 +128,12 @@ class MainController(QObject):
         return checkbox_data
 
 
+    def is_valid_dataframe(self, df):
+        """Check if a DataFrame is empty or contains only NA values."""
+        if df.empty or df.isna().all().all():
+            return False
+        return True
+
     def action_export_xlsx_handler(self):
         print("action_export_xlsx_handler working")
         spinbox_data = self.gather_spinbox_data()
@@ -152,19 +158,25 @@ class MainController(QObject):
 
             # Store the data in the DataFrame
             for name, value in spinbox_data.items():
-                self.data = pd.concat(
-                    [self.data, pd.DataFrame([[ name, value]], columns=[ "WidgetName", "Value"])],
-                    ignore_index=True)
+                # Create a new DataFrame to be concatenated
+                new_df = pd.DataFrame([[name, value]], columns=["WidgetName", "Value"])
+                # Check if the DataFrame is valid before concatenating
+                if self.is_valid_dataframe(new_df):
+                    self.data = pd.concat([self.data, new_df], ignore_index=True)
 
             for name, value in checkbox_data.items():
-                self.data = pd.concat(
-                    [self.data, pd.DataFrame([[ name, value]], columns=[ "WidgetName", "Value"])],
-                    ignore_index=True)
+                # Create a new DataFrame to be concatenated
+                new_df = pd.DataFrame([[name, value]], columns=["WidgetName", "Value"])
+                # Check if the DataFrame is valid before concatenating
+                if self.is_valid_dataframe(new_df):
+                    self.data = pd.concat([self.data, new_df], ignore_index=True)
 
-            for name,value in line_edits_data.items():
-                self.data = pd.concat(
-                    [self.data, pd.DataFrame([[name, value]], columns=["WidgetName", "Value"])],
-                    ignore_index=True)
+            for name, value in line_edits_data.items():
+                # Create a new DataFrame to be concatenated
+                new_df = pd.DataFrame([[name, value]], columns=["WidgetName", "Value"])
+                # Check if the DataFrame is valid before concatenating
+                if self.is_valid_dataframe(new_df):
+                    self.data = pd.concat([self.data, new_df], ignore_index=True)
 
 
             writer = pd.ExcelWriter(file_path,engine='xlsxwriter')
@@ -260,12 +272,29 @@ class MainController(QObject):
                 target_cell_empty = xl_rowcol_to_cell(last_row, target_col_empty)
 
 
+
+
                 # Create a format for right alignment
                 right_align_format = workbook.add_format({
                     'align': 'right',
                     'valign': 'vcenter',
-                    'bold': True
+                    'bold': True,
+
                 })
+
+                # Create a format for green background
+                green_bg_format = workbook.add_format({
+                    'bg_color': 'green',
+                    'bold': True,
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'border':1
+                })
+
+                # Apply the green background to the header row
+                for col_num, col_data in enumerate(df.columns):
+                    sheet.write(0, col_num, col_data, green_bg_format)
+
 
                 # Write "SUMA:" into the target cell with right alignment
                 sheet.write(target_cell_suma, "SUMA:", right_align_format)
@@ -286,13 +315,22 @@ class MainController(QObject):
                         col_idx = df.columns.get_loc(col)
                         sheet.set_column(col_idx, col_idx, None, decimal_format)
 
+                # Create a format for the body cells with borders
+                cell_format_with_border = workbook.add_format({
+                    'border': 1  # Adds a border to cells
+                })
 
+                # Apply borders to all cells except the last row
+                for row in range(1, df.shape[0]):  # Start from 1 to skip the header row
+                    for col_num in range(df.shape[1]):
+                        sheet.write(row, col_num, df.iloc[row - 1, col_num], cell_format_with_border)
 
                 # Auto-fit columns
                 sheet = writer.sheets[sheet_name]
                 for col_num, col_data in enumerate(df.columns):
                     max_length = max(df[col_data].astype(str).map(len).max(), len(col_data))
                     sheet.set_column(col_num, col_num, max_length + 2)  # Adding some padding
+
 
 
             writer._save()
