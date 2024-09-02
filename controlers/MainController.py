@@ -4,18 +4,17 @@ from xlsxwriter.utility import xl_rowcol_to_cell
 
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtWidgets import QMenu, QFileDialog
-from PyQt6.QtCore import QObject, pyqtSlot, QEvent, Qt, QMimeData
-from PyQt6.QtGui import QDrag, QDragEnterEvent, QDropEvent
+from PyQt6.QtCore import QObject, pyqtSlot, QEvent, Qt, QMimeData, QRect, QPoint
+from PyQt6.QtGui import QDrag, QDragEnterEvent, QDropEvent, QMouseEvent
 
 from model.CheckBoxItem import CheckBoxItem
-from model.DoubleSpinnBoxItem import DoubleSpinnBoxItem
-from model.GroupBox import GroupBox
-from model.Item import Item
+from model.DoubleSpinBoxItem import DoubleSpinBoxItem
+
 from model.ItemWithFormula import ItemWithFormula
 from model.LineEditItem import LineEditItem
 from model.Model import Model, Spreadsheet, db
-from model.Spreadsheet import SpreadsheetCell
-from resources.TabWidget import PropertiesWidget, TabWidget
+
+from resources.TabWidget import MyTab, TabWidget, GroupBox
 from resources.utils import letter_to_index
 from views.MainView.MainView import MainView
 import resources.constants as constants
@@ -32,7 +31,7 @@ class MainController(QObject):
         self.eventTrap = None
         self.target = None
         self.dragged_widget = None
-        self.view.installEventFilter(self)
+        self.view.setAcceptDrops(True)
 
     ############################################
 
@@ -59,32 +58,37 @@ class MainController(QObject):
 
         def add_lines(csv_path, sp_name):
             for _ in open(csv_path, encoding='utf-8'):
-                Model.add_row(name=sp_name)
-            Model.add_row(name=sp_name)
+                Model.get_spreadsheet_from_db(name=sp_name).add_row()
+            Model.get_spreadsheet_from_db(name=sp_name).add_row()
 
-        self.add_properties_tab(constants.PROPERTIES_SPREADSHEET_NAME, self.view.tabWidget)
+        self.add_new_tab(constants.PROPERTIES_SPREADSHEET_NAME, self.view.tabWidget)
 
-        self.add_spreadsheet_tab(constants.POSITION_SPREADSHEET_NAME, self.view.tabWidget)
-        self.add_spreadsheet_tab(constants.ROOF_SPREADSHEET_NAME, self.view.tabWidget)
-        self.add_spreadsheet_tab(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
-        self.add_spreadsheet_tab(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
+        self.add_new_tab(constants.POSITION_SPREADSHEET_NAME, self.view.tabWidget)
+        self.add_new_tab(constants.ROOF_SPREADSHEET_NAME, self.view.tabWidget)
+        self.add_new_tab(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
+        self.add_new_tab(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
+
+        self.add_property(constants.POSITION_SPREADSHEET_NAME,constants.POSITION_SPREADSHEET_NAME,Spreadsheet, Model.get_tab_from_db(constants.POSITION_SPREADSHEET_NAME))
+        self.add_property(constants.ROOF_SPREADSHEET_NAME,constants.ROOF_SPREADSHEET_NAME,Spreadsheet, Model.get_tab_from_db(constants.ROOF_SPREADSHEET_NAME))
+        self.add_property(constants.FOUNDATION_SPREADSHEET_NAME,constants.FOUNDATION_SPREADSHEET_NAME,Spreadsheet, Model.get_tab_from_db(constants.FOUNDATION_SPREADSHEET_NAME))
+        self.add_property(constants.INSULATION_SPREADSHEET_NAME,constants.INSULATION_SPREADSHEET_NAME,Spreadsheet, Model.get_tab_from_db(constants.INSULATION_SPREADSHEET_NAME))
 
         add_lines(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         add_lines(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
         add_lines(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
         add_lines(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
 
-        property_tab = db[constants.PROPERTIES_SPREADSHEET_NAME]
+        property_tab = Model.get_tab_from_db(constants.PROPERTIES_SPREADSHEET_NAME)
         DEAFULT_PROPERTIES = [
-            ("Powierzchnia siatki", "gridArea", DoubleSpinnBoxItem),
-            ("Długość budynku [m]", "buildingLength", DoubleSpinnBoxItem),
-            ("Szerokość budynku [m]", "buildingWidth", DoubleSpinnBoxItem),
-            ("Ilość szklanek", "glassQuantity", DoubleSpinnBoxItem),
-            ("Ścianki działowe na parterze [mb]", "groundFloorWalls", DoubleSpinnBoxItem),
-            ("Długość połaci", "roofLength", DoubleSpinnBoxItem),
-            ("Ścianki działowe na piętrze [mb]", "firstFloorWalls", DoubleSpinnBoxItem),
-            ("Wysokość ścianki kolankowej", "kneeWallHeight", DoubleSpinnBoxItem),
-            ("Wysokość ścian parteru", "groundFloorHeight", DoubleSpinnBoxItem),
+            ("Powierzchnia siatki", "gridArea", DoubleSpinBoxItem),
+            ("Długość budynku [m]", "buildingLength", DoubleSpinBoxItem),
+            ("Szerokość budynku [m]", "buildingWidth", DoubleSpinBoxItem),
+            ("Ilość szklanek", "glassQuantity", DoubleSpinBoxItem),
+            ("Ścianki działowe na parterze [mb]", "groundFloorWalls", DoubleSpinBoxItem),
+            ("Długość połaci", "roofLength", DoubleSpinBoxItem),
+            ("Ścianki działowe na piętrze [mb]", "firstFloorWalls", DoubleSpinBoxItem),
+            ("Wysokość ścianki kolankowej", "kneeWallHeight", DoubleSpinBoxItem),
+            ("Wysokość ścian parteru", "groundFloorHeight", DoubleSpinBoxItem),
 
             ("Czy dom powyżej 70m2?", "largeHouse", CheckBoxItem),
             ("Czy poddasze użytkowe?", "attic", CheckBoxItem),
@@ -109,16 +113,16 @@ class MainController(QObject):
         load_default(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
 
-        db.get("perimeter").set_item('=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2')
-        db.get("foundationArea").set_item('=PROPERTIES!buildingLength*PROPERTIES!buildingWidth')
-        db.get("rafterCount").set_item('=PROPERTIES!buildingLength/0.6')
-        db.get("rafterLength").set_item('=PROPERTIES!buildingWidth*0.9')
-        db.get("groundWallArea").set_item('=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter')
-        db.get("kneeWallArea").set_item('=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter')
-        db.get("gableArea").set_item('=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight')
-        db.get("externalWallArea").set_item('=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea')
-        db.get("eavesLenght").set_item('=IF(PROPERTIES!buildingWidth>6;0.80;0.60)')
-        db.get("spoutLength").set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
+        Model.get_from_db("perimeter").set_item('=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2')
+        Model.get_from_db("foundationArea").set_item('=PROPERTIES!buildingLength*PROPERTIES!buildingWidth')
+        Model.get_from_db("rafterCount").set_item('=PROPERTIES!buildingLength/0.6')
+        Model.get_from_db("rafterLength").set_item('=PROPERTIES!buildingWidth*0.9')
+        Model.get_from_db("groundWallArea").set_item('=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter')
+        Model.get_from_db("kneeWallArea").set_item('=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter')
+        Model.get_from_db("gableArea").set_item('=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight')
+        Model.get_from_db("externalWallArea").set_item('=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea')
+        Model.get_from_db("eavesLenght").set_item('=IF(PROPERTIES!buildingWidth>6;0.80;0.60)')
+        Model.get_from_db("spoutLength").set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
 
     def setup_connections(self):
         # Tab widget
@@ -138,7 +142,7 @@ class MainController(QObject):
 
     def gather_properties_data(self):
         data = {}
-        for name, obj in db.items():
+        for obj in Model.get_items_from_db():
             if isinstance(obj,CheckBoxItem):
                 if (obj.isChecked()):
                     data[obj.name] = 'TAK'
@@ -146,7 +150,7 @@ class MainController(QObject):
                     data[obj.name] = 'NIE'
             elif isinstance(obj,LineEditItem):
                 data[obj.name] = obj.value
-            elif isinstance(obj,DoubleSpinnBoxItem):
+            elif isinstance(obj, DoubleSpinBoxItem):
                 data[obj.name] = obj.value
         return data
 
@@ -163,7 +167,7 @@ class MainController(QObject):
             print(f"Selected directory: {directory}")
 
             sheets = {}
-            for name, obj in db.items():
+            for obj in Model.get_items_from_db():
                 if isinstance(obj,Spreadsheet):
                     sheets[obj.name] = obj
 
@@ -305,7 +309,7 @@ class MainController(QObject):
         from controlers.NewEstimateController import NewEstimateController
         self.new_estimate_cntroller = NewEstimateController(Model)
 
-    def on_action_new_property(self, widget: PropertiesWidget, index: int):
+    def on_action_new_property(self, widget: MyTab, index: int):
         from controlers.NewPropertyFormController import NewPropertyController
         self.controller = NewPropertyController(widget, index)
         self.controller.property_added.connect(self.add_property)
@@ -359,95 +363,76 @@ class MainController(QObject):
 
     ############################################
 
-    def spreadsheet_context_menu(self, pos: QtCore.QPoint):
-        widget = self.view.tabWidget.currentWidget().findChild(Spreadsheet)
-        index = widget.indexAt(pos)
+    def spreadsheet_context_menu(self, pos: QtCore.QPoint,spreadsheet: Spreadsheet):
+        index = spreadsheet.indexAt(pos)
 
         menu = QMenu()
         add_position_action = menu.addAction('Add Row')
         menu.addSeparator()
         delete_action = menu.addAction('Delete Row')
 
-        action = menu.exec(widget.mapToGlobal(pos))
+        action = menu.exec(spreadsheet.mapToGlobal(pos))
         if not action:
             return
 
         row = index.row()
         if action == add_position_action:
-            Model.add_row(row + 1, name=widget.name)
+            spreadsheet.add_row(row + 1)
         elif action == delete_action:
-            Model.remove_row(row, name=widget.name)
+            spreadsheet.remove_row(row)
 
     def tabWidget_context_menu(self, pos: QtCore.QPoint):
         global_pos = self.view.tabWidget.tabBar().mapToGlobal(pos)
-
         menu = QMenu()
-        add_spreadsheet_action = menu.addAction('Dodaj Spreadsheet_tab')
-        add_properties_action = menu.addAction('Dodaj Właściwości_tab')
+        add_tab_action = menu.addAction('Dodaj nową karte')
 
         action = menu.exec(global_pos)
-        if action == add_spreadsheet_action:
-            self.add_spreadsheet_tab("spreadsheet_tab",self.view.tabWidget)
-        elif action == add_properties_action:
-            self.add_properties_tab("properties_tab",self.view.tabWidget)
+        if action == add_tab_action:
+            self.add_new_tab("new_tab",self.view.tabWidget)
 
-    def properties_context_menu(self, pos: QtCore.QPoint):
+    def tab_context_menu(self, pos: QtCore.QPoint, tab: MyTab):
         menu = QMenu()
         add_new_property_action = menu.addAction('Dodaj właściwość')
 
-        current_widget = self.view.tabWidget.currentWidget().findChild(PropertiesWidget)
-        index = self.get_index(current_widget.scroll_area.mapTo(self.view, pos))
+        index = self.get_index(tab.mapToGlobal(pos))
 
-        action = menu.exec(current_widget.scroll_area.mapToGlobal(pos))
-
+        action = menu.exec(tab.mapToGlobal(pos))
         if action == add_new_property_action:
-            self.on_action_new_property(current_widget, index)
+            self.on_action_new_property(tab, index)
 
     ############################################
 
-    def add_spreadsheet_tab(self, name: str, parent: TabWidget):
+    def add_new_tab(self, name: str, tab_widget: TabWidget):
         if name in db:
             raise KeyError(f"Tab found with name '{name}'.")
-        new_tab = parent.add_tab(name)
-        new_table_widget = Spreadsheet(new_tab, name=name)
+        my_tab = tab_widget.add_tab(name)
 
-        new_table_widget.customContextMenuRequested.connect(self.spreadsheet_context_menu)
-        new_table_widget.textEditedSignal.connect(self.itemWithFormulaTextEdited)
-        new_table_widget.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
-        new_table_widget.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
+        my_tab.context_menu_request.connect(self.tab_context_menu)
+        my_tab.installEventFilter(self)
 
-        for index, (header_name, _) in enumerate(constants.COLUMNS):
-            item = QtWidgets.QTableWidgetItem()
-            item.setText(header_name)
-            new_table_widget.setHorizontalHeaderItem(index, item)
+        Model.add_tab_to_db(my_tab)
 
-        Model.add_item(new_table_widget)
-
-    def add_properties_tab(self, name: str, parent: TabWidget):
-        if name in db:
-            raise KeyError(f"Tab found with name '{name}'.")
-        new_tab = parent.add_tab(name)
-        new_properties_widget = PropertiesWidget(new_tab, name=name)
-
-        new_properties_widget.scroll_area.customContextMenuRequested.connect(self.properties_context_menu)
-
-        Model.add_item(new_properties_widget)
-
-    def add_property(self, label_text: str, item_name: str, item_type, parent: PropertiesWidget, index: int = 0):
-        if item_name in db:
-            raise KeyError(f"property found with name '{item_name}'.")
+    def add_property(self, label_text: str, item_name: str, item_type, my_tab: MyTab, index: int = 0):
         if item_type is None:
-            return
-        tmp = GroupBox(label_text, item_name, item_type, index, parent.scrollAreaWidgetContents)
+            raise KeyError(f"Missing item_type.")
+        tmp = GroupBox(label_text, item_name, item_type, my_tab)
 
-        if isinstance(tmp.item, (DoubleSpinnBoxItem,CheckBoxItem)):
+        if isinstance(tmp.item, (DoubleSpinBoxItem, CheckBoxItem)):
             tmp.item.activeItemChangedSignal.connect(self.activeItemChanged)
         elif isinstance(tmp.item, LineEditItem):
             tmp.item.textEditedSignal.connect(self.itemWithFormulaTextEdited)
             tmp.item.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
             tmp.item.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
-
-        Model.add_item(tmp.item)
+        elif isinstance(tmp.item, Spreadsheet):
+            tmp.item.context_menu_request.connect(self.spreadsheet_context_menu)
+            tmp.item.textEditedSignal.connect(self.itemWithFormulaTextEdited)
+            tmp.item.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
+            tmp.item.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
+            for i, (header_name, _) in enumerate(constants.COLUMNS):
+                item = QtWidgets.QTableWidgetItem()
+                item.setText(header_name)
+                tmp.item.setHorizontalHeaderItem(i, item)
+        my_tab.add_group_box(tmp, index)
 
     ############################################
 
@@ -464,32 +449,32 @@ class MainController(QObject):
             self.dropEvent(event)
         return super().eventFilter(watched, event)
 
-    def get_index(self, global_pos):
+    def get_index(self, pos):
         """Return the index of the widget under the given global position."""
-        current_widget = self.view.tabWidget.currentWidget().findChild(PropertiesWidget)
+        current_widget = self.view.tabWidget.currentWidget()
 
-        if not isinstance(current_widget, PropertiesWidget):
+        if not isinstance(current_widget, MyTab):
             return None
 
-        for i in range(current_widget.scroll_vertical_layout.count()):
-            widget = current_widget.scroll_vertical_layout.itemAt(i).widget()
+        for i in range(current_widget.scroll_area_content.layout().count()):
+            widget = current_widget.scroll_area_content.layout().itemAt(i).widget()
 
-            top_left = widget.mapTo(self.view, widget.rect().topLeft())
-            bottom_right = widget.mapTo(self.view, widget.rect().bottomRight())
+            top_left = widget.mapToGlobal(widget.rect().topLeft())
+            bottom_right = widget.mapToGlobal(widget.rect().bottomRight())
 
             widget_rect = QtCore.QRect(top_left, bottom_right)
 
-            if widget_rect.contains(global_pos):
+            if widget_rect.contains(pos):
                 # print(f"Selected target index: {i}")
                 return i
 
         return None
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             if self.eventTrap is None:
                 self.eventTrap = event
-                self.target = self.get_index(event.pos())
+                self.target = self.get_index(event.globalPosition().toPoint())
             elif self.eventTrap == event:
                 pass
             else:
@@ -499,9 +484,9 @@ class MainController(QObject):
 
     def mouseMoveEvent(self, event):
         if event.buttons() & Qt.MouseButton.LeftButton and self.target is not None:
-            current_widget = self.view.tabWidget.currentWidget().findChild(PropertiesWidget)
+            current_widget = self.view.tabWidget.currentWidget()
 
-            self.dragged_widget = current_widget.scroll_vertical_layout.itemAt(self.target).widget()
+            self.dragged_widget = current_widget.scroll_area_content.layout().itemAt(self.target).widget()
 
             drag = QDrag(self.dragged_widget)
             pix = self.dragged_widget.grab()
@@ -511,7 +496,8 @@ class MainController(QObject):
             drag.setMimeData(mimedata)
 
             drag.setPixmap(pix)
-            local_pos = event.pos() - self.dragged_widget.mapTo(self.view, self.dragged_widget.rect().topLeft())
+
+            local_pos = event.globalPosition().toPoint() - self.dragged_widget.mapToGlobal(self.dragged_widget.rect().topLeft())
             drag.setHotSpot(local_pos)
 
             self.dragged_widget.setVisible(False)
@@ -532,20 +518,20 @@ class MainController(QObject):
             event.ignore()
 
     def dropEvent(self, event: QDropEvent):
-        drop_position = event.position().toPoint()
-        current_widget = self.view.tabWidget.currentWidget().findChild(PropertiesWidget)
+        current_widget = self.view.tabWidget.currentWidget()
+        drop_position = current_widget.mapToGlobal(event.position().toPoint())
 
-        widget_count = current_widget.scroll_vertical_layout.count()
+        widget_count = current_widget.scroll_area_content.layout().count()
         if widget_count == 0:
             target_index = 0
         else:
             target_index = widget_count - 1
 
             for i in range(widget_count):
-                widget = current_widget.scroll_vertical_layout.itemAt(i).widget()
+                widget = current_widget.scroll_area_content.layout().itemAt(i).widget()
 
-                top_left = widget.mapTo(self.view, widget.rect().topLeft())
-                bottom_right = widget.mapTo(self.view, widget.rect().bottomRight())
+                top_left = widget.mapToGlobal(widget.rect().topLeft())
+                bottom_right = widget.mapToGlobal(widget.rect().bottomRight())
 
                 if drop_position.y() <= top_left.y() and i == 0:
                     target_index = 0
@@ -554,7 +540,8 @@ class MainController(QObject):
                     target_index = i
                     break
 
-        current_widget.scroll_vertical_layout.insertWidget(target_index, self.dragged_widget)
+        current_widget.scroll_area_content.layout().insertWidget(target_index, self.dragged_widget)
 
         self.target = None
         self.eventTrap = None
+

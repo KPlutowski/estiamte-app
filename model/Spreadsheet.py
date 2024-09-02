@@ -63,8 +63,9 @@ class Spreadsheet(QTableWidget):
     textEditedSignal = pyqtSignal(object,str)
     textEditingFinishedSignal = pyqtSignal(object)
     activeItemChangedSignal = pyqtSignal(object)
+    context_menu_request = pyqtSignal(QtCore.QPoint, object)
 
-    def __init__(self, parent, name, *args, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.worksheet: List[List[SpreadsheetCell]] = [[SpreadsheetCell() for _ in range(self.columnCount())] for _ in
                                                        range(0)]
@@ -73,12 +74,18 @@ class Spreadsheet(QTableWidget):
         self.delegate.text_edited_signal.connect(self.text_edited)
         self.delegate.commitData.connect(self.editing_finished)
         self.currentCellChanged.connect(self.active_cell_changed)
-        self.name = name
+        self.customContextMenuRequested.connect(self.context_menu)
         self.initUI()
+
+    def context_menu(self,pos):
+        self.context_menu_request.emit(pos, self)
+
+    @property
+    def name(self):
+        return self.objectName()
 
     def initUI(self):
         self.setObjectName(self.name)
-        self.parent().layout().addWidget(self)
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.setAlternatingRowColors(True)

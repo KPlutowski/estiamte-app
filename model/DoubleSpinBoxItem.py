@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QDoubleSpinBox
 from model.Item import Item
 
 
-class DoubleSpinnBoxItem(Item, QDoubleSpinBox):
+class DoubleSpinBoxItem(Item, QDoubleSpinBox):
     def __init__(self, parent):
         super().__init__()
         self.set_item(0.0)

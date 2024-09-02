@@ -1,10 +1,11 @@
-from typing import List, Optional, Dict, Set, Union
+from typing import List, Optional, Dict, Set, Union, Any
 from collections import deque, defaultdict
 
 from model.Enums import ErrorType
 from model.Item import Item
 from model.ItemWithFormula import ItemWithFormula
 from model.Spreadsheet import Spreadsheet, SpreadsheetCell
+from resources.TabWidget import MyTab, TabWidget
 from resources.utils import parse_cell_reference, parse_cell_range, is_convertible_to_float
 
 
@@ -18,13 +19,6 @@ class Model:
     @staticmethod
     def get_active_item() -> ItemWithFormula:
         return Model.__active_item
-
-    @staticmethod
-    def add_item(item):
-        if item.name not in db:
-            db[item.name] = item
-        else:
-            raise NameError(f'!!ERROR AT Model.add_item, name:{item.objectName()}!!')
 
     @staticmethod
     def calculate_dirty_items():
@@ -87,37 +81,17 @@ class Model:
         assert not dirty_items, "Some cells are still marked as dirty after calculation."
 
     @staticmethod
-    def get_spreadsheet(name) -> Spreadsheet:
-        if name in db:
-            if isinstance(db[name], Spreadsheet):
-                return db[name]
-        return None
-
-    @staticmethod
-    def add_row(index=None, text: Optional[List[str]] = None, name=None):
-        if name in db:
-            db[name].add_row(index, text)
-
-    @staticmethod
-    def remove_row(index=None, name=None):
-        if name in db:
-            db[name].remove_row(index)
-
-    @staticmethod
     def get_cell(row_or_address: Union[int, str], column: Optional[int] = None,
                  name_of_spreadsheet: Optional[str] = None) -> Optional[SpreadsheetCell]:
         # If column is not None, it means we're using row and column parameters
         if column is not None and name_of_spreadsheet is not None:
             if name_of_spreadsheet in db:
-                return db[name_of_spreadsheet].get_cell(row_or_address, column)
+                return Model.get_spreadsheet_from_db(name_of_spreadsheet).get_cell(row_or_address, column)
 
         # If column is None, we assume we're using the address format
         elif isinstance(row_or_address, str):
             sheet_name, row_number, col_number = parse_cell_reference(row_or_address)
-            if sheet_name in db:
-                if 0 <= row_number < db[sheet_name].rowCount():
-                    if 0 <= col_number < db[sheet_name].columnCount():
-                        return db[sheet_name].get_cell(row_number, col_number)
+            return Model.get_spreadsheet_from_db(sheet_name).get_cell(row_number, col_number)
         return None
 
     @staticmethod
@@ -149,11 +123,12 @@ class Model:
         name = address[len('PROPERTIES!'):]
         if not name:
             return None
-        return db.get(name)
+        return Model.get_from_db(name)
 
     @staticmethod
     def evaluate_formula(formula: str) -> str:
         return str(eval(formula))
+    #########################################
 
     @staticmethod
     def sum_function(cells: List['SpreadsheetCell']) -> float:
@@ -174,6 +149,66 @@ class Model:
         else:
             return value_if_false
 
+    #########################################
+
+    @staticmethod
+    def add_tab_to_db(item: MyTab):
+        if item.name in db:
+            raise NameError(f'TabWidget found with name {item.objectName()}!!')
+        db[item.name] = item
+
+
+    @staticmethod
+    def get_tab_from_db(name: str) -> MyTab:
+        for tab_name, tab in db.items():
+            if tab_name == name:
+                return tab
+        return None
+
+    @staticmethod
+    def get_tabs_from_db() -> list[MyTab]:
+        list = []
+        for tab_name, tab in db.items():
+            list.append(tab)
+        return list
+
+    @staticmethod
+    def get_item_from_db(name: str):
+        for tab_name, tab in db.items():
+            for gb_name, group_box in tab.group_boxes.items():
+                if group_box.item.name == name:
+                    return group_box.item
+        return None
+
+    @staticmethod
+    def get_spreadsheet_from_db(name: str) -> Spreadsheet:
+        for tab_name, tab in db.items():
+            for gb_name, group_box in tab.group_boxes.items():
+                if group_box.item.name == name and isinstance(group_box.item,Spreadsheet):
+                    return group_box.item
+        return None
+
+    @staticmethod
+    def get_items_from_db() -> list[Any]:
+        list = []
+        for tab_name, tab in db.items():
+            for gb_name, group_box in tab.group_boxes.items():
+                list.append(group_box.item)
+        return list
+
+    @staticmethod
+    def get_from_db(name: str):
+        for tab_name, tab in db.items():
+            if tab_name == name:
+                return tab
+            else:
+                for gb_name, group_box in tab.group_boxes.items():
+                    if gb_name == name:
+                        return group_box
+                    elif group_box.item.name == name:
+                        return group_box.item
+        return None
+
 
 dirty_items: Set[Item] = set()
-db: Dict[str, any] = {}
+db: Dict[str, MyTab] = {}

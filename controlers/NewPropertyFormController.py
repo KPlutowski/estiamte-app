@@ -1,25 +1,25 @@
 from PyQt6.QtCore import pyqtSignal, QObject
 
 from model.ItemModel import ItemModel
-from resources.TabWidget import PropertiesWidget
+from resources.TabWidget import MyTab
 from views.NewPropertyFormView.NewPropertyFormView import NewPropertyFormView
 
 
 class NewPropertyController(QObject):
-    property_added = pyqtSignal(str, str, object, PropertiesWidget,int)
+    property_added = pyqtSignal(str, str, object, MyTab, int)
 
-    def __init__(self, widget: PropertiesWidget, index: int):
+    def __init__(self, widget: MyTab, index: int):
         super().__init__()
         self.model = ItemModel()
         self.view = NewPropertyFormView()
         self.widget = widget
-        self.index = index
+        self.index = index if index is not None else 0
 
         self.setup_ui()
         self.setup_connections()
 
     def setup_ui(self):
-        self.view.item_type_ComboBox.addItems(self.model.get_item_types())
+        self.view.item_type_ComboBox.addItems(ItemModel.get_item_types())
 
     def setup_connections(self):
         self.view.buttonBox.accepted.connect(self.handle_ok)
@@ -30,7 +30,7 @@ class NewPropertyController(QObject):
         label_text = self.view.label_text_LineEdit.text().strip()
         item_type = self.view.item_type_ComboBox.currentText()
 
-        if item_name and label_text:
+        if item_name:
             item_class = self.model.get_item_class(item_type)
             if item_class:
                 self.property_added.emit(label_text, item_name, item_class, self.widget, self.index)
