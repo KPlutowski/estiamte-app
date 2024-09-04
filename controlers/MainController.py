@@ -28,11 +28,6 @@ class MainController(QObject):
         self.default_data()
         self.data = pd.DataFrame(columns=["WidgetName", "Value"])  # Initialize the DataFrame
 
-        self.eventTrap = None
-        self.target = None
-        self.dragged_widget = None
-        self.view.setAcceptDrops(True)
-
     ############################################
 
     def default_data(self):
@@ -58,8 +53,8 @@ class MainController(QObject):
 
         def add_lines(csv_path, sp_name):
             for _ in open(csv_path, encoding='utf-8'):
-                Model.get_spreadsheet_from_db(name=sp_name).add_row()
-            Model.get_spreadsheet_from_db(name=sp_name).add_row()
+                Model.find_spreadsheet(name=sp_name).add_row()
+            Model.find_spreadsheet(name=sp_name).add_row()
 
         self.add_new_tab(constants.PROPERTIES_SPREADSHEET_NAME, self.view.tabWidget)
 
@@ -68,17 +63,17 @@ class MainController(QObject):
         self.add_new_tab(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
         self.add_new_tab(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
 
-        self.add_property(constants.POSITION_SPREADSHEET_NAME,constants.POSITION_SPREADSHEET_NAME,Spreadsheet, Model.get_tab_from_db(constants.POSITION_SPREADSHEET_NAME))
-        self.add_property(constants.ROOF_SPREADSHEET_NAME,constants.ROOF_SPREADSHEET_NAME,Spreadsheet, Model.get_tab_from_db(constants.ROOF_SPREADSHEET_NAME))
-        self.add_property(constants.FOUNDATION_SPREADSHEET_NAME,constants.FOUNDATION_SPREADSHEET_NAME,Spreadsheet, Model.get_tab_from_db(constants.FOUNDATION_SPREADSHEET_NAME))
-        self.add_property(constants.INSULATION_SPREADSHEET_NAME,constants.INSULATION_SPREADSHEET_NAME,Spreadsheet, Model.get_tab_from_db(constants.INSULATION_SPREADSHEET_NAME))
+        self.add_property(constants.POSITION_SPREADSHEET_NAME, constants.POSITION_SPREADSHEET_NAME, Spreadsheet, Model.find_tab(constants.POSITION_SPREADSHEET_NAME))
+        self.add_property(constants.ROOF_SPREADSHEET_NAME, constants.ROOF_SPREADSHEET_NAME, Spreadsheet, Model.find_tab(constants.ROOF_SPREADSHEET_NAME))
+        self.add_property(constants.FOUNDATION_SPREADSHEET_NAME, constants.FOUNDATION_SPREADSHEET_NAME, Spreadsheet, Model.find_tab(constants.FOUNDATION_SPREADSHEET_NAME))
+        self.add_property(constants.INSULATION_SPREADSHEET_NAME, constants.INSULATION_SPREADSHEET_NAME, Spreadsheet, Model.find_tab(constants.INSULATION_SPREADSHEET_NAME))
 
         add_lines(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         add_lines(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
         add_lines(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
         add_lines(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
 
-        property_tab = Model.get_tab_from_db(constants.PROPERTIES_SPREADSHEET_NAME)
+        property_tab = Model.find_tab(constants.PROPERTIES_SPREADSHEET_NAME)
         DEAFULT_PROPERTIES = [
             ("Powierzchnia siatki", "gridArea", DoubleSpinBoxItem),
             ("Długość budynku [m]", "buildingLength", DoubleSpinBoxItem),
@@ -113,16 +108,16 @@ class MainController(QObject):
         load_default(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
 
-        Model.get_from_db("perimeter").set_item('=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2')
-        Model.get_from_db("foundationArea").set_item('=PROPERTIES!buildingLength*PROPERTIES!buildingWidth')
-        Model.get_from_db("rafterCount").set_item('=PROPERTIES!buildingLength/0.6')
-        Model.get_from_db("rafterLength").set_item('=PROPERTIES!buildingWidth*0.9')
-        Model.get_from_db("groundWallArea").set_item('=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter')
-        Model.get_from_db("kneeWallArea").set_item('=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter')
-        Model.get_from_db("gableArea").set_item('=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight')
-        Model.get_from_db("externalWallArea").set_item('=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea')
-        Model.get_from_db("eavesLenght").set_item('=IF(PROPERTIES!buildingWidth>6;0.80;0.60)')
-        Model.get_from_db("spoutLength").set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
+        Model.find_by_name("perimeter").set_item('=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2')
+        Model.find_by_name("foundationArea").set_item('=PROPERTIES!buildingLength*PROPERTIES!buildingWidth')
+        Model.find_by_name("rafterCount").set_item('=PROPERTIES!buildingLength/0.6')
+        Model.find_by_name("rafterLength").set_item('=PROPERTIES!buildingWidth*0.9')
+        Model.find_by_name("groundWallArea").set_item('=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter')
+        Model.find_by_name("kneeWallArea").set_item('=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter')
+        Model.find_by_name("gableArea").set_item('=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight')
+        Model.find_by_name("externalWallArea").set_item('=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea')
+        Model.find_by_name("eavesLenght").set_item('=IF(PROPERTIES!buildingWidth>6;0.80;0.60)')
+        Model.find_by_name("spoutLength").set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
 
     def setup_connections(self):
         # Tab widget
@@ -142,7 +137,7 @@ class MainController(QObject):
 
     def gather_properties_data(self):
         data = {}
-        for obj in Model.get_items_from_db():
+        for obj in Model.list_all_items():
             if isinstance(obj,CheckBoxItem):
                 if (obj.isChecked()):
                     data[obj.name] = 'TAK'
@@ -167,7 +162,7 @@ class MainController(QObject):
             print(f"Selected directory: {directory}")
 
             sheets = {}
-            for obj in Model.get_items_from_db():
+            for obj in Model.list_all_items():
                 if isinstance(obj,Spreadsheet):
                     sheets[obj.name] = obj
 
@@ -359,6 +354,8 @@ class MainController(QObject):
 
     @pyqtSlot(int)
     def on_tab_changed(self, index: int):
+        if Model.find_by_name(self.view.tabWidget.widget(index).objectName()) is not None:
+            print(Model.find_by_name(self.view.tabWidget.widget(index).objectName()).group_boxes)
         pass
 
     ############################################

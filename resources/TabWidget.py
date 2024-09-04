@@ -1,7 +1,7 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer, QMimeData, QPoint
+from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint
 from PyQt6.QtGui import QMouseEvent, QDrag, QDropEvent, QDragEnterEvent
 from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel
 
@@ -136,6 +136,7 @@ class MyTab(QWidget):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent):
+        from model.Model import Model
         drop_position = self.mapToGlobal(event.position().toPoint())
         layout = self.scroll_area_content_layout
 
@@ -151,6 +152,10 @@ class MyTab(QWidget):
 
         # Add the dragged widget to the new position
         dragged_widget = self.parent().parent().dragged_widget
+
+        Model.remove_item(dragged_widget.name)
+        self.group_boxes[dragged_widget.name] = dragged_widget
+
         layout.insertWidget(target_index, dragged_widget)
         event.acceptProposedAction()
 
@@ -159,14 +164,11 @@ class TabWidget(QTabWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUI()
-        self.dragged_widget = None
-        self.tabBar().installEventFilter(self)
-        self.tabBar().setMouseTracking(True)
-        self.MSEC_HOVER_DELAY_TIME = 700
-        self.hover_timer = QTimer(self)
-        self.hover_timer.setSingleShot(True)
-        self.hover_timer.timeout.connect(self.switch_to_hovered_tab)
-        self.hovered_tab_index = -1
+        self.dragged_widget: Optional[GroupBox] = None
+
+        self.setAcceptDrops(True)
+        self.tabBar().setChangeCurrentOnDrag(True)
+        self.tabBar().setAcceptDrops(True)
 
     def initUI(self):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -189,21 +191,3 @@ class TabWidget(QTabWidget):
             if widget.objectName() == name:
                 return widget.children()[0]
         return None
-
-    def eventFilter(self, watched, event: QEvent):
-        if watched == self.tabBar():
-            if event.type() == QEvent.Type.HoverMove:
-                tab_index = self.tabBar().tabAt(event.position().toPoint())
-                if tab_index != self.hovered_tab_index:
-                    self.hovered_tab_index = tab_index
-                    self.hover_timer.start(self.MSEC_HOVER_DELAY_TIME)
-
-            elif event.type() == QEvent.Type.HoverLeave:
-                self.hover_timer.stop()
-                self.hovered_tab_index = -1
-
-        return super().eventFilter(watched, event)
-
-    def switch_to_hovered_tab(self):
-        if self.hovered_tab_index != -1:
-            self.setCurrentIndex(self.hovered_tab_index)

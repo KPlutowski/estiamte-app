@@ -5,7 +5,7 @@ from model.Enums import ErrorType
 from model.Item import Item
 from model.ItemWithFormula import ItemWithFormula
 from model.Spreadsheet import Spreadsheet, SpreadsheetCell
-from resources.TabWidget import MyTab, TabWidget
+from resources.TabWidget import MyTab, TabWidget, GroupBox
 from resources.utils import parse_cell_reference, parse_cell_range, is_convertible_to_float
 
 
@@ -86,12 +86,12 @@ class Model:
         # If column is not None, it means we're using row and column parameters
         if column is not None and name_of_spreadsheet is not None:
             if name_of_spreadsheet in db:
-                return Model.get_spreadsheet_from_db(name_of_spreadsheet).get_cell(row_or_address, column)
+                return Model.find_spreadsheet(name_of_spreadsheet).get_cell(row_or_address, column)
 
         # If column is None, we assume we're using the address format
         elif isinstance(row_or_address, str):
             sheet_name, row_number, col_number = parse_cell_reference(row_or_address)
-            return Model.get_spreadsheet_from_db(sheet_name).get_cell(row_number, col_number)
+            return Model.find_spreadsheet(sheet_name).get_cell(row_number, col_number)
         return None
 
     @staticmethod
@@ -123,7 +123,7 @@ class Model:
         name = address[len('PROPERTIES!'):]
         if not name:
             return None
-        return Model.get_from_db(name)
+        return Model.find_by_name(name)
 
     @staticmethod
     def evaluate_formula(formula: str) -> str:
@@ -152,62 +152,76 @@ class Model:
     #########################################
 
     @staticmethod
-    def add_tab_to_db(item: MyTab):
+    def add_tab_to_db(item: MyTab) -> None:
         if item.name in db:
-            raise NameError(f'TabWidget found with name {item.objectName()}!!')
+            raise NameError(f'TabWidget found with name {item.name}')
         db[item.name] = item
 
+    @staticmethod
+    def find_tab(name: str) -> Optional[MyTab]:
+        return db.get(name)
 
     @staticmethod
-    def get_tab_from_db(name: str) -> MyTab:
-        for tab_name, tab in db.items():
-            if tab_name == name:
-                return tab
-        return None
+    def list_all_tabs() -> list[MyTab]:
+        return list(db.values())
 
     @staticmethod
-    def get_tabs_from_db() -> list[MyTab]:
-        list = []
-        for tab_name, tab in db.items():
-            list.append(tab)
-        return list
-
-    @staticmethod
-    def get_item_from_db(name: str):
-        for tab_name, tab in db.items():
-            for gb_name, group_box in tab.group_boxes.items():
+    def find_item(name: str) -> Optional[Item]:
+        for tab in db.values():
+            for group_box in tab.group_boxes.values():
                 if group_box.item.name == name:
                     return group_box.item
         return None
 
     @staticmethod
-    def get_spreadsheet_from_db(name: str) -> Spreadsheet:
-        for tab_name, tab in db.items():
-            for gb_name, group_box in tab.group_boxes.items():
-                if group_box.item.name == name and isinstance(group_box.item,Spreadsheet):
+    def find_spreadsheet(name: str) -> Optional[Spreadsheet]:
+        for tab in db.values():
+            for group_box in tab.group_boxes.values():
+                if group_box.item.name == name and isinstance(group_box.item, Spreadsheet):
                     return group_box.item
         return None
 
     @staticmethod
-    def get_items_from_db() -> list[Any]:
-        list = []
-        for tab_name, tab in db.items():
-            for gb_name, group_box in tab.group_boxes.items():
-                list.append(group_box.item)
-        return list
+    def list_all_items() -> list[Any]:
+        return [group_box.item for tab in db.values() for group_box in tab.group_boxes.values()]
 
     @staticmethod
-    def get_from_db(name: str):
-        for tab_name, tab in db.items():
-            if tab_name == name:
+    def find_by_name(name: str) -> Optional[Union[MyTab, GroupBox, Item]]:
+        for tab in db.values():
+            if tab.name == name:
                 return tab
-            else:
-                for gb_name, group_box in tab.group_boxes.items():
-                    if gb_name == name:
-                        return group_box
-                    elif group_box.item.name == name:
-                        return group_box.item
+            for group_box in tab.group_boxes.values():
+                if group_box.name == name or group_box.item.name == name:
+                    return group_box if group_box.name == name else group_box.item
         return None
+
+    @staticmethod
+    def remove_tab(name: str) -> Optional[MyTab]:
+        return db.pop(name, None)
+
+    @staticmethod
+    def remove_item(name: str) -> Optional[GroupBox]:
+        for tab in db.values():
+            group_box = tab.group_boxes.pop(name, None)
+            if group_box:
+                return group_box
+        return None
+
+    @staticmethod
+    def update_tab(name: str, updated_tab: MyTab) -> None:
+        if name not in db:
+            raise KeyError(f'TabWidget with name {name} not found')
+        db[name] = updated_tab
+
+    @staticmethod
+    def update_item(tab_name: str, item_name: str, updated_item: Item) -> None:
+        tab = db.get(tab_name)
+        if tab:
+            for group_box in tab.group_boxes.values():
+                if group_box.item.name == item_name:
+                    group_box.item = updated_item
+                    return
+        raise KeyError(f'Item with name {item_name} not found in tab {tab_name}')
 
 
 dirty_items: Set[Item] = set()
