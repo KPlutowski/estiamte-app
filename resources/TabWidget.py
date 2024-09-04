@@ -1,7 +1,8 @@
 from typing import Dict
 
 from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer, QMimeData, QPoint
+from PyQt6.QtGui import QMouseEvent, QDrag, QDropEvent, QDragEnterEvent
 from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel
 
 from model.ItemModel import ItemModel
@@ -9,9 +10,11 @@ from model.ItemModel import ItemModel
 
 class GroupBox(QWidget):
     context_menu_request = pyqtSignal(QtCore.QPoint, object)
+    drag_started = pyqtSignal(QWidget)
 
     def __init__(self, label_text="", item_name="", item_type=None, parent: QWidget = None):
         super().__init__(parent=parent)
+        self.drag_start_position: QPoint
         self.label = QLabel(parent=self)
         self.label.setText(label_text)
 
@@ -44,6 +47,33 @@ class GroupBox(QWidget):
     @property
     def name(self):
         return self.objectName()
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_start_position = event.globalPosition().toPoint()
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            distance = (event.globalPosition().toPoint() - self.drag_start_position).manhattanLength()
+            if distance >= QtWidgets.QApplication.startDragDistance():
+                self.start_drag()
+
+    def start_drag(self):
+        drag = QDrag(self)
+        mime_data = QMimeData()
+        drag.setMimeData(mime_data)
+
+        pixmap = self.grab()
+        drag.setPixmap(pixmap)
+
+        local_pos = self.drag_start_position - self.mapToGlobal(self.rect().topLeft())
+
+        drag.setHotSpot(local_pos)
+
+        self.drag_started.emit(self)
+        self.setVisible(False)
+        drag.exec(Qt.DropAction.MoveAction)
+        self.setVisible(True)
 
 
 class MyTab(QWidget):
@@ -101,16 +131,38 @@ class MyTab(QWidget):
         layout.insertWidget(index, group_box)
         self.group_boxes[group_box.name] = group_box
 
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        drop_position = self.mapToGlobal(event.position().toPoint())
+        layout = self.scroll_area_content_layout
+
+        target_index = layout.count()-1
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+
+            top_left = widget.mapToGlobal(widget.rect().topLeft())
+
+            if drop_position.y() < top_left.y():
+                target_index = i
+                break
+
+        # Add the dragged widget to the new position
+        dragged_widget = self.parent().parent().dragged_widget
+        layout.insertWidget(target_index, dragged_widget)
+        event.acceptProposedAction()
+
 
 class TabWidget(QTabWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUI()
-
+        self.dragged_widget = None
         self.tabBar().installEventFilter(self)
         self.tabBar().setMouseTracking(True)
-
-        self.HOVER_DELAY_TIME = 700
+        self.MSEC_HOVER_DELAY_TIME = 700
         self.hover_timer = QTimer(self)
         self.hover_timer.setSingleShot(True)
         self.hover_timer.timeout.connect(self.switch_to_hovered_tab)
@@ -144,7 +196,7 @@ class TabWidget(QTabWidget):
                 tab_index = self.tabBar().tabAt(event.position().toPoint())
                 if tab_index != self.hovered_tab_index:
                     self.hovered_tab_index = tab_index
-                    self.hover_timer.start(self.HOVER_DELAY_TIME)
+                    self.hover_timer.start(self.MSEC_HOVER_DELAY_TIME)
 
             elif event.type() == QEvent.Type.HoverLeave:
                 self.hover_timer.stop()

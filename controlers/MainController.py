@@ -416,6 +416,7 @@ class MainController(QObject):
         if item_type is None:
             raise KeyError(f"Missing item_type.")
         tmp = GroupBox(label_text, item_name, item_type, my_tab)
+        tmp.drag_started.connect(self.on_drag_started)
 
         if isinstance(tmp.item, (DoubleSpinBoxItem, CheckBoxItem)):
             tmp.item.activeItemChangedSignal.connect(self.activeItemChanged)
@@ -436,18 +437,8 @@ class MainController(QObject):
 
     ############################################
 
-    def eventFilter(self, watched, event: QEvent):
-        if event.type() == QEvent.Type.MouseButtonPress:
-            self.mousePressEvent(event)
-        elif event.type() == QEvent.Type.MouseMove:
-            self.mouseMoveEvent(event)
-        elif event.type() == QEvent.Type.MouseButtonRelease:
-            self.mouseReleaseEvent(event)
-        elif event.type() == QEvent.Type.DragEnter:
-            self.dragEnterEvent(event)
-        elif event.type() == QEvent.Type.Drop:
-            self.dropEvent(event)
-        return super().eventFilter(watched, event)
+    def on_drag_started(self, widget: GroupBox):
+        self.view.tabWidget.dragged_widget = widget
 
     def get_index(self, pos):
         """Return the index of the widget under the given global position."""
@@ -465,83 +456,6 @@ class MainController(QObject):
             widget_rect = QtCore.QRect(top_left, bottom_right)
 
             if widget_rect.contains(pos):
-                # print(f"Selected target index: {i}")
                 return i
 
         return None
-
-    def mousePressEvent(self, event: QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            if self.eventTrap is None:
-                self.eventTrap = event
-                self.target = self.get_index(event.globalPosition().toPoint())
-            elif self.eventTrap == event:
-                pass
-            else:
-                print("Something broke")
-        else:
-            self.target = None
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.MouseButton.LeftButton and self.target is not None:
-            current_widget = self.view.tabWidget.currentWidget()
-
-            self.dragged_widget = current_widget.scroll_area_content.layout().itemAt(self.target).widget()
-
-            drag = QDrag(self.dragged_widget)
-            pix = self.dragged_widget.grab()
-
-            mimedata = QMimeData()
-            mimedata.setImageData(pix)
-            drag.setMimeData(mimedata)
-
-            drag.setPixmap(pix)
-
-            local_pos = event.globalPosition().toPoint() - self.dragged_widget.mapToGlobal(self.dragged_widget.rect().topLeft())
-            drag.setHotSpot(local_pos)
-
-            self.dragged_widget.setVisible(False)
-            drag.exec()
-            self.dragged_widget.setVisible(True)
-
-            self.target = None
-            self.dragged_widget = None
-
-    def mouseReleaseEvent(self, event):
-        self.eventTrap = None
-        self.target = None
-
-    def dragEnterEvent(self, event: QDragEnterEvent):
-        if event.mimeData().hasImage():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event: QDropEvent):
-        current_widget = self.view.tabWidget.currentWidget()
-        drop_position = current_widget.mapToGlobal(event.position().toPoint())
-
-        widget_count = current_widget.scroll_area_content.layout().count()
-        if widget_count == 0:
-            target_index = 0
-        else:
-            target_index = widget_count - 1
-
-            for i in range(widget_count):
-                widget = current_widget.scroll_area_content.layout().itemAt(i).widget()
-
-                top_left = widget.mapToGlobal(widget.rect().topLeft())
-                bottom_right = widget.mapToGlobal(widget.rect().bottomRight())
-
-                if drop_position.y() <= top_left.y() and i == 0:
-                    target_index = 0
-                    break
-                elif drop_position.y() <= bottom_right.y():
-                    target_index = i
-                    break
-
-        current_widget.scroll_area_content.layout().insertWidget(target_index, self.dragged_widget)
-
-        self.target = None
-        self.eventTrap = None
-
