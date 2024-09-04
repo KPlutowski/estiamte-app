@@ -1,8 +1,8 @@
 from typing import Dict
 
 from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal
-from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QGroupBox, QLabel, QMenu
+from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
+from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel
 
 from model.ItemModel import ItemModel
 
@@ -107,6 +107,15 @@ class TabWidget(QTabWidget):
         super().__init__(parent)
         self.initUI()
 
+        self.tabBar().installEventFilter(self)
+        self.tabBar().setMouseTracking(True)
+
+        self.HOVER_DELAY_TIME = 700
+        self.hover_timer = QTimer(self)
+        self.hover_timer.setSingleShot(True)
+        self.hover_timer.timeout.connect(self.switch_to_hovered_tab)
+        self.hovered_tab_index = -1
+
     def initUI(self):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setTabPosition(QtWidgets.QTabWidget.TabPosition.South)
@@ -128,3 +137,21 @@ class TabWidget(QTabWidget):
             if widget.objectName() == name:
                 return widget.children()[0]
         return None
+
+    def eventFilter(self, watched, event: QEvent):
+        if watched == self.tabBar():
+            if event.type() == QEvent.Type.HoverMove:
+                tab_index = self.tabBar().tabAt(event.position().toPoint())
+                if tab_index != self.hovered_tab_index:
+                    self.hovered_tab_index = tab_index
+                    self.hover_timer.start(self.HOVER_DELAY_TIME)
+
+            elif event.type() == QEvent.Type.HoverLeave:
+                self.hover_timer.stop()
+                self.hovered_tab_index = -1
+
+        return super().eventFilter(watched, event)
+
+    def switch_to_hovered_tab(self):
+        if self.hovered_tab_index != -1:
+            self.setCurrentIndex(self.hovered_tab_index)
