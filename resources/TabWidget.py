@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
 from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent
+from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent, QSize
 from PyQt6.QtGui import QMouseEvent, QDrag, QDropEvent, QDragEnterEvent
 from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel, QInputDialog, QLineEdit, \
     QSplitter
@@ -177,6 +177,16 @@ class MyTab(QWidget):
             self.splitter.addWidget(dragged_widget)
 
         event.acceptProposedAction()
+
+    def reset_spliter(self):
+        widget_count = self.splitter.count()
+        if widget_count == 0:
+            return
+
+        available_height = self.splitter.height()
+        equal_size = available_height // widget_count
+        sizes = [equal_size] * widget_count
+        self.splitter.setSizes(sizes)
 
 
 class TabWidget(QTabWidget):

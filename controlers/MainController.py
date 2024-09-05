@@ -310,12 +310,15 @@ class MainController(QObject):
     def tab_context_menu(self, pos: QtCore.QPoint, tab: MyTab):
         menu = QMenu()
         add_new_property_action = menu.addAction('Dodaj właściwość')
+        reset_spliter_action = menu.addAction('Przywróć domyślny układ')
 
         index = self.get_index(tab.mapToGlobal(pos))
 
         action = menu.exec(tab.mapToGlobal(pos))
         if action == add_new_property_action:
             self.on_action_new_property(tab, index)
+        elif action == reset_spliter_action:
+            tab.reset_spliter()
 
     ############################################
 
