@@ -140,7 +140,7 @@ class MyTab(QWidget):
         drop_position = self.mapToGlobal(event.position().toPoint())
         layout = self.scroll_area_content_layout
 
-        target_index = layout.count()-1
+        target_index = layout.count() - 1
         for i in range(layout.count()):
             widget = layout.itemAt(i).widget()
 
@@ -200,7 +200,7 @@ class TabWidget(QTabWidget):
             super().mouseDoubleClickEvent(event)
 
     def eventFilter(self, watched, event: QEvent):
-        if watched==self.tabBar():
+        if watched == self.tabBar():
             if event.type() == QEvent.Type.MouseButtonDblClick:
                 self.mouseDoubleClick(event)
         return super().eventFilter(watched, event)
@@ -218,6 +218,6 @@ class TabWidget(QTabWidget):
                 current_name
             )
             if ok and new_name:
-                Model.rename_tab(current_name,new_name)
+                Model.rename_tab(current_name, new_name)
                 tab_bar.setTabText(index, new_name)
                 self.setTabText(index, new_name)

@@ -1,4 +1,6 @@
 import csv
+from typing import Dict, Any
+
 import pandas as pd
 from xlsxwriter.utility import xl_rowcol_to_cell
 
@@ -25,7 +27,7 @@ class MainController(QObject):
         self.view = MainView()
         self.setup_connections()
         self.default_data()
-        self.data = pd.DataFrame(columns=["WidgetName", "Value"])  # Initialize the DataFrame
+        self.properties = pd.DataFrame(columns=["WidgetName", "Value"])  # Initialize the DataFrame
 
     ############################################
 
@@ -134,170 +136,87 @@ class MainController(QObject):
 
     ############################################
 
-    def gather_properties_data(self):
-        data = {}
-        for obj in Model.list_all_items():
-            if isinstance(obj,CheckBoxItem):
-                if (obj.isChecked()):
-                    data[obj.name] = 'TAK'
-                else:
-                    data[obj.name] = 'NIE'
-            elif isinstance(obj,LineEditItem):
-                data[obj.name] = obj.value
-            elif isinstance(obj, DoubleSpinBoxItem):
-                data[obj.name] = obj.value
-        return data
-
     def action_export_xlsx_handler(self):
-        print("action_export_xlsx_handler working")
-
-        data = self.gather_properties_data()
-
-        # Open a file dialog to choose the directory
-        directory = QFileDialog.getExistingDirectory(self.view, "Select Directory")
-
-        if directory:
-            file_path = f"{directory}/output.xlsx"
-            print(f"Selected directory: {directory}")
-
+        def gather_data():
+            """Gather properties and spreadsheets from the group boxes."""
+            properties = {}
             sheets = {}
-            for obj in Model.list_all_items():
-                if isinstance(obj,Spreadsheet):
-                    sheets[obj.name] = obj
+            for group_box in Model.list_all_group_boxes():
+                if isinstance(group_box.item, Spreadsheet):
+                    sheets[group_box.label.text()] = group_box.item
+                elif isinstance(group_box.item, CheckBoxItem):
+                    if group_box.item.isChecked():
+                        properties[group_box.label.text()] = 'TAK'
+                    else:
+                        properties[group_box.label.text()] = 'NIE'
+                else:
+                    properties[group_box.label.text()] = group_box.item.value
+            return properties, sheets
 
-            # Store the data in the DataFrame
-            for name, value in data.items():
-                self.data = pd.concat(
-                    [self.data, pd.DataFrame([[name, value]], columns=["WidgetName", "Value"])],
-                    ignore_index=True)
-
-            writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
-            self.data.to_excel(writer, index=False, header=False, sheet_name='Właściwości')
-
-            for sheet_name, spreadsheet in sheets.items():
-                df = spreadsheet.to_dataframe()
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-            workbook = writer.book
-            worksheet = writer.sheets['Właściwości']
-            worksheet.set_zoom(130)
-
-            dct_Right = workbook.add_format({
-                'align': 'right',  # Center alignment for both strings and numbers
-                'valign': 'vcenter',  # Vertical alignment
-                'bold': True,
-                'border': 1,
-                'num_format': '#,##0.00'
+        def format_properties_sheet(worksheet, workbook):
+            """ Format the properties worksheet. """
+            right_format = workbook.add_format({
+                'align': 'right', 'valign': 'vcenter', 'bold': True, 'border': 1, 'num_format': '#,##0.00'
+            })
+            yellow_format = workbook.add_format({
+                'bg_color': 'yellow', 'align': 'right', 'valign': 'vcenter', 'bold': True, 'border': 1
             })
 
-            dct_Left = workbook.add_format({
-                'align': 'left',  # Center alignment for both strings and numbers
-                'valign': 'vcenter',  # Vertical alignment
-                'bold': True,
-                'border': 1
-            })
+            # Apply formatting to the properties
+            for row in range(len(self.properties)):
+                widget_name = self.properties.iloc[row, 0]
+                value = self.properties.iloc[row, 1]
+                worksheet.write(row, 0, widget_name, yellow_format)
+                worksheet.write(row, 1, value, right_format)
 
-            yellow_cell_format = workbook.add_format({
-                'bg_color': 'yellow',
-                'align': 'right',  # Center alignment for both strings and numbers
-                'valign': 'vcenter',  # Vertical alignment
-                'bold': True,
-                'border': 1
-            })
-
-            red_cell_format = workbook.add_format({
-                'bg_color': 'red',
-                'align': 'right',  # Center alignment for both strings and numbers
-                'valign': 'vcenter',  # Vertical alignment
-                'bold': True,
-                'border': 1
-            })
-
-            # Apply formats to columns
-            for row in range(0, 9):
-                # Read the current value of the cell
-                cell_value = self.data.iloc[
-                    row, 0]  # Assuming the data for column A is in the first column of DataFrame
-                cell_value2 = self.data.iloc[row, 1]
-                worksheet.write(row, 0, cell_value, yellow_cell_format)  # (row, col) is 0-indexed
-                worksheet.write(row, 1, cell_value2, dct_Right)
-
-            for row in range(9, 12):
-                cell_value = self.data.iloc[
-                    row, 0]  # Assuming the data for column A is in the first column of DataFrame
-                cell_value2 = self.data.iloc[row, 1]
-                worksheet.write(row, 0, cell_value, red_cell_format)  # (row, col) is 0-indexed
-                worksheet.write(row, 1, cell_value2, dct_Left)
-
-            for row in range(12, 22):
-                # Read the current value of the cell
-                cell_value = self.data.iloc[
-                    row, 0]  # Assuming the data for column A is in the first column of DataFrame
-                cell_value2 = self.data.iloc[row, 1]
-                worksheet.write(row, 0, cell_value, yellow_cell_format)  # (row, col) is 0-indexed
-                worksheet.write(row, 1, cell_value2, dct_Right)
-
-            # Set column A and B to be wider
+            # Set column widths for better readability
             worksheet.set_column('A:A', 17)
             worksheet.set_column('B:B', 10)
 
-            # Format other sheets
+        def write_sheets(writer, sheets):
+            """Write each spreadsheet to a new sheet."""
             for sheet_name, spreadsheet in sheets.items():
                 df = spreadsheet.to_dataframe()
 
-                # Convert last 3 columns to decimal (float)
-                if df.shape[1] >= 3:  # Check if there are at least 3 columns
-                    last_three_cols = df.columns[-3:]
-                    for col in last_three_cols:
-                        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)  # Use float
-
-                # Write DataFrame to Excel
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-                # Get the sheet and write "SUMA:" in the specified cell
                 sheet = writer.sheets[sheet_name]
 
-                # Calculate the target cell
-                last_row = df.shape[0]  # The last row index
-                target_col_suma = df.shape[1] - 2  # Second column from the last
-                target_col_empty = df.shape[1] - 3  # Third column from the last
-                target_cell_suma = xl_rowcol_to_cell(last_row, target_col_suma)
-                target_cell_empty = xl_rowcol_to_cell(last_row, target_col_empty)
-
-                # Create a format for right alignment
-                right_align_format = workbook.add_format({
-                    'align': 'right',
-                    'valign': 'vcenter',
-                    'bold': True
-                })
-
-                # Write "SUMA:" into the target cell with right alignment
-                sheet.write(target_cell_suma, "SUMA:", right_align_format)
-                sheet.write(target_cell_empty, "", right_align_format)
-
-                # Apply decimal formatting to the last three columns
-                if df.shape[1] >= 3:
-                    last_three_cols = df.columns[-3:]
-                    decimal_format = workbook.add_format({
-                        'num_format': '0.00',
-                        'align': 'right',
-                        'valign': 'vcenter'
-                    })
-                    sheet = writer.sheets[sheet_name]
-                    for col in last_three_cols:
-                        col_idx = df.columns.get_loc(col)
-                        sheet.set_column(col_idx, col_idx, None, decimal_format)
-
-                # Auto-fit columns
-                sheet = writer.sheets[sheet_name]
                 for col_num, col_data in enumerate(df.columns):
                     max_length = max(df[col_data].astype(str).map(len).max(), len(col_data))
-                    sheet.set_column(col_num, col_num, max_length + 2)  # Adding some padding
+                    sheet.set_column(col_num, col_num, max_length + 2)  # Adding padding for readability
 
-            writer._save()
+        def save_to_excel(file_path, properties, sheets):
+            """Save the properties and spreadsheets to an Excel file."""
+            try:
+                writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
 
-        else:
-            print("No directory selected.")
+                for label, value in properties.items():
+                    self.properties = pd.concat([self.properties,pd.DataFrame([[label, value]], columns=["WidgetName", "Value"])], ignore_index=True)
+
+                self.properties.to_excel(writer, index=False, header=False, sheet_name='Właściwości')
+                format_properties_sheet(writer.sheets['Właściwości'], writer.book)
+
+                # Write the spreadsheets to their respective sheets
+                write_sheets(writer, sheets)
+
+                # Save the Excel file
+                writer._save()
+            except Exception as e:
+                print(f"Failed to save to Excel: {e}")
+
+        try:
+            file_path, _ = QFileDialog.getSaveFileName(self.view, "Save Excel File", "",
+                                                       "Excel Files (*.xlsx);;All Files (*)")
+            if not file_path:
+                return
+
+            if not file_path.endswith('.xlsx'):
+                file_path += '.xlsx'
+
+            properties, sheets = gather_data()
+            save_to_excel(file_path, properties, sheets)
+        except Exception as e:
+            print(f"An error occurred during export: {e}")
 
     def on_action_new_triggered(self):
         from controlers.NewEstimateController import NewEstimateController

@@ -244,6 +244,10 @@ class Model:
         else:
             raise KeyError(f'Tab with name {old_tab_name} not found')
 
+    @staticmethod
+    def list_all_group_boxes() -> List[GroupBox]:
+        return [group_box for tab in db.values() for group_box in tab.group_boxes.values()]
+
 
 dirty_items: Set[Item] = set()
 db: Dict[str, MyTab] = {}

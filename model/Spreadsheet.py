@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
 
 from model.ItemWithFormula import ItemWithFormula
 from resources import constants
-from resources.utils import index_to_letter
+from resources.utils import index_to_letter, is_convertible_to_float
 
 
 class ItemDelegate(QStyledItemDelegate):
@@ -146,11 +146,10 @@ class Spreadsheet(QTableWidget):
 
         # Extract the data
         data = []
-        for row in range(rows):
+        for row in self.worksheet:
             row_data = []
-            for col in range(cols):
-                item = self.item(row, col)
-                row_data.append(item.text() if item else '')
+            for cell in row:
+                row_data.append(float(cell.text()) if is_convertible_to_float(cell.text()) else cell.text())
             data.append(row_data)
 
         # Create a DataFrame
