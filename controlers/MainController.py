@@ -4,8 +4,7 @@ from xlsxwriter.utility import xl_rowcol_to_cell
 
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtWidgets import QMenu, QFileDialog
-from PyQt6.QtCore import QObject, pyqtSlot, QEvent, Qt, QMimeData, QRect, QPoint
-from PyQt6.QtGui import QDrag, QDragEnterEvent, QDropEvent, QMouseEvent
+from PyQt6.QtCore import QObject, pyqtSlot, Qt
 
 from model.CheckBoxItem import CheckBoxItem
 from model.DoubleSpinBoxItem import DoubleSpinBoxItem
@@ -354,9 +353,11 @@ class MainController(QObject):
 
     @pyqtSlot(int)
     def on_tab_changed(self, index: int):
-        if Model.find_by_name(self.view.tabWidget.widget(index).objectName()) is not None:
-            print(Model.find_by_name(self.view.tabWidget.widget(index).objectName()).group_boxes)
-        pass
+        name = self.view.tabWidget.widget(index).objectName()
+        tab = Model.find_tab(name)
+        if tab is not None:
+            print(name)
+            print(tab.group_boxes)
 
     ############################################
 

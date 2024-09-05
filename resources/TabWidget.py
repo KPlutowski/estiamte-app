@@ -1,9 +1,9 @@
 from typing import Dict, Optional
 
 from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint
+from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent
 from PyQt6.QtGui import QMouseEvent, QDrag, QDropEvent, QDragEnterEvent
-from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel
+from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel, QInputDialog, QLineEdit
 
 from model.ItemModel import ItemModel
 
@@ -169,6 +169,7 @@ class TabWidget(QTabWidget):
         self.setAcceptDrops(True)
         self.tabBar().setChangeCurrentOnDrag(True)
         self.tabBar().setAcceptDrops(True)
+        self.tabBar().installEventFilter(self)
 
     def initUI(self):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -191,3 +192,27 @@ class TabWidget(QTabWidget):
             if widget.objectName() == name:
                 return widget.children()[0]
         return None
+
+    def mouseDoubleClick(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            tab_bar = self.tabBar()
+            index = tab_bar.tabAt(event.position().toPoint())
+            if index != -1:  # Ensure the click was on a tab
+                current_name = tab_bar.tabText(index)
+                new_name, ok = QInputDialog.getText(
+                    self, "Change Name",
+                    "Insert New Tab Name:",
+                    QLineEdit.EchoMode.Normal,
+                    current_name
+                )
+                if ok and new_name:
+                    tab_bar.setTabText(index, new_name)
+                    self.setTabText(index, new_name)
+        else:
+            super().mouseDoubleClickEvent(event)
+
+    def eventFilter(self, watched, event: QEvent):
+        if watched==self.tabBar():
+            if event.type() == QEvent.Type.MouseButtonDblClick:
+                self.mouseDoubleClick(event)
+        return super().eventFilter(watched, event)
