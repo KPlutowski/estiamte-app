@@ -12,7 +12,7 @@ class Item:
 
     def __init__(self, formula=""):
         super().__init__()
-        self.formula = formula
+        self.formula: str = formula
         self._value = ''
         self.error: Optional['ErrorType'] = None
         self.items_that_dependents_on_me: ['ItemWithFormula'] = []
@@ -104,3 +104,8 @@ class Item:
     @abc.abstractmethod
     def name(self):
         pass
+
+    def clean_up(self):
+        for item in self.items_that_dependents_on_me:
+            item.remove_dependent(self)
+        self.items_that_dependents_on_me.clear()

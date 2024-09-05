@@ -80,6 +80,10 @@ class Spreadsheet(QTableWidget):
     def context_menu(self,pos):
         self.context_menu_request.emit(pos, self)
 
+    def clean_up(self):
+        for i in range(self.rowCount()):
+            self.remove_row(0)
+
     @property
     def name(self):
         return self.objectName()

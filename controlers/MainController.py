@@ -310,6 +310,7 @@ class MainController(QObject):
     def tab_context_menu(self, pos: QtCore.QPoint, tab: MyTab):
         menu = QMenu()
         add_new_property_action = menu.addAction('Dodaj właściwość')
+        delete_property_action = menu.addAction('Usuń właściwość')
         reset_spliter_action = menu.addAction('Przywróć domyślny układ')
 
         index = self.get_index(tab.mapToGlobal(pos))
@@ -319,6 +320,8 @@ class MainController(QObject):
             self.on_action_new_property(tab, index)
         elif action == reset_spliter_action:
             tab.reset_spliter()
+        elif action == delete_property_action:
+            tab.delete_property(index)
 
     ############################################
 
@@ -357,21 +360,37 @@ class MainController(QObject):
     ############################################
 
     def get_index(self, pos):
-        """Return the index of the widget under the given global position."""
         current_widget = self.view.tabWidget.currentWidget()
 
         if not isinstance(current_widget, MyTab):
             return None
 
-        for i in range(current_widget.scroll_area_content.layout().count()):
-            widget = current_widget.scroll_area_content.layout().itemAt(i).widget()
+        closest_index = None
+        min_distance = float('inf')  # Initialize with an infinite distance
 
+        # Iterate through the widgets in the layout
+        for i in range(current_widget.splitter.count()):
+            widget = current_widget.splitter.widget(i)
+
+            # Get the global coordinates of the widget's top-left and bottom-right corners
             top_left = widget.mapToGlobal(widget.rect().topLeft())
             bottom_right = widget.mapToGlobal(widget.rect().bottomRight())
 
+            # Create a QRect representing the widget's global geometry
             widget_rect = QtCore.QRect(top_left, bottom_right)
 
             if widget_rect.contains(pos):
+                # If the position is inside the widget, return its index immediately
                 return i
 
-        return None
+            # Otherwise, calculate the distance from the click position to the widget's rect
+            # Use the center of the widget for a more accurate "closeness" measure
+            widget_center = widget_rect.center()
+            distance = (pos - widget_center).manhattanLength()
+
+            # Keep track of the widget with the minimum distance
+            if distance < min_distance:
+                min_distance = distance
+                closest_index = i
+
+        return closest_index

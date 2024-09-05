@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSize
     QSplitter
 
 from model.ItemModel import ItemModel
+from model.Spreadsheet import Spreadsheet
 
 
 class GroupBox(QWidget):
@@ -59,6 +60,7 @@ class GroupBox(QWidget):
                 self.start_drag()
 
     def start_drag(self):
+        from model.Model import Model
         drag = QDrag(self)
         mime_data = QMimeData()
         mime_data.setData('application/x-estimatex-dragged-widget', self.objectName().encode())
@@ -71,6 +73,8 @@ class GroupBox(QWidget):
         drag.setHotSpot(local_pos)
 
         self.setVisible(False)
+        Model.remove_item(self.name)
+
         drag.exec(Qt.DropAction.MoveAction)
         self.setVisible(True)
 
@@ -138,7 +142,6 @@ class MyTab(QWidget):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent):
-        from model.Model import Model
         drop_position = event.position().toPoint()
         mime_data = event.mimeData()
         dragged_widget = None
@@ -168,7 +171,6 @@ class MyTab(QWidget):
         else:
             index = self.splitter.count() - 1  # Default to last position if no widget found
 
-        Model.remove_item(dragged_widget.name)
         self.group_boxes[dragged_widget.name] = dragged_widget
 
         if 0 <= index < self.splitter.count():
@@ -187,6 +189,24 @@ class MyTab(QWidget):
         equal_size = available_height // widget_count
         sizes = [equal_size] * widget_count
         self.splitter.setSizes(sizes)
+
+    def delete_property(self, index: int):
+        widget_to_delete = self.splitter.widget(index)
+
+        # Ensure the widget exists
+        if widget_to_delete is None:
+            print(f"No widget found at index {index}")
+            return
+
+        # Remove the widget from the splitter
+        self.splitter.widget(index).setParent(None)
+
+        # Remove the widget from the group_boxes dictionary
+        if widget_to_delete.name in self.group_boxes:
+            widget_to_delete.item.clean_up()
+            del self.group_boxes[widget_to_delete.name]
+        else:
+            print(f"GroupBox '{widget_to_delete.name}' not found in group_boxes")
 
 
 class TabWidget(QTabWidget):

@@ -91,7 +91,9 @@ class Model:
         # If column is None, we assume we're using the address format
         elif isinstance(row_or_address, str):
             sheet_name, row_number, col_number = parse_cell_reference(row_or_address)
-            return Model.find_spreadsheet(sheet_name).get_cell(row_number, col_number)
+            sheet = Model.find_spreadsheet(sheet_name)
+            if sheet is not None:
+                return sheet.get_cell(row_number, col_number)
         return None
 
     @staticmethod

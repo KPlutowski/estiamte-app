@@ -2,7 +2,7 @@ import abc
 from enum import Enum, auto
 from typing import List, Dict
 
-from model.Enums import FormulaType
+from model.Enums import FormulaType, ErrorType
 from model.Item import Item
 from resources import constants
 
@@ -72,6 +72,8 @@ class ItemWithFormula(Item):
 
     def remove_dependent(self, cell: 'ItemWithFormula'):
         if cell.name in self.items_that_i_depend_on:
+            self.formula = self.formula.replace(cell.name,ErrorType.REF.value[0])
+            self.set_error(ErrorType.REF)
             del self.items_that_i_depend_on[cell.name]
 
     def evaluate_formula(self):
@@ -144,3 +146,13 @@ class ItemWithFormula(Item):
     @abc.abstractmethod
     def set_display_text(self):
         pass
+
+    def clean_up(self):
+        for item in self.items_that_dependents_on_me:
+            item.remove_dependent(self)
+        for name,item in self.items_that_i_depend_on.items():
+            item.items_that_i_depend_on.pop(self.name)
+
+        self.items_that_dependents_on_me.clear()
+        self.items_that_i_depend_on.clear()
+
