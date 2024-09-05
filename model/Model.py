@@ -223,6 +223,27 @@ class Model:
                     return
         raise KeyError(f'Item with name {item_name} not found in tab {tab_name}')
 
+    @staticmethod
+    def rename_item(tab_name: str, old_item_name: str, new_item_name: str) -> None:
+        tab = Model.find_tab(tab_name)
+        if tab:
+            for group_box in tab.group_boxes.values():
+                if group_box.item.name == old_item_name:
+                    group_box.item.name = new_item_name
+                    tab.group_boxes[new_item_name] = tab.group_boxes.pop(old_item_name)
+                    return
+        raise KeyError(f"Item with name {old_item_name} not found in tab {tab_name}")
+
+    @staticmethod
+    def rename_tab(old_tab_name: str, new_tab_name: str) -> None:
+        tab = Model.find_tab(old_tab_name)
+        if tab:
+            Model.remove_tab(old_tab_name)
+            tab.setObjectName(new_tab_name)
+            Model.add_tab_to_db(tab)
+        else:
+            raise KeyError(f'Tab with name {old_tab_name} not found')
+
 
 dirty_items: Set[Item] = set()
 db: Dict[str, MyTab] = {}

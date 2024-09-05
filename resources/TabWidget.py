@@ -195,19 +195,7 @@ class TabWidget(QTabWidget):
 
     def mouseDoubleClick(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
-            tab_bar = self.tabBar()
-            index = tab_bar.tabAt(event.position().toPoint())
-            if index != -1:  # Ensure the click was on a tab
-                current_name = tab_bar.tabText(index)
-                new_name, ok = QInputDialog.getText(
-                    self, "Change Name",
-                    "Insert New Tab Name:",
-                    QLineEdit.EchoMode.Normal,
-                    current_name
-                )
-                if ok and new_name:
-                    tab_bar.setTabText(index, new_name)
-                    self.setTabText(index, new_name)
+            self.rename_tab(event)
         else:
             super().mouseDoubleClickEvent(event)
 
@@ -216,3 +204,20 @@ class TabWidget(QTabWidget):
             if event.type() == QEvent.Type.MouseButtonDblClick:
                 self.mouseDoubleClick(event)
         return super().eventFilter(watched, event)
+
+    def rename_tab(self, event):
+        from model.Model import Model
+        tab_bar = self.tabBar()
+        index = tab_bar.tabAt(event.position().toPoint())
+        if index != -1:  # Ensure the click was on a tab
+            current_name = tab_bar.tabText(index)
+            new_name, ok = QInputDialog.getText(
+                self, "Change Name",
+                "Insert New Tab Name:",
+                QLineEdit.EchoMode.Normal,
+                current_name
+            )
+            if ok and new_name:
+                Model.rename_tab(current_name,new_name)
+                tab_bar.setTabText(index, new_name)
+                self.setTabText(index, new_name)
