@@ -3,14 +3,14 @@ from typing import Dict, Optional
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent
 from PyQt6.QtGui import QMouseEvent, QDrag, QDropEvent, QDragEnterEvent
-from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel, QInputDialog, QLineEdit
+from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel, QInputDialog, QLineEdit, \
+    QSplitter
 
 from model.ItemModel import ItemModel
 
 
 class GroupBox(QWidget):
     context_menu_request = pyqtSignal(QtCore.QPoint, object)
-    drag_started = pyqtSignal(QWidget)
 
     def __init__(self, label_text="", item_name="", item_type=None, parent: QWidget = None):
         super().__init__(parent=parent)
@@ -61,16 +61,15 @@ class GroupBox(QWidget):
     def start_drag(self):
         drag = QDrag(self)
         mime_data = QMimeData()
+        mime_data.setData('application/x-estimatex-dragged-widget', self.objectName().encode())
         drag.setMimeData(mime_data)
 
         pixmap = self.grab()
         drag.setPixmap(pixmap)
 
         local_pos = self.drag_start_position - self.mapToGlobal(self.rect().topLeft())
-
         drag.setHotSpot(local_pos)
 
-        self.drag_started.emit(self)
         self.setVisible(False)
         drag.exec(Qt.DropAction.MoveAction)
         self.setVisible(True)
@@ -86,15 +85,18 @@ class MyTab(QWidget):
         # Main layout for MyTab
         self.main_layout = QVBoxLayout(self)
 
-        # Layout for the content within the scroll area
-        self.scroll_area_content_layout = QVBoxLayout()
+        # Create and set up the vertical splitter
+        self.splitter = QSplitter(Qt.Orientation.Vertical)
+        self.splitter.setHandleWidth(5)
+        self.splitter.setChildrenCollapsible(False)
 
         # Scroll area and its content
         self.scroll_area = QScrollArea(self)
         self.scroll_area_content = QWidget()
 
         # Set the layout for the scroll area content
-        self.scroll_area_content.setLayout(self.scroll_area_content_layout)
+        self.scroll_area_content.setLayout(QVBoxLayout(self.scroll_area_content))
+        self.scroll_area_content.layout().addWidget(self.splitter)
 
         # Add the scroll area to the main layout
         self.main_layout.addWidget(self.scroll_area)
@@ -117,18 +119,18 @@ class MyTab(QWidget):
     def name(self):
         return self.objectName()
 
-    def add_group_box(self, group_box: GroupBox, index: int):
+    def add_group_box(self, group_box: GroupBox, index: int = -1):
         if group_box.name in self.group_boxes:
             raise KeyError(f"group_box found with name '{group_box.name}'.")
 
-        layout = self.scroll_area_content_layout
-        if layout is None:
-            raise RuntimeError("Layout is not initialized.")
+        if self.splitter is None:
+            raise RuntimeError("Splitter is not initialized.")
 
-        if index < 0 or index > layout.count():
-            raise IndexError("Index out of bounds.")
+        if index == -1 or index >= self.splitter.count():
+            self.splitter.addWidget(group_box)
+        else:
+            self.splitter.insertWidget(index, group_box)
 
-        layout.insertWidget(index, group_box)
         self.group_boxes[group_box.name] = group_box
 
     def dragEnterEvent(self, event: QDragEnterEvent):
@@ -137,26 +139,43 @@ class MyTab(QWidget):
 
     def dropEvent(self, event: QDropEvent):
         from model.Model import Model
-        drop_position = self.mapToGlobal(event.position().toPoint())
-        layout = self.scroll_area_content_layout
+        drop_position = event.position().toPoint()
+        mime_data = event.mimeData()
+        dragged_widget = None
 
-        target_index = layout.count() - 1
-        for i in range(layout.count()):
-            widget = layout.itemAt(i).widget()
+        if mime_data.data('application/x-estimatex-dragged-widget'):
+            widget_name = mime_data.data('application/x-estimatex-dragged-widget').data().decode()
 
-            top_left = widget.mapToGlobal(widget.rect().topLeft())
+            dragged_widget = self.findChild(GroupBox, widget_name)
 
-            if drop_position.y() < top_left.y():
-                target_index = i
-                break
+            if not dragged_widget:
+                # If not found, search in other tabs
+                for i in range(self.parent().parent().count()):
+                    tab = self.parent().parent().widget(i)
+                    dragged_widget = tab.findChild(GroupBox, widget_name)
+                    if dragged_widget:
+                        break
 
-        # Add the dragged widget to the new position
-        dragged_widget = self.parent().parent().dragged_widget
+        if not dragged_widget:
+            print("Dragged widget not found.")
+            return
+
+        map_pos = self.splitter.mapFromGlobal(self.mapToGlobal(drop_position))
+        widget_under_cursor = self.splitter.childAt(map_pos)
+
+        if widget_under_cursor:
+            index = self.splitter.indexOf(widget_under_cursor.parent())
+        else:
+            index = self.splitter.count() - 1  # Default to last position if no widget found
 
         Model.remove_item(dragged_widget.name)
         self.group_boxes[dragged_widget.name] = dragged_widget
 
-        layout.insertWidget(target_index, dragged_widget)
+        if 0 <= index < self.splitter.count():
+            self.splitter.insertWidget(index, dragged_widget)
+        else:
+            self.splitter.addWidget(dragged_widget)
+
         event.acceptProposedAction()
 
 
@@ -164,7 +183,6 @@ class TabWidget(QTabWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUI()
-        self.dragged_widget: Optional[GroupBox] = None
 
         self.setAcceptDrops(True)
         self.tabBar().setChangeCurrentOnDrag(True)

@@ -333,7 +333,6 @@ class MainController(QObject):
         if item_type is None:
             raise KeyError(f"Missing item_type.")
         tmp = GroupBox(label_text, item_name, item_type, my_tab)
-        tmp.drag_started.connect(self.on_drag_started)
 
         if isinstance(tmp.item, (DoubleSpinBoxItem, CheckBoxItem)):
             tmp.item.activeItemChangedSignal.connect(self.activeItemChanged)
@@ -353,9 +352,6 @@ class MainController(QObject):
         my_tab.add_group_box(tmp, index)
 
     ############################################
-
-    def on_drag_started(self, widget: GroupBox):
-        self.view.tabWidget.dragged_widget = widget
 
     def get_index(self, pos):
         """Return the index of the widget under the given global position."""
