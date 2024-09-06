@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QFormLayout
+from PyQt6.QtWidgets import QWidget, QLineEdit, QLabel, QVBoxLayout
 
 
 class ValidatedLineEdit(QWidget):

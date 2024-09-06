@@ -1,13 +1,12 @@
-from typing import Dict, Optional
+from typing import Dict
 
 from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent, QSize
+from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent
 from PyQt6.QtGui import QMouseEvent, QDrag, QDropEvent, QDragEnterEvent
 from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel, QInputDialog, QLineEdit, \
     QSplitter
 
 from model.ItemModel import ItemModel
-from model.Spreadsheet import Spreadsheet
 
 
 class GroupBox(QWidget):
@@ -82,7 +81,7 @@ class GroupBox(QWidget):
 class MyTab(QWidget):
     context_menu_request = pyqtSignal(QtCore.QPoint, object)
 
-    def __init__(self, parent):
+    def __init__(self, parent, name: str):
         super().__init__(parent)
         self.group_boxes: Dict[str, GroupBox] = {}
 
@@ -115,6 +114,8 @@ class MyTab(QWidget):
         self.setAcceptDrops(True)
         self.scroll_area.setAcceptDrops(True)
         self.scroll_area_content.setAcceptDrops(True)
+
+        self.setObjectName(name)
 
     def context_menu(self, pos):
         self.context_menu_request.emit(pos, self)
@@ -191,6 +192,8 @@ class MyTab(QWidget):
         self.splitter.setSizes(sizes)
 
     def delete_property(self, index: int):
+        if index is None:
+            return
         widget_to_delete = self.splitter.widget(index)
 
         # Ensure the widget exists
@@ -229,8 +232,7 @@ class TabWidget(QTabWidget):
         self.setObjectName("tabWidget")
 
     def add_tab(self, name) -> MyTab:
-        my_tab = MyTab(self)
-        my_tab.setObjectName(name)
+        my_tab = MyTab(self, name)
         self.addTab(my_tab, name)
         return my_tab
 

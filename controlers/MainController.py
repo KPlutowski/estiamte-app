@@ -1,8 +1,6 @@
 import csv
-from typing import Dict, Any
 
 import pandas as pd
-from xlsxwriter.utility import xl_rowcol_to_cell
 
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtWidgets import QMenu, QFileDialog
@@ -223,9 +221,14 @@ class MainController(QObject):
         self.new_estimate_cntroller = NewEstimateController(Model)
 
     def on_action_new_property(self, widget: MyTab, index: int):
-        from controlers.NewPropertyFormController import NewPropertyController
-        self.controller = NewPropertyController(widget, index)
-        self.controller.property_added.connect(self.add_property)
+        from views.Dialogs.NewPropertyDialog import NewPropertyDialog
+        self.property_dialog = NewPropertyDialog(widget, index)
+        self.property_dialog.property_added.connect(self.add_property)
+
+    def on_action_new_tab(self, widget: TabWidget):
+        from views.Dialogs.NewTabDialog import NewTabDialog
+        self.tab_dialog = NewTabDialog(widget)
+        self.tab_dialog.tab_added.connect(self.add_new_tab)
 
     ############################################
 
@@ -305,7 +308,7 @@ class MainController(QObject):
 
         action = menu.exec(global_pos)
         if action == add_tab_action:
-            self.add_new_tab("new_tab",self.view.tabWidget)
+            self.on_action_new_tab(self.view.tabWidget)
 
     def tab_context_menu(self, pos: QtCore.QPoint, tab: MyTab):
         menu = QMenu()
