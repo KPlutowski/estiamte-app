@@ -10,7 +10,8 @@ from model.DoubleSpinBoxItem import DoubleSpinBoxItem
 
 from model.ItemWithFormula import ItemWithFormula
 from model.LineEditItem import LineEditItem
-from model.Model import Model, Spreadsheet
+from model.Model import Model
+from model.Spreadsheet import Spreadsheet
 from resources.TabWidget import GroupBox
 
 from resources.utils import letter_to_index
@@ -51,8 +52,8 @@ class MainController(QObject):
 
         def add_lines(csv_path, sp_name):
             for _ in open(csv_path, encoding='utf-8'):
-                Model.find_spreadsheet(name=sp_name).add_row()
-            Model.find_spreadsheet(name=sp_name).add_row()
+                Model.find_item(name=sp_name).add_row()
+            Model.find_item(name=sp_name).add_row()
 
         self.view.tabWidget.add_new_tab(constants.PROPERTIES_SPREADSHEET_NAME)
 
@@ -106,16 +107,16 @@ class MainController(QObject):
         load_default(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
 
-        Model.find_by_name("perimeter").set_item('=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2')
-        Model.find_by_name("foundationArea").set_item('=PROPERTIES!buildingLength*PROPERTIES!buildingWidth')
-        Model.find_by_name("rafterCount").set_item('=PROPERTIES!buildingLength/0.6')
-        Model.find_by_name("rafterLength").set_item('=PROPERTIES!buildingWidth*0.9')
-        Model.find_by_name("groundWallArea").set_item('=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter')
-        Model.find_by_name("kneeWallArea").set_item('=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter')
-        Model.find_by_name("gableArea").set_item('=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight')
-        Model.find_by_name("externalWallArea").set_item('=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea')
-        Model.find_by_name("eavesLenght").set_item('=IF(PROPERTIES!buildingWidth>6;0.80;0.60)')
-        Model.find_by_name("spoutLength").set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
+        Model.find_item("perimeter").set_item('=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2')
+        Model.find_item("foundationArea").set_item('=PROPERTIES!buildingLength*PROPERTIES!buildingWidth')
+        Model.find_item("rafterCount").set_item('=PROPERTIES!buildingLength/0.6')
+        Model.find_item("rafterLength").set_item('=PROPERTIES!buildingWidth*0.9')
+        Model.find_item("groundWallArea").set_item('=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter')
+        Model.find_item("kneeWallArea").set_item('=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter')
+        Model.find_item("gableArea").set_item('=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight')
+        Model.find_item("externalWallArea").set_item('=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea')
+        Model.find_item("eavesLenght").set_item('=IF(PROPERTIES!buildingWidth>6;0.80;0.60)')
+        Model.find_item("spoutLength").set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
 
     def setup_connections(self):
         # Tab widget
@@ -281,4 +282,5 @@ class MainController(QObject):
         tab = Model.find_tab(name)
         if tab is not None:
             print(name)
-            print(tab.group_boxes)
+            for gb in tab.group_boxes:
+                print(gb.name)

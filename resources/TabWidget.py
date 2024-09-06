@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Set, Optional
 
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent
@@ -15,18 +15,20 @@ class GroupBox(QWidget):
 
     def __init__(self, label_text="", item_name="", item_type=None, parent: QWidget = None):
         super().__init__(parent=parent)
-        self.drag_start_position: QPoint
+        self.drag_start_position: Optional[QPoint] = None
+
         self.label = QLabel(parent=self)
         self.label.setText(label_text)
 
         self.item = item_type(parent=self)
-        self.setObjectName(f"GroupBox_{item_name}")
-        self.item.setObjectName(item_name)
+        self.name = item_name
 
         if item_type == ItemModel.get_item_class("Spreadsheet"):
+            sizePolicy = QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
             self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             self.layout = QtWidgets.QVBoxLayout(self)
         else:
+            sizePolicy = QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
             self.layout = QtWidgets.QHBoxLayout(self)
 
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -34,15 +36,19 @@ class GroupBox(QWidget):
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.item)
 
-        sizePolicy = QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.item.sizePolicy().hasHeightForWidth())
         self.item.setSizePolicy(sizePolicy)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.objectName()
+
+    @name.setter
+    def name(self, new_name):
+        self.item.setObjectName(new_name)
+        self.setObjectName(f"GroupBox_{new_name}")
 
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -55,10 +61,9 @@ class GroupBox(QWidget):
                 self.start_drag()
 
     def start_drag(self):
-        from model.Model import Model
         drag = QDrag(self)
         mime_data = QMimeData()
-        mime_data.setData('application/x-estimatex-dragged-widget', self.objectName().encode())
+        mime_data.setData('application/x-groupbox-dragged-widget', self.objectName().encode())
         drag.setMimeData(mime_data)
 
         pixmap = self.grab()
@@ -68,7 +73,6 @@ class GroupBox(QWidget):
         drag.setHotSpot(local_pos)
 
         self.setVisible(False)
-        Model.remove_item(self.name)
 
         drag.exec(Qt.DropAction.MoveAction)
         self.setVisible(True)
@@ -83,7 +87,7 @@ class MyTab(QWidget):
 
     def __init__(self, parent, name: str):
         super().__init__(parent)
-        self.group_boxes: Dict[str, GroupBox] = {}
+        self.group_boxes: Set[GroupBox] = set()
 
         # Main layout for MyTab
         self.main_layout = QVBoxLayout(self)
@@ -118,8 +122,8 @@ class MyTab(QWidget):
         return self.objectName()
 
     def add_group_box(self, group_box: GroupBox, index: int = -1):
-        if group_box.name in self.group_boxes:
-            raise KeyError(f"group_box found with name '{group_box.name}'.")
+        if group_box in self.group_boxes:
+            raise KeyError(f"group_box already exists.")
 
         if self.splitter is None:
             raise RuntimeError("Splitter is not initialized.")
@@ -129,43 +133,29 @@ class MyTab(QWidget):
         else:
             self.splitter.insertWidget(index, group_box)
 
-        self.group_boxes[group_box.name] = group_box
+        self.group_boxes.add(group_box)
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData():
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent):
+        from model.Model import Model
+
         drop_position = event.position().toPoint()
         mime_data = event.mimeData()
-        dragged_widget = None
+        widget_name = None
 
-        if mime_data.data('application/x-estimatex-dragged-widget'):
-            widget_name = mime_data.data('application/x-estimatex-dragged-widget').data().decode()
-
-            dragged_widget = self.findChild(GroupBox, widget_name)
-
-            if not dragged_widget:
-                # If not found, search in other tabs
-                for i in range(self.parent().parent().count()):
-                    tab = self.parent().parent().widget(i)
-                    dragged_widget = tab.findChild(GroupBox, widget_name)
-                    if dragged_widget:
-                        break
-
-        if not dragged_widget:
-            print("Dragged widget not found.")
-            return
+        if mime_data.data('application/x-groupbox-dragged-widget'):
+            widget_name = mime_data.data('application/x-groupbox-dragged-widget').data().decode()
 
         map_pos = self.splitter.mapFromGlobal(self.mapToGlobal(drop_position))
         widget_under_cursor = self.splitter.childAt(map_pos)
 
-        if widget_under_cursor:
-            index = self.splitter.indexOf(widget_under_cursor.parent())
-        else:
-            index = self.splitter.count() - 1  # Default to last position if no widget found
-
-        self.group_boxes[dragged_widget.name] = dragged_widget
+        index = self.splitter.indexOf(
+            widget_under_cursor.parent()) if widget_under_cursor else self.splitter.count() - 1
+        dragged_widget=Model.find_groupBox(widget_name)
+        Model.move_group_box(widget_name,self.name)
 
         if 0 <= index < self.splitter.count():
             self.splitter.insertWidget(index, dragged_widget)
@@ -185,31 +175,36 @@ class MyTab(QWidget):
         self.splitter.setSizes(sizes)
 
     def delete_property(self, index: int):
-        if index is None:
-            return
-        widget_to_delete = self.splitter.widget(index)
-
+        widget_to_delete = self.get_GroupBox(index)
         if widget_to_delete is None:
             return
-        widget_to_delete.delete()
 
-        del self.group_boxes[widget_to_delete.name]
+        widget_to_delete.delete()
+        self.group_boxes.remove(widget_to_delete)
 
     def delete_tab(self):
         from model.Model import Model
-        for i in range(len(self.group_boxes)):
+        while self.group_boxes:
             self.delete_property(0)
         Model.remove_tab(self.name)
 
     def context_menu(self, pos):
-        menu = QMenu()
-        add_new_property_action = menu.addAction('Dodaj właściwość')
-        delete_property_action = menu.addAction('Usuń właściwość')
-        reset_spliter_action = menu.addAction('Przywróć domyślny układ')
-
         index = self.get_index(self.mapToGlobal(pos))
 
+        menu = QMenu()
+        add_new_property_action = menu.addAction('Dodaj')
+
+        if index is not None:
+            widget = self.get_GroupBox(index)
+            name = widget.item.name
+            reset_spliter_action = menu.addAction('Przywróć domyślny układ')
+            delete_property_action = menu.addAction(f'Usuń {name}')
+            edit_property_action = menu.addAction(f'Edytuj {name}')
+
         action = menu.exec(self.mapToGlobal(pos))
+        if action is None:
+            return
+
         if action == add_new_property_action:
             from views.Dialogs.NewPropertyDialog import NewPropertyDialog
             self.property_dialog = NewPropertyDialog(index)
@@ -218,6 +213,10 @@ class MyTab(QWidget):
             self.reset_spliter()
         elif action == delete_property_action:
             self.delete_property(index)
+        elif action == edit_property_action:
+            from views.Dialogs.EditPropertyDialog import EditPropertyDialog
+            self.edit_property_dialog = EditPropertyDialog(index, widget)
+            self.edit_property_dialog.property_edited.connect(self.edit_property)
 
     def add_property(self, label_text: str, item_name: str, item_type, index: int = 0):
         if item_type is None:
@@ -231,38 +230,34 @@ class MyTab(QWidget):
         pass
 
     def get_index(self, pos):
-        if not isinstance(self, MyTab):
-            return None
-
         closest_index = None
         min_distance = float('inf')
 
-        # Iterate through the widgets in the layout
         for i in range(self.splitter.count()):
-            widget = self.splitter.widget(i)
+            widget = self.get_GroupBox(i)
 
-            # Get the global coordinates of the widget's top-left and bottom-right corners
             top_left = widget.mapToGlobal(widget.rect().topLeft())
             bottom_right = widget.mapToGlobal(widget.rect().bottomRight())
-
-            # Create a QRect representing the widget's global geometry
             widget_rect = QtCore.QRect(top_left, bottom_right)
 
             if widget_rect.contains(pos):
-                # If the position is inside the widget, return its index immediately
                 return i
 
-            # Otherwise, calculate the distance from the click position to the widget's rect
-            # Use the center of the widget for a more accurate "closeness" measure
             widget_center = widget_rect.center()
             distance = (pos - widget_center).manhattanLength()
-
-            # Keep track of the widget with the minimum distance
             if distance < min_distance:
                 min_distance = distance
                 closest_index = i
 
         return closest_index
+
+    def edit_property(self, label_text, item_name, index):
+        widget = self.get_GroupBox(index)
+        widget.label.setText(label_text)
+        widget.name = item_name
+
+    def get_GroupBox(self, index) -> GroupBox:
+        return self.splitter.widget(index)
 
 
 class TabWidget(QTabWidget):

@@ -92,6 +92,8 @@ class Spreadsheet(QTableWidget):
         self.setAlternatingRowColors(True)
         self.setColumnCount(len(constants.COLUMNS))
         self.horizontalHeader().setStretchLastSection(True)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
         self.setRowCount(0)
         for i, (header_name, _) in enumerate(constants.COLUMNS):
             item = QtWidgets.QTableWidgetItem()
