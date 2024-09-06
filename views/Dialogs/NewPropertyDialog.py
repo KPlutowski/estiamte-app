@@ -1,18 +1,16 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox, QComboBox, QLabel, QFormLayout, QLineEdit
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox, QComboBox, QLabel, QFormLayout
 from PyQt6.QtCore import pyqtSignal
 
 from model.ItemModel import ItemModel
 from model.Model import Model
-from resources.TabWidget import MyTab
 from resources.ValidatedLineEdit import ValidatedLineEdit
 
 
 class NewPropertyDialog(QDialog):
-    property_added = pyqtSignal(str, str, object, MyTab, int)
+    property_added = pyqtSignal(str, str, object, int)
 
-    def __init__(self, widget: MyTab, index: int = 0):
+    def __init__(self, index: int = 0):
         super().__init__()
-        self.widget = widget
         self.index = index
 
         self._setup_ui()
@@ -68,7 +66,7 @@ class NewPropertyDialog(QDialog):
 
         item_class = ItemModel.get_item_class(item_type)
         if item_class:
-            self.property_added.emit(label_text, item_name, item_class, self.widget, self.index)
+            self.property_added.emit(label_text, item_name, item_class, self.index)
             self.close_window()
 
     def clear_error(self):

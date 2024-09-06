@@ -3,10 +3,10 @@ from typing import Dict
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent
 from PyQt6.QtGui import QMouseEvent, QDrag, QDropEvent, QDragEnterEvent
-from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel, QInputDialog, QLineEdit, \
-    QSplitter
+from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSizePolicy, QLabel, QSplitter, QMenu
 
 from model.ItemModel import ItemModel
+
 from views.Dialogs.RenameTabDialog import RenameTabDialog
 
 
@@ -26,24 +26,19 @@ class GroupBox(QWidget):
         if item_type == ItemModel.get_item_class("Spreadsheet"):
             self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             self.layout = QtWidgets.QVBoxLayout(self)
-            self.layout.setContentsMargins(0, 0, 0, 0)
-            self.layout.addWidget(self.label)
-            self.layout.addWidget(self.item)
-
-            sizePolicy = QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(self.item.sizePolicy().hasHeightForWidth())
         else:
             self.layout = QtWidgets.QHBoxLayout(self)
-            self.layout.setContentsMargins(0, 0, 0, 0)
-            self.layout.addWidget(self.label)
-            self.layout.addWidget(self.item)
 
-            sizePolicy = QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(self.item.sizePolicy().hasHeightForWidth())
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.item)
+
+        sizePolicy = QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.item.sizePolicy().hasHeightForWidth())
+        self.item.setSizePolicy(sizePolicy)
 
     @property
     def name(self):
@@ -84,7 +79,7 @@ class GroupBox(QWidget):
 
 
 class MyTab(QWidget):
-    context_menu_request = pyqtSignal(QtCore.QPoint, object)
+    propertyAdded = pyqtSignal(object)
 
     def __init__(self, parent, name: str):
         super().__init__(parent)
@@ -101,15 +96,11 @@ class MyTab(QWidget):
         # Scroll area and its content
         self.scroll_area = QScrollArea(self)
         self.scroll_area_content = QWidget()
-
-        # Set the layout for the scroll area content
         self.scroll_area_content.setLayout(QVBoxLayout(self.scroll_area_content))
         self.scroll_area_content.layout().addWidget(self.splitter)
 
         # Add the scroll area to the main layout
         self.main_layout.addWidget(self.scroll_area)
-
-        # Configure the scroll area
         self.scroll_area.setWidget(self.scroll_area_content)
         self.scroll_area.setWidgetResizable(True)
 
@@ -121,9 +112,6 @@ class MyTab(QWidget):
         self.scroll_area_content.setAcceptDrops(True)
 
         self.setObjectName(name)
-
-    def context_menu(self, pos):
-        self.context_menu_request.emit(pos, self)
 
     @property
     def name(self):
@@ -201,9 +189,7 @@ class MyTab(QWidget):
             return
         widget_to_delete = self.splitter.widget(index)
 
-        # Ensure the widget exists
         if widget_to_delete is None:
-            print(f"No widget found at index {index}")
             return
         widget_to_delete.delete()
 
@@ -215,8 +201,73 @@ class MyTab(QWidget):
             self.delete_property(0)
         Model.remove_tab(self.name)
 
+    def context_menu(self, pos):
+        menu = QMenu()
+        add_new_property_action = menu.addAction('Dodaj właściwość')
+        delete_property_action = menu.addAction('Usuń właściwość')
+        reset_spliter_action = menu.addAction('Przywróć domyślny układ')
+
+        index = self.get_index(self.mapToGlobal(pos))
+
+        action = menu.exec(self.mapToGlobal(pos))
+        if action == add_new_property_action:
+            from views.Dialogs.NewPropertyDialog import NewPropertyDialog
+            self.property_dialog = NewPropertyDialog(index)
+            self.property_dialog.property_added.connect(self.add_property)
+        elif action == reset_spliter_action:
+            self.reset_spliter()
+        elif action == delete_property_action:
+            self.delete_property(index)
+
+    def add_property(self, label_text: str, item_name: str, item_type, index: int = 0):
+        if item_type is None:
+            raise KeyError(f"Missing item_type.")
+        tmp = GroupBox(label_text, item_name, item_type, self)
+
+        self.propertyAdded.emit(tmp)
+        self.add_group_box(tmp, index)
+
+    def eventFilter(self, a0, a1):
+        pass
+
+    def get_index(self, pos):
+        if not isinstance(self, MyTab):
+            return None
+
+        closest_index = None
+        min_distance = float('inf')
+
+        # Iterate through the widgets in the layout
+        for i in range(self.splitter.count()):
+            widget = self.splitter.widget(i)
+
+            # Get the global coordinates of the widget's top-left and bottom-right corners
+            top_left = widget.mapToGlobal(widget.rect().topLeft())
+            bottom_right = widget.mapToGlobal(widget.rect().bottomRight())
+
+            # Create a QRect representing the widget's global geometry
+            widget_rect = QtCore.QRect(top_left, bottom_right)
+
+            if widget_rect.contains(pos):
+                # If the position is inside the widget, return its index immediately
+                return i
+
+            # Otherwise, calculate the distance from the click position to the widget's rect
+            # Use the center of the widget for a more accurate "closeness" measure
+            widget_center = widget_rect.center()
+            distance = (pos - widget_center).manhattanLength()
+
+            # Keep track of the widget with the minimum distance
+            if distance < min_distance:
+                min_distance = distance
+                closest_index = i
+
+        return closest_index
+
 
 class TabWidget(QTabWidget):
+    propertyAdded = pyqtSignal(object)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUI()
@@ -225,25 +276,17 @@ class TabWidget(QTabWidget):
         self.tabBar().setChangeCurrentOnDrag(True)
         self.tabBar().setAcceptDrops(True)
         self.tabBar().installEventFilter(self)
+        self.tabBar().customContextMenuRequested.connect(self.tabBar_context_menu)
 
     def initUI(self):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tabBar().setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setTabPosition(QtWidgets.QTabWidget.TabPosition.South)
         self.setTabShape(QtWidgets.QTabWidget.TabShape.Triangular)
         self.setDocumentMode(True)
         self.setMovable(True)
         self.setTabBarAutoHide(True)
         self.setObjectName("tabWidget")
-
-    def add_tab(self, name) -> MyTab:
-        my_tab = MyTab(self, name)
-        self.addTab(my_tab, name)
-        return my_tab
-
-    def remove_tab(self, index: int):
-        tab_name = self.tabText(index)
-        self.get_tab_by_name(tab_name).delete_tab()
-        self.removeTab(index)
 
     def get_tab_by_name(self, name: str) -> MyTab:
         for i in range(self.count()):
@@ -267,3 +310,51 @@ class TabWidget(QTabWidget):
         Model.rename_tab(current_name, new_name)
         self.tabBar().setTabText(index, new_name)
         self.setTabText(index, new_name)
+
+    def tabBar_context_menu(self, pos: QtCore.QPoint):
+        global_pos = self.tabBar().mapToGlobal(pos)
+
+        index_of_clicked_tab = self.tabBar().tabAt(pos)
+
+        if index_of_clicked_tab != -1:
+            # Get the name of the clicked tab
+            name_of_clicked_tab = self.tabText(index_of_clicked_tab)
+
+            # Create the context menu
+            menu = QMenu()
+            add_tab_action = menu.addAction('Dodaj nową karte')
+            delete_tab_action = menu.addAction(f'Usuń karte "{name_of_clicked_tab}"')
+
+            # Execute the menu
+            action = menu.exec(global_pos)
+
+            if action == add_tab_action:
+                from views.Dialogs.NewTabDialog import NewTabDialog
+                self.tab_dialog = NewTabDialog()
+                self.tab_dialog.tab_added.connect(self.add_new_tab)
+            elif action == delete_tab_action:
+                tab_name = self.tabText(index_of_clicked_tab)
+                reply = QtWidgets.QMessageBox.question(
+                    self,
+                    "Potwierdzenie usunięcia karty",
+                    f"Czy na pewno chcesz usunąć kartę '{tab_name}'?",
+                    QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+                )
+
+                if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+                    self.delete_tab(index_of_clicked_tab)
+        else:
+            print("No tab was clicked.")
+
+    def add_new_tab(self, name: str):
+        from model.Model import Model
+        my_tab = MyTab(self, name)
+        my_tab.propertyAdded.connect(self.propertyAdded.emit)
+        self.addTab(my_tab, name)
+        Model.add_tab_to_db(my_tab)
+
+    def delete_tab(self, index: int):
+        if 0 <= index < self.count():
+            tab_name = self.tabText(index)
+            self.get_tab_by_name(tab_name).delete_tab()
+            self.removeTab(index)

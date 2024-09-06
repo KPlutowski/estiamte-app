@@ -3,7 +3,7 @@ from typing import List, Optional
 import pandas as pd
 from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtCore import pyqtSignal, QModelIndex, QEvent, Qt
-from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
+from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate, QMenu
 
 from model.ItemWithFormula import ItemWithFormula
 from resources import constants
@@ -77,9 +77,6 @@ class Spreadsheet(QTableWidget):
         self.customContextMenuRequested.connect(self.context_menu)
         self.initUI()
 
-    def context_menu(self,pos):
-        self.context_menu_request.emit(pos, self)
-
     def clean_up(self):
         for i in range(self.rowCount()):
             self.remove_row(0)
@@ -96,6 +93,10 @@ class Spreadsheet(QTableWidget):
         self.setColumnCount(len(constants.COLUMNS))
         self.horizontalHeader().setStretchLastSection(True)
         self.setRowCount(0)
+        for i, (header_name, _) in enumerate(constants.COLUMNS):
+            item = QtWidgets.QTableWidgetItem()
+            item.setText(header_name)
+            self.setHorizontalHeaderItem(i, item)
 
     def add_row(self, index: Optional[int] = None, text: Optional[List[str]] = None):
         if text is None:
@@ -178,3 +179,21 @@ class Spreadsheet(QTableWidget):
     def focusInEvent(self, event: QEvent):
         super().focusInEvent(event)
         self.activeItemChangedSignal.emit(self.currentItem())
+
+    def context_menu(self, pos):
+        index = self.indexAt(pos)
+
+        menu = QMenu()
+        add_position_action = menu.addAction('Dodaj wiersz')
+        menu.addSeparator()
+        delete_action = menu.addAction('Usuń wiersz')
+
+        action = menu.exec(self.mapToGlobal(pos))
+        if not action:
+            return
+
+        row = index.row()
+        if action == add_position_action:
+            self.add_row(row + 1)
+        elif action == delete_action:
+            self.remove_row(row)

@@ -7,11 +7,10 @@ from resources.ValidatedLineEdit import ValidatedLineEdit
 
 
 class NewTabDialog(QDialog):
-    tab_added = pyqtSignal(str, TabWidget)
+    tab_added = pyqtSignal(str)
 
-    def __init__(self, widget: TabWidget):
+    def __init__(self):
         super().__init__()
-        self.widget = widget
 
         self._setup_ui()
         self._setup_connections()
@@ -52,7 +51,7 @@ class NewTabDialog(QDialog):
             self.tab_name_field.set_error("Ta nazwa elementu już istnieje.")
             return
 
-        self.tab_added.emit(tab_name, self.widget)
+        self.tab_added.emit(tab_name)
         self.close_window()
 
     def clear_error(self):

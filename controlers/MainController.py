@@ -2,18 +2,17 @@ import csv
 
 import pandas as pd
 
-from PyQt6 import QtCore, QtWidgets
-from PyQt6.QtWidgets import QMenu, QFileDialog
-from PyQt6.QtCore import QObject, pyqtSlot, Qt
+from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtCore import QObject, pyqtSlot
 
 from model.CheckBoxItem import CheckBoxItem
 from model.DoubleSpinBoxItem import DoubleSpinBoxItem
 
 from model.ItemWithFormula import ItemWithFormula
 from model.LineEditItem import LineEditItem
-from model.Model import Model, Spreadsheet, db
+from model.Model import Model, Spreadsheet
+from resources.TabWidget import GroupBox
 
-from resources.TabWidget import MyTab, TabWidget, GroupBox
 from resources.utils import letter_to_index
 from views.MainView.MainView import MainView
 import resources.constants as constants
@@ -55,17 +54,17 @@ class MainController(QObject):
                 Model.find_spreadsheet(name=sp_name).add_row()
             Model.find_spreadsheet(name=sp_name).add_row()
 
-        self.add_new_tab(constants.PROPERTIES_SPREADSHEET_NAME, self.view.tabWidget)
+        self.view.tabWidget.add_new_tab(constants.PROPERTIES_SPREADSHEET_NAME)
 
-        self.add_new_tab(constants.POSITION_SPREADSHEET_NAME, self.view.tabWidget)
-        self.add_new_tab(constants.ROOF_SPREADSHEET_NAME, self.view.tabWidget)
-        self.add_new_tab(constants.FOUNDATION_SPREADSHEET_NAME, self.view.tabWidget)
-        self.add_new_tab(constants.INSULATION_SPREADSHEET_NAME, self.view.tabWidget)
+        self.view.tabWidget.add_new_tab(constants.POSITION_SPREADSHEET_NAME)
+        self.view.tabWidget.add_new_tab(constants.ROOF_SPREADSHEET_NAME)
+        self.view.tabWidget.add_new_tab(constants.FOUNDATION_SPREADSHEET_NAME)
+        self.view.tabWidget.add_new_tab(constants.INSULATION_SPREADSHEET_NAME)
 
-        self.add_property(constants.POSITION_SPREADSHEET_NAME, constants.POSITION_SPREADSHEET_NAME, Spreadsheet, Model.find_tab(constants.POSITION_SPREADSHEET_NAME))
-        self.add_property(constants.ROOF_SPREADSHEET_NAME, constants.ROOF_SPREADSHEET_NAME, Spreadsheet, Model.find_tab(constants.ROOF_SPREADSHEET_NAME))
-        self.add_property(constants.FOUNDATION_SPREADSHEET_NAME, constants.FOUNDATION_SPREADSHEET_NAME, Spreadsheet, Model.find_tab(constants.FOUNDATION_SPREADSHEET_NAME))
-        self.add_property(constants.INSULATION_SPREADSHEET_NAME, constants.INSULATION_SPREADSHEET_NAME, Spreadsheet, Model.find_tab(constants.INSULATION_SPREADSHEET_NAME))
+        self.view.tabWidget.get_tab_by_name(constants.POSITION_SPREADSHEET_NAME).add_property(constants.POSITION_SPREADSHEET_NAME, constants.POSITION_SPREADSHEET_NAME, Spreadsheet)
+        self.view.tabWidget.get_tab_by_name(constants.ROOF_SPREADSHEET_NAME).add_property(constants.ROOF_SPREADSHEET_NAME, constants.ROOF_SPREADSHEET_NAME, Spreadsheet)
+        self.view.tabWidget.get_tab_by_name(constants.FOUNDATION_SPREADSHEET_NAME).add_property(constants.FOUNDATION_SPREADSHEET_NAME, constants.FOUNDATION_SPREADSHEET_NAME, Spreadsheet)
+        self.view.tabWidget.get_tab_by_name(constants.INSULATION_SPREADSHEET_NAME).add_property(constants.INSULATION_SPREADSHEET_NAME, constants.INSULATION_SPREADSHEET_NAME, Spreadsheet)
 
         add_lines(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         add_lines(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
@@ -100,7 +99,7 @@ class MainController(QObject):
             ("Powierzchnia ścian zewnętrznych [m2]", "externalWallArea", LineEditItem)
         ]
         for i, c in enumerate(DEAFULT_PROPERTIES):
-            self.add_property(*c, property_tab, i)
+            property_tab.add_property(*c, i)
 
         load_default(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
         load_default(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
@@ -121,8 +120,7 @@ class MainController(QObject):
     def setup_connections(self):
         # Tab widget
         self.view.tabWidget.currentChanged.connect(self.on_tab_changed)
-        self.view.tabWidget.tabBar().setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.view.tabWidget.tabBar().customContextMenuRequested.connect(self.tabWidget_context_menu)
+        self.view.tabWidget.propertyAdded.connect(self.new_GroupBox_setup_connections)
 
         # Formula_bar
         self.view.Formula_bar.textEdited.connect(self.formula_bar_edited)
@@ -131,6 +129,18 @@ class MainController(QObject):
         # Actions
         self.view.actionNew.triggered.connect(self.on_action_new_triggered)
         self.view.actionExport_xlsx.triggered.connect(self.action_export_xlsx_handler)
+
+    def new_GroupBox_setup_connections(self, group_box: GroupBox):
+        if isinstance(group_box.item, (DoubleSpinBoxItem, CheckBoxItem)):
+            group_box.item.activeItemChangedSignal.connect(self.activeItemChanged)
+        elif isinstance(group_box.item, LineEditItem):
+            group_box.item.textEditedSignal.connect(self.itemWithFormulaTextEdited)
+            group_box.item.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
+            group_box.item.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
+        elif isinstance(group_box.item, Spreadsheet):
+            group_box.item.textEditedSignal.connect(self.itemWithFormulaTextEdited)
+            group_box.item.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
+            group_box.item.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
 
     ############################################
 
@@ -220,28 +230,6 @@ class MainController(QObject):
         from controlers.NewEstimateController import NewEstimateController
         self.new_estimate_cntroller = NewEstimateController(Model)
 
-    def on_action_new_property(self, widget: MyTab, index: int):
-        from views.Dialogs.NewPropertyDialog import NewPropertyDialog
-        self.property_dialog = NewPropertyDialog(widget, index)
-        self.property_dialog.property_added.connect(self.add_property)
-
-    def on_action_new_tab(self, widget: TabWidget):
-        from views.Dialogs.NewTabDialog import NewTabDialog
-        self.tab_dialog = NewTabDialog(widget)
-        self.tab_dialog.tab_added.connect(self.add_new_tab)
-
-    def on_action_delete_tab(self, tab_widget: TabWidget, index: int):
-        tab_name = tab_widget.tabText(index)
-        reply = QtWidgets.QMessageBox.question(
-            tab_widget,
-            "Potwierdzenie usunięcia karty",
-            f"Czy na pewno chcesz usunąć kartę '{tab_name}'?",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
-        )
-
-        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-            self.delete_tab(index, tab_widget)
-
     ############################################
 
     def itemWithFormulaTextEdited(self, item, edited_text):
@@ -273,6 +261,8 @@ class MainController(QObject):
             self.view.update_name_box(item.name)
             print(item)
 
+    ############################################
+
     @pyqtSlot(str)
     def formula_bar_edited(self, text):
         if Model.get_active_item():
@@ -292,139 +282,3 @@ class MainController(QObject):
         if tab is not None:
             print(name)
             print(tab.group_boxes)
-
-    ############################################
-
-    def spreadsheet_context_menu(self, pos: QtCore.QPoint,spreadsheet: Spreadsheet):
-        index = spreadsheet.indexAt(pos)
-
-        menu = QMenu()
-        add_position_action = menu.addAction('Add Row')
-        menu.addSeparator()
-        delete_action = menu.addAction('Delete Row')
-
-        action = menu.exec(spreadsheet.mapToGlobal(pos))
-        if not action:
-            return
-
-        row = index.row()
-        if action == add_position_action:
-            spreadsheet.add_row(row + 1)
-        elif action == delete_action:
-            spreadsheet.remove_row(row)
-
-    def tabWidget_context_menu(self, pos: QtCore.QPoint):
-        global_pos = self.view.tabWidget.tabBar().mapToGlobal(pos)
-
-        index_of_clicked_tab = self.view.tabWidget.tabBar().tabAt(pos)
-
-        if index_of_clicked_tab != -1:
-            # Get the name of the clicked tab
-            name_of_clicked_tab = self.view.tabWidget.tabText(index_of_clicked_tab)
-
-            # Create the context menu
-            menu = QMenu()
-            add_tab_action = menu.addAction('Dodaj nową karte')
-            delete_tab_action = menu.addAction(f'Usuń karte "{name_of_clicked_tab}"')
-
-            # Execute the menu
-            action = menu.exec(global_pos)
-
-            if action == add_tab_action:
-                self.on_action_new_tab(self.view.tabWidget)
-            elif action == delete_tab_action:
-                self.on_action_delete_tab(self.view.tabWidget, index_of_clicked_tab)
-        else:
-            print("No tab was clicked.")
-
-    def tab_context_menu(self, pos: QtCore.QPoint, tab: MyTab):
-        menu = QMenu()
-        add_new_property_action = menu.addAction('Dodaj właściwość')
-        delete_property_action = menu.addAction('Usuń właściwość')
-        reset_spliter_action = menu.addAction('Przywróć domyślny układ')
-
-        index = self.get_index(tab.mapToGlobal(pos))
-
-        action = menu.exec(tab.mapToGlobal(pos))
-        if action == add_new_property_action:
-            self.on_action_new_property(tab, index)
-        elif action == reset_spliter_action:
-            tab.reset_spliter()
-        elif action == delete_property_action:
-            tab.delete_property(index)
-
-    ############################################
-
-    def add_new_tab(self, name: str, tab_widget: TabWidget):
-        if name in db:
-            raise KeyError(f"Tab found with name '{name}'.")
-        my_tab = tab_widget.add_tab(name)
-
-        my_tab.context_menu_request.connect(self.tab_context_menu)
-        my_tab.installEventFilter(self)
-
-        Model.add_tab_to_db(my_tab)
-
-    def delete_tab(self, index: int, tab_widget: TabWidget):
-        if 0 <= index < tab_widget.count():
-            tab_widget.remove_tab(index)
-
-    def add_property(self, label_text: str, item_name: str, item_type, my_tab: MyTab, index: int = 0):
-        if item_type is None:
-            raise KeyError(f"Missing item_type.")
-        tmp = GroupBox(label_text, item_name, item_type, my_tab)
-
-        if isinstance(tmp.item, (DoubleSpinBoxItem, CheckBoxItem)):
-            tmp.item.activeItemChangedSignal.connect(self.activeItemChanged)
-        elif isinstance(tmp.item, LineEditItem):
-            tmp.item.textEditedSignal.connect(self.itemWithFormulaTextEdited)
-            tmp.item.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
-            tmp.item.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
-        elif isinstance(tmp.item, Spreadsheet):
-            tmp.item.context_menu_request.connect(self.spreadsheet_context_menu)
-            tmp.item.textEditedSignal.connect(self.itemWithFormulaTextEdited)
-            tmp.item.doubleClickedSignal.connect(self.itemWithFormulaDoubleClicked)
-            tmp.item.activeItemChangedSignal.connect(self.activeItemWithFormulaChanged)
-            for i, (header_name, _) in enumerate(constants.COLUMNS):
-                item = QtWidgets.QTableWidgetItem()
-                item.setText(header_name)
-                tmp.item.setHorizontalHeaderItem(i, item)
-        my_tab.add_group_box(tmp, index)
-
-    ############################################
-
-    def get_index(self, pos):
-        current_widget = self.view.tabWidget.currentWidget()
-
-        if not isinstance(current_widget, MyTab):
-            return None
-
-        closest_index = None
-        min_distance = float('inf')  # Initialize with an infinite distance
-
-        # Iterate through the widgets in the layout
-        for i in range(current_widget.splitter.count()):
-            widget = current_widget.splitter.widget(i)
-
-            # Get the global coordinates of the widget's top-left and bottom-right corners
-            top_left = widget.mapToGlobal(widget.rect().topLeft())
-            bottom_right = widget.mapToGlobal(widget.rect().bottomRight())
-
-            # Create a QRect representing the widget's global geometry
-            widget_rect = QtCore.QRect(top_left, bottom_right)
-
-            if widget_rect.contains(pos):
-                # If the position is inside the widget, return its index immediately
-                return i
-
-            # Otherwise, calculate the distance from the click position to the widget's rect
-            # Use the center of the widget for a more accurate "closeness" measure
-            widget_center = widget_rect.center()
-            distance = (pos - widget_center).manhattanLength()
-
-            # Keep track of the widget with the minimum distance
-            if distance < min_distance:
-                min_distance = distance
-                closest_index = i
-
-        return closest_index
