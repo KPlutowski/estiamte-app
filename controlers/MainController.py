@@ -230,6 +230,18 @@ class MainController(QObject):
         self.tab_dialog = NewTabDialog(widget)
         self.tab_dialog.tab_added.connect(self.add_new_tab)
 
+    def on_action_delete_tab(self, tab_widget: TabWidget, index: int):
+        tab_name = tab_widget.tabText(index)
+        reply = QtWidgets.QMessageBox.question(
+            tab_widget,
+            "Potwierdzenie usunięcia karty",
+            f"Czy na pewno chcesz usunąć kartę '{tab_name}'?",
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+        )
+
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            self.delete_tab(index, tab_widget)
+
     ############################################
 
     def itemWithFormulaTextEdited(self, item, edited_text):
@@ -303,12 +315,27 @@ class MainController(QObject):
 
     def tabWidget_context_menu(self, pos: QtCore.QPoint):
         global_pos = self.view.tabWidget.tabBar().mapToGlobal(pos)
-        menu = QMenu()
-        add_tab_action = menu.addAction('Dodaj nową karte')
 
-        action = menu.exec(global_pos)
-        if action == add_tab_action:
-            self.on_action_new_tab(self.view.tabWidget)
+        index_of_clicked_tab = self.view.tabWidget.tabBar().tabAt(pos)
+
+        if index_of_clicked_tab != -1:
+            # Get the name of the clicked tab
+            name_of_clicked_tab = self.view.tabWidget.tabText(index_of_clicked_tab)
+
+            # Create the context menu
+            menu = QMenu()
+            add_tab_action = menu.addAction('Dodaj nową karte')
+            delete_tab_action = menu.addAction(f'Usuń karte "{name_of_clicked_tab}"')
+
+            # Execute the menu
+            action = menu.exec(global_pos)
+
+            if action == add_tab_action:
+                self.on_action_new_tab(self.view.tabWidget)
+            elif action == delete_tab_action:
+                self.on_action_delete_tab(self.view.tabWidget, index_of_clicked_tab)
+        else:
+            print("No tab was clicked.")
 
     def tab_context_menu(self, pos: QtCore.QPoint, tab: MyTab):
         menu = QMenu()
@@ -337,6 +364,10 @@ class MainController(QObject):
         my_tab.installEventFilter(self)
 
         Model.add_tab_to_db(my_tab)
+
+    def delete_tab(self, index: int, tab_widget: TabWidget):
+        if 0 <= index < tab_widget.count():
+            tab_widget.remove_tab(index)
 
     def add_property(self, label_text: str, item_name: str, item_type, my_tab: MyTab, index: int = 0):
         if item_type is None:

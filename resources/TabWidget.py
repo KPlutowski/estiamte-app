@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QTabWidget, QWidget, QVBoxLayout, QScrollArea, QSize
     QSplitter
 
 from model.ItemModel import ItemModel
+from views.Dialogs.RenameTabDialog import RenameTabDialog
 
 
 class GroupBox(QWidget):
@@ -76,6 +77,10 @@ class GroupBox(QWidget):
 
         drag.exec(Qt.DropAction.MoveAction)
         self.setVisible(True)
+
+    def delete(self):
+        self.setParent(None)
+        self.item.clean_up()
 
 
 class MyTab(QWidget):
@@ -200,16 +205,15 @@ class MyTab(QWidget):
         if widget_to_delete is None:
             print(f"No widget found at index {index}")
             return
+        widget_to_delete.delete()
 
-        # Remove the widget from the splitter
-        self.splitter.widget(index).setParent(None)
+        del self.group_boxes[widget_to_delete.name]
 
-        # Remove the widget from the group_boxes dictionary
-        if widget_to_delete.name in self.group_boxes:
-            widget_to_delete.item.clean_up()
-            del self.group_boxes[widget_to_delete.name]
-        else:
-            print(f"GroupBox '{widget_to_delete.name}' not found in group_boxes")
+    def delete_tab(self):
+        from model.Model import Model
+        for i in range(len(self.group_boxes)):
+            self.delete_property(0)
+        Model.remove_tab(self.name)
 
 
 class TabWidget(QTabWidget):
@@ -236,38 +240,30 @@ class TabWidget(QTabWidget):
         self.addTab(my_tab, name)
         return my_tab
 
-    def get_tab_by_name(self, name: str):
-        for i in range(self.count()):
-            widget = self.widget(i)
-            if widget.objectName() == name:
-                return widget.children()[0]
-        return None
+    def remove_tab(self, index: int):
+        tab_name = self.tabText(index)
+        self.get_tab_by_name(tab_name).delete_tab()
+        self.removeTab(index)
 
-    def mouseDoubleClick(self, event: QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.rename_tab(event)
-        else:
-            super().mouseDoubleClickEvent(event)
+    def get_tab_by_name(self, name: str) -> MyTab:
+        for i in range(self.count()):
+            tab = self.widget(i)
+            if tab.objectName() == name:
+                return tab
+        return None
 
     def eventFilter(self, watched, event: QEvent):
         if watched == self.tabBar():
             if event.type() == QEvent.Type.MouseButtonDblClick:
-                self.mouseDoubleClick(event)
+                index = self.tabBar().tabAt(event.position().toPoint())
+                if index != -1:  # Ensure the click was on a tab
+                    self.rename_tab_dialog = RenameTabDialog(index)
+                    self.rename_tab_dialog.tab_renamed.connect(self.rename_tab)
         return super().eventFilter(watched, event)
 
-    def rename_tab(self, event):
+    def rename_tab(self, new_name, index):
         from model.Model import Model
-        tab_bar = self.tabBar()
-        index = tab_bar.tabAt(event.position().toPoint())
-        if index != -1:  # Ensure the click was on a tab
-            current_name = tab_bar.tabText(index)
-            new_name, ok = QInputDialog.getText(
-                self, "Change Name",
-                "Insert New Tab Name:",
-                QLineEdit.EchoMode.Normal,
-                current_name
-            )
-            if ok and new_name:
-                Model.rename_tab(current_name, new_name)
-                tab_bar.setTabText(index, new_name)
-                self.setTabText(index, new_name)
+        current_name = self.tabBar().tabText(index)
+        Model.rename_tab(current_name, new_name)
+        self.tabBar().setTabText(index, new_name)
+        self.setTabText(index, new_name)
