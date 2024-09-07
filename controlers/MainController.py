@@ -127,9 +127,20 @@ class MainController(QObject):
         self.view.Formula_bar.textEdited.connect(self.formula_bar_edited)
         self.view.Formula_bar.editingFinished.connect(self.formula_bar_editing_finished)
 
-        # Actions
-        self.view.actionNew.triggered.connect(self.on_action_new_triggered)
-        self.view.actionExport_xlsx.triggered.connect(self.action_export_xlsx_handler)
+        # File actions
+        self.view.actionNew.triggered.connect(self.handle_new_file_action)
+        self.view.actionOpen.triggered.connect(self.handle_file_open_action)
+        self.view.actionSave.triggered.connect(self.handle_file_save_action)
+        self.view.actionSaveAs.triggered.connect(self.handle_file_save_as_action)
+        self.view.actionClose.triggered.connect(self.handle_file_close_action)
+
+        # Export actions
+        self.view.actionExportXlsx.triggered.connect(self.handle_export_xlsx_action)
+        self.view.actionExportJson.triggered.connect(self.handle_export_json_action)
+        self.view.actionExportPdf.triggered.connect(self.handle_export_pdf_action)
+
+        # Import actions
+        self.view.actionImportJson.triggered.connect(self.handle_import_json_action)
 
     def new_GroupBox_setup_connections(self, group_box: GroupBox):
         if isinstance(group_box.item, (DoubleSpinBoxItem, CheckBoxItem)):
@@ -145,7 +156,23 @@ class MainController(QObject):
 
     ############################################
 
-    def action_export_xlsx_handler(self):
+    def handle_new_file_action(self):
+        from controlers.NewEstimateController import NewEstimateController
+        self.new_estimate_cntroller = NewEstimateController(Model)
+
+    def handle_file_open_action(self):
+        print("handle_file_open_action")
+
+    def handle_file_save_action(self):
+        print("handle_file_save_action")
+
+    def handle_file_save_as_action(self):
+        print("handle_file_save_as_action")
+
+    def handle_file_close_action(self):
+        print("handle_file_close_action")
+
+    def handle_export_xlsx_action(self):
         def gather_data():
             """Gather properties and spreadsheets from the group boxes."""
             properties = {}
@@ -227,9 +254,14 @@ class MainController(QObject):
         except Exception as e:
             print(f"An error occurred during export: {e}")
 
-    def on_action_new_triggered(self):
-        from controlers.NewEstimateController import NewEstimateController
-        self.new_estimate_cntroller = NewEstimateController(Model)
+    def handle_export_json_action(self):
+        print("handle_export_json_action")
+
+    def handle_export_pdf_action(self):
+        print("handle_export_pdf_action")
+
+    def handle_import_json_action(self):
+        print("handle_import_json_action")
 
     ############################################
 
