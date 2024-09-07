@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 import pandas as pd
 from PyQt6 import QtWidgets, QtCore
@@ -56,6 +56,11 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
 
     def set_display_text(self):
         self.setText(self.format.format_value(self._value))
+
+    def get_dict_data(self) -> Dict[str, Any]:
+        data = super().get_dict_data()
+        data.pop('item_type')
+        return data
 
 
 class Spreadsheet(QTableWidget):
@@ -144,14 +149,6 @@ class Spreadsheet(QTableWidget):
         return None
 
     def to_dataframe(self) -> pd.DataFrame:
-        rows = self.rowCount()
-        cols = self.columnCount()
-
-        # Extract the headers
-        headers = [self.horizontalHeaderItem(col).text() if self.horizontalHeaderItem(col) else f'Column {col + 1}' for
-                   col in range(cols)]
-
-        # Extract the data
         data = []
         for row in self.worksheet:
             row_data = []
@@ -159,9 +156,33 @@ class Spreadsheet(QTableWidget):
                 row_data.append(float(cell.text()) if is_convertible_to_float(cell.text()) else cell.text())
             data.append(row_data)
 
-        # Create a DataFrame
-        df = pd.DataFrame(data, columns=headers)
+        df = pd.DataFrame(data, columns=self.get_headers())
         return df
+
+    def get_headers(self) -> List[str]:
+        return [self.horizontalHeaderItem(col).text() if self.horizontalHeaderItem(col) else f'Column {col + 1}' for col in range(self.columnCount())]
+
+    def recalculate(self):
+        for row in self.worksheet:
+            for cell in row:
+                cell.recalculate()
+
+    def get_dict_data(self) -> Dict[str, Any]:
+        from model.ItemModel import ItemModel
+
+        cells = []
+        for row in self.worksheet:
+            for cell in row:
+                cells.append(cell.get_dict_data())
+        data = {
+            'cells': cells,
+            'item_name': self.name,
+            'row_count': self.rowCount(),
+            'column_count': self.columnCount(),
+            'item_type': ItemModel.get_item_type_from_class(type(self))
+        }
+
+        return data
 
     ###############################################
 

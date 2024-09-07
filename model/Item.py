@@ -1,6 +1,6 @@
 import abc
 from collections import deque
-from typing import Optional
+from typing import Optional, Dict, Any
 from PyQt6.QtCore import pyqtSignal, QEvent
 
 from resources.utils import is_convertible_to_float
@@ -94,9 +94,11 @@ class Item:
         super().focusInEvent(event)
         self.activeItemChangedSignal.emit(self)
 
+    @abc.abstractmethod
     def editing_finished(self, text):
         pass
 
+    @abc.abstractmethod
     def evaluate_formula(self):
         pass
 
@@ -109,3 +111,14 @@ class Item:
         for item in self.items_that_dependents_on_me:
             item.remove_dependent(self)
         self.items_that_dependents_on_me.clear()
+
+    def recalculate(self):
+        self.set_item(self.formula)
+
+    def get_dict_data(self) -> Dict[str, Any]:
+        from model.ItemModel import ItemModel
+
+        data = {'item_name': self.name,
+                'item_type': ItemModel.get_item_type_from_class(type(self)),
+                'formula': self.formula}
+        return data

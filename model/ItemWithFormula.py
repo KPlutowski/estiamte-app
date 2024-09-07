@@ -1,6 +1,6 @@
 import abc
 from enum import Enum, auto
-from typing import List, Dict
+from typing import List, Dict, Any
 
 from model.Enums import FormulaType, ErrorType
 from model.Item import Item
@@ -52,7 +52,7 @@ class ItemWithFormula(Item):
         self.items_that_i_depend_on: Dict[str, ItemWithFormula] = {}  # items and their representation in formula
         self.formula_type: FormulaType = FormulaType.NO_TYPE
         self.python_formula = ''
-        self.format = NumberFormat.GENERAL
+        self.format: NumberFormat = NumberFormat.GENERAL
 
     def __str__(self) -> str:
         return (
@@ -156,3 +156,9 @@ class ItemWithFormula(Item):
         self.items_that_dependents_on_me.clear()
         self.items_that_i_depend_on.clear()
 
+    def get_dict_data(self) -> Dict[str, Any]:
+        data = super().get_dict_data()
+        data.update({
+            'format': self.format.value
+        })
+        return data

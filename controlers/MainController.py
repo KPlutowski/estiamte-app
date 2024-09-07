@@ -1,22 +1,22 @@
-import csv
+import json
 
 import pandas as pd
 
-from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QFileDialog, QMessageBox
 from PyQt6.QtCore import QObject, pyqtSlot
 
 from model.CheckBoxItem import CheckBoxItem
 from model.DoubleSpinBoxItem import DoubleSpinBoxItem
+from model.ItemModel import ItemModel
 
 from model.ItemWithFormula import ItemWithFormula
 from model.LineEditItem import LineEditItem
 from model.Model import Model
 from model.Spreadsheet import Spreadsheet
-from resources.TabWidget import GroupBox
+from resources.TabWidget import GroupBox, MyTab
 
-from resources.utils import letter_to_index
+from resources.utils import parse_cell_reference
 from views.MainView.MainView import MainView
-import resources.constants as constants
 
 
 class MainController(QObject):
@@ -30,93 +30,7 @@ class MainController(QObject):
     ############################################
 
     def default_data(self):
-        def load_default(csv_path, sp_name):
-            line_count = 0
-            with open(csv_path, newline='', encoding='utf-8') as csvfile:
-                reader = csv.reader(csvfile)
-                for i, row in enumerate(reader):
-                    line_count += 1
-                    # Calculate the NET_VALUE_COLUMN based on the formula
-                    row[letter_to_index(constants.NET_VALUE_COLUMN[1])] = (
-                        f'={sp_name}!'
-                        f'{constants.QUANTITY_COLUMN[1]}{i + 1}*'
-                        f'{sp_name}!'
-                        f'{constants.PRICE_COLUMN[1]}{i + 1}'
-                    )
-                    for j, value in enumerate(row):
-                        Model.get_cell(i, j, sp_name).set_item(value)
-
-            Model.get_cell(line_count, letter_to_index(constants.PRICE_COLUMN[1]), sp_name).set_item(f'SUMA: ')
-            Model.get_cell(line_count, letter_to_index(constants.NET_VALUE_COLUMN[1]), sp_name).set_item(
-                f'=SUM({sp_name}!{constants.NET_VALUE_COLUMN[1]}1:{constants.NET_VALUE_COLUMN[1]}{line_count})')
-
-        def add_lines(csv_path, sp_name):
-            for _ in open(csv_path, encoding='utf-8'):
-                Model.find_item(name=sp_name).add_row()
-            Model.find_item(name=sp_name).add_row()
-
-        self.view.tabWidget.add_new_tab(constants.PROPERTIES_SPREADSHEET_NAME)
-
-        self.view.tabWidget.add_new_tab(constants.POSITION_SPREADSHEET_NAME)
-        self.view.tabWidget.add_new_tab(constants.ROOF_SPREADSHEET_NAME)
-        self.view.tabWidget.add_new_tab(constants.FOUNDATION_SPREADSHEET_NAME)
-        self.view.tabWidget.add_new_tab(constants.INSULATION_SPREADSHEET_NAME)
-
-        self.view.tabWidget.get_tab_by_name(constants.POSITION_SPREADSHEET_NAME).add_property(constants.POSITION_SPREADSHEET_NAME, constants.POSITION_SPREADSHEET_NAME, Spreadsheet)
-        self.view.tabWidget.get_tab_by_name(constants.ROOF_SPREADSHEET_NAME).add_property(constants.ROOF_SPREADSHEET_NAME, constants.ROOF_SPREADSHEET_NAME, Spreadsheet)
-        self.view.tabWidget.get_tab_by_name(constants.FOUNDATION_SPREADSHEET_NAME).add_property(constants.FOUNDATION_SPREADSHEET_NAME, constants.FOUNDATION_SPREADSHEET_NAME, Spreadsheet)
-        self.view.tabWidget.get_tab_by_name(constants.INSULATION_SPREADSHEET_NAME).add_property(constants.INSULATION_SPREADSHEET_NAME, constants.INSULATION_SPREADSHEET_NAME, Spreadsheet)
-
-        add_lines(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
-        add_lines(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
-        add_lines(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
-        add_lines(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
-
-        property_tab = Model.find_tab(constants.PROPERTIES_SPREADSHEET_NAME)
-        DEAFULT_PROPERTIES = [
-            ("Powierzchnia siatki", "gridArea", DoubleSpinBoxItem),
-            ("Długość budynku [m]", "buildingLength", DoubleSpinBoxItem),
-            ("Szerokość budynku [m]", "buildingWidth", DoubleSpinBoxItem),
-            ("Ilość szklanek", "glassQuantity", DoubleSpinBoxItem),
-            ("Ścianki działowe na parterze [mb]", "groundFloorWalls", DoubleSpinBoxItem),
-            ("Długość połaci", "roofLength", DoubleSpinBoxItem),
-            ("Ścianki działowe na piętrze [mb]", "firstFloorWalls", DoubleSpinBoxItem),
-            ("Wysokość ścianki kolankowej", "kneeWallHeight", DoubleSpinBoxItem),
-            ("Wysokość ścian parteru", "groundFloorHeight", DoubleSpinBoxItem),
-
-            ("Czy dom powyżej 70m2?", "largeHouse", CheckBoxItem),
-            ("Czy poddasze użytkowe?", "attic", CheckBoxItem),
-            ("Czy komin?", "chimney", CheckBoxItem),
-
-            ("Obwód", "perimeter", LineEditItem),
-            ("Powierzchnia Fundamentu", "foundationArea", LineEditItem),
-            ("Powierzchnia ściany parteru [m2]", "groundWallArea", LineEditItem),
-            ("Ilość krokwii", "rafterCount", LineEditItem),
-            ("Powierzchnia ściany kolankowej [m2]", "kneeWallArea", LineEditItem),
-            ("Powierzchnia szczytów [m2]", "gableArea", LineEditItem),
-            ("Długość okapu", "eavesLenght", LineEditItem),
-            ("Długość wypustu", "spoutLength", LineEditItem),
-            ("Długość Krokwii", "rafterLength", LineEditItem),
-            ("Powierzchnia ścian zewnętrznych [m2]", "externalWallArea", LineEditItem)
-        ]
-        for i, c in enumerate(DEAFULT_PROPERTIES):
-            property_tab.add_property(*c, i)
-
-        load_default(constants.DEFAULT_POSITION_CSV_PATH, constants.POSITION_SPREADSHEET_NAME)
-        load_default(constants.DEFAULT_ROOF_CSV_PATH, constants.ROOF_SPREADSHEET_NAME)
-        load_default(constants.DEFAULT_FOUNDATION_CSV_PATH, constants.FOUNDATION_SPREADSHEET_NAME)
-        load_default(constants.DEFAULT_INSULATION_CSV_PATH, constants.INSULATION_SPREADSHEET_NAME)
-
-        Model.find_item("perimeter").set_item('=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2')
-        Model.find_item("foundationArea").set_item('=PROPERTIES!buildingLength*PROPERTIES!buildingWidth')
-        Model.find_item("rafterCount").set_item('=PROPERTIES!buildingLength/0.6')
-        Model.find_item("rafterLength").set_item('=PROPERTIES!buildingWidth*0.9')
-        Model.find_item("groundWallArea").set_item('=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter')
-        Model.find_item("kneeWallArea").set_item('=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter')
-        Model.find_item("gableArea").set_item('=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight')
-        Model.find_item("externalWallArea").set_item('=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea')
-        Model.find_item("eavesLenght").set_item('=IF(PROPERTIES!buildingWidth>6;0.80;0.60)')
-        Model.find_item("spoutLength").set_item('=IF(PROPERTIES!buildingLength>7;0.8;0.6)')
+        self.handle_import_json_action("resources/default_data.json")
 
     def setup_connections(self):
         # Tab widget
@@ -156,21 +70,22 @@ class MainController(QObject):
 
     ############################################
 
-    def handle_new_file_action(self):
-        from controlers.NewEstimateController import NewEstimateController
-        self.new_estimate_cntroller = NewEstimateController(Model)
-
+    # TODO
     def handle_file_open_action(self):
         print("handle_file_open_action")
 
+    # TODO
     def handle_file_save_action(self):
         print("handle_file_save_action")
 
+    # TODO
     def handle_file_save_as_action(self):
         print("handle_file_save_as_action")
 
+    # TODO
     def handle_file_close_action(self):
-        print("handle_file_close_action")
+        # TODO ask if user want to save
+        self.view.close()
 
     def handle_export_xlsx_action(self):
         def gather_data():
@@ -227,7 +142,9 @@ class MainController(QObject):
                 writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
 
                 for label, value in properties.items():
-                    self.properties = pd.concat([self.properties,pd.DataFrame([[label, value]], columns=["WidgetName", "Value"])], ignore_index=True)
+                    self.properties = pd.concat(
+                        [self.properties, pd.DataFrame([[label, value]], columns=["WidgetName", "Value"])],
+                        ignore_index=True)
 
                 self.properties.to_excel(writer, index=False, header=False, sheet_name='Właściwości')
                 format_properties_sheet(writer.sheets['Właściwości'], writer.book)
@@ -254,14 +171,111 @@ class MainController(QObject):
         except Exception as e:
             print(f"An error occurred during export: {e}")
 
-    def handle_export_json_action(self):
-        print("handle_export_json_action")
-
+    # TODO
     def handle_export_pdf_action(self):
         print("handle_export_pdf_action")
 
-    def handle_import_json_action(self):
-        print("handle_import_json_action")
+    def handle_new_file_action(self):
+        def create_new_project():
+            """ Initialize a new project. """
+            # Clear current data, tabs, properties, etc.
+            self.view.tabWidget.clean_up()
+            self.properties = pd.DataFrame(columns=["WidgetName", "Value"])  # Reset properties DataFrame
+
+        def reset_ui():
+            """ Reset the UI components to their default states. """
+            self.view.Formula_bar.clear()
+            self.view.update_name_box("")
+            self.view.tabWidget.setCurrentIndex(0)
+            self.view.Formula_bar.setDisabled(True)
+
+        reply = QMessageBox.question(self.view, "Unsaved Changes",
+                                     "Do you want to save changes to the current project?",
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
+                                     QMessageBox.StandardButton.Cancel)
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.handle_export_json_action()
+        elif reply == QMessageBox.StandardButton.Cancel:
+            return 1
+
+        create_new_project()
+        reset_ui()
+
+    def handle_export_json_action(self):
+        def convert_to_json(data):
+            try:
+                return json.dumps(data, indent=4, ensure_ascii=False)
+            except TypeError as e:
+                QMessageBox.critical(self.view, "Export Failed", f"Failed to convert data to JSON: {str(e)}")
+                return None
+
+        def save_json_to_file(json_data):
+            file_dialog = QFileDialog()
+            file_name, _ = file_dialog.getSaveFileName(self.view, "Export to JSON", "", "JSON Files (*.json)")
+
+            if file_name:
+                try:
+                    with open(file_name, 'w', encoding='utf-8') as file:
+                        file.write(json_data)
+                    QMessageBox.information(self.view, "Export Successful",
+                                            f"Data successfully exported to {file_name}")
+                except Exception as e:
+                    QMessageBox.critical(self.view, "Export Failed", f"Failed to export data: {str(e)}")
+
+        export_data = Model.get_dict_data()
+        json_data = convert_to_json(export_data)
+
+        if json_data:
+            save_json_to_file(json_data)
+
+    def handle_import_json_action(self,file_path=None):
+        def create_or_get_tab(tab_name: str):
+            return self.view.tabWidget.add_new_tab(tab_name)
+
+        def create_or_get_group_box(tab: MyTab, group_box_label: str, item_name: str, item_type: str) -> GroupBox:
+            return tab.add_property(group_box_label, item_name, ItemModel.get_item_class(item_type))
+
+        if self.handle_new_file_action() == 0:
+            return
+
+        if file_path is not None:
+            file_name = file_path
+        else:
+            file_dialog = QFileDialog()
+            file_name, _ = file_dialog.getOpenFileName(self.view, "Import from JSON", "", "JSON Files (*.json)")
+
+        if not file_name:
+            return
+
+        try:
+            with open(file_name, 'r', encoding='utf-8') as file:
+                import_data = json.load(file)
+
+            for tab_data in import_data:
+                tab_name = tab_data['tab_name']
+                tab = create_or_get_tab(tab_name)
+
+                for group_box_data in tab_data['group_boxes']:
+                    item_type = group_box_data['item_type']
+                    item_name = group_box_data['item_name']
+                    group_box_label = group_box_data['group_box_label']
+                    group_box = create_or_get_group_box(tab, group_box_label, item_name, item_type)
+
+                    if isinstance(group_box.item, Spreadsheet):
+                        for i in range(group_box_data['row_count']):
+                            group_box.item.add_row()
+                        for cell_data in group_box_data['cells']:
+                            sh_name,row,col = parse_cell_reference(cell_data['item_name'])
+                            formula = cell_data.get('formula', '')
+                            group_box.item.get_cell(row, col).set_item(formula)
+                    else:
+                        group_box.item.set_item(group_box_data.get('formula', ''))
+
+            Model.recalculate()
+            QMessageBox.information(self.view, "Import Successful", f"Data successfully imported from {file_name}")
+        except Exception as e:
+            QMessageBox.critical(self.view, "Import Failed", f"Failed to import data: {str(e)}")
 
     ############################################
 
@@ -310,9 +324,8 @@ class MainController(QObject):
 
     @pyqtSlot(int)
     def on_tab_changed(self, index: int):
-        name = self.view.tabWidget.widget(index).objectName()
-        tab = Model.find_tab(name)
+        tab = self.view.tabWidget.widget(index)
         if tab is not None:
-            print(name)
+            print(tab.objectName())
             for gb in tab.group_boxes:
                 print(gb.name)

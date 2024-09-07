@@ -1,10 +1,10 @@
-from typing import List, Optional, Set, Union
+from typing import List, Optional, Set, Union, Dict, Any
 from collections import deque, defaultdict
 
 from model.Enums import ErrorType
 from model.Item import Item
 from model.ItemWithFormula import ItemWithFormula
-from model.Spreadsheet import SpreadsheetCell
+from model.Spreadsheet import SpreadsheetCell, Spreadsheet
 from resources.TabWidget import MyTab, GroupBox
 from resources.utils import parse_cell_reference, parse_cell_range, is_convertible_to_float
 
@@ -239,6 +239,23 @@ class Model:
 
         new_tab.add_group_box(group_box)
         group_box.setParent(new_tab)
+
+    @staticmethod
+    def get_list_of_tabs() -> List[MyTab]:
+        """Retrieve a list of all tabs in the database."""
+        return list(db)
+
+    @staticmethod
+    def recalculate():
+        for tab in Model.get_list_of_tabs():
+            tab.recalculate()
+
+    @staticmethod
+    def get_dict_data() -> List[Dict[str, Any]]:
+        data = []
+        for tab in Model.get_list_of_tabs():
+            data.append(tab.get_dict_data())
+        return data
 
 
 dirty_items: Set[Item] = set()

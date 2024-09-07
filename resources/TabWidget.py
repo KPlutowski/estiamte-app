@@ -1,4 +1,4 @@
-from typing import Set, Optional
+from typing import Set, Optional, Dict, Any, List
 
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QEvent
@@ -23,7 +23,7 @@ class GroupBox(QWidget):
         self.item = item_type(parent=self)
         self.name = item_name
 
-        if item_type == ItemModel.get_item_class("Spreadsheet"):
+        if item_type == ItemModel.get_class_from_name("Spreadsheet"):
             sizePolicy = QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
             self.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             self.layout = QtWidgets.QVBoxLayout(self)
@@ -77,9 +77,19 @@ class GroupBox(QWidget):
         drag.exec(Qt.DropAction.MoveAction)
         self.setVisible(True)
 
-    def delete(self):
+    def clean_up(self):
         self.setParent(None)
         self.item.clean_up()
+
+    def recalculate(self):
+        self.item.recalculate()
+
+    def get_dict_data(self) -> Dict[str, Any]:
+        data = self.item.get_dict_data()
+        data.update({
+            'group_box_label': self.label.text(),
+        })
+        return data
 
 
 class MyTab(QWidget):
@@ -179,10 +189,10 @@ class MyTab(QWidget):
         if widget_to_delete is None:
             return
 
-        widget_to_delete.delete()
+        widget_to_delete.clean_up()
         self.group_boxes.remove(widget_to_delete)
 
-    def delete_tab(self):
+    def clean_up(self):
         from model.Model import Model
         while self.group_boxes:
             self.delete_property(0)
@@ -225,6 +235,7 @@ class MyTab(QWidget):
 
         self.propertyAdded.emit(tmp)
         self.add_group_box(tmp, index)
+        return tmp
 
     def eventFilter(self, a0, a1):
         pass
@@ -259,6 +270,18 @@ class MyTab(QWidget):
     def get_GroupBox(self, index) -> GroupBox:
         return self.splitter.widget(index)
 
+    def recalculate(self):
+        for group_box in self.group_boxes:
+            group_box.recalculate()
+
+    def get_dict_data(self) -> Dict[str, Any]:
+        group_boxes_data = []
+        for group_box in self.group_boxes:
+            group_boxes_data.append(group_box.get_dict_data())
+        data = {'group_boxes': group_boxes_data,
+                'tab_name': self.name,}
+        return data
+
 
 class TabWidget(QTabWidget):
     propertyAdded = pyqtSignal(object)
@@ -280,15 +303,8 @@ class TabWidget(QTabWidget):
         self.setTabShape(QtWidgets.QTabWidget.TabShape.Triangular)
         self.setDocumentMode(True)
         self.setMovable(True)
-        self.setTabBarAutoHide(True)
+        self.setTabBarAutoHide(False)
         self.setObjectName("tabWidget")
-
-    def get_tab_by_name(self, name: str) -> MyTab:
-        for i in range(self.count()):
-            tab = self.widget(i)
-            if tab.objectName() == name:
-                return tab
-        return None
 
     def eventFilter(self, watched, event: QEvent):
         if watched == self.tabBar():
@@ -341,15 +357,23 @@ class TabWidget(QTabWidget):
         else:
             print("No tab was clicked.")
 
-    def add_new_tab(self, name: str):
+    def add_new_tab(self, name: str) -> MyTab:
         from model.Model import Model
         my_tab = MyTab(self, name)
         my_tab.propertyAdded.connect(self.propertyAdded.emit)
         self.addTab(my_tab, name)
         Model.add_tab_to_db(my_tab)
+        return my_tab
 
     def delete_tab(self, index: int):
+        from model.Model import Model
         if 0 <= index < self.count():
             tab_name = self.tabText(index)
-            self.get_tab_by_name(tab_name).delete_tab()
+            Model.find_tab(tab_name).clean_up()
             self.removeTab(index)
+
+    def clean_up(self):
+        for i in range(self.count()):
+            self.delete_tab(0)
+
+

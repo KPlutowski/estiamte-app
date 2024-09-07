@@ -1,0 +1,3530 @@
+[
+    {
+        "group_boxes": [
+            {
+                "item_name": "foundationArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!buildingLength*PROPERTIES!buildingWidth",
+                "format": 1,
+                "group_box_label": "Powierzchnia Fundamentu"
+            },
+            {
+                "item_name": "groundFloorWalls",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Ścianki działowe na parterze [mb]"
+            },
+            {
+                "item_name": "attic",
+                "item_type": "Pole wyboru",
+                "formula": false,
+                "group_box_label": "Czy poddasze użytkowe?"
+            },
+            {
+                "item_name": "kneeWallArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter",
+                "format": 1,
+                "group_box_label": "Powierzchnia ściany kolankowej [m2]"
+            },
+            {
+                "item_name": "perimeter",
+                "item_type": "Pole tekstowe",
+                "formula": "=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2",
+                "format": 1,
+                "group_box_label": "Obwód"
+            },
+            {
+                "item_name": "kneeWallHeight",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Wysokość ścianki kolankowej"
+            },
+            {
+                "item_name": "rafterLength",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!buildingWidth*0.9",
+                "format": 1,
+                "group_box_label": "Długość Krokwii"
+            },
+            {
+                "item_name": "rafterCount",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!buildingLength/0.6",
+                "format": 1,
+                "group_box_label": "Ilość krokwii"
+            },
+            {
+                "item_name": "glassQuantity",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Ilość szklanek"
+            },
+            {
+                "item_name": "chimney",
+                "item_type": "Pole wyboru",
+                "formula": false,
+                "group_box_label": "Czy komin?"
+            },
+            {
+                "item_name": "largeHouse",
+                "item_type": "Pole wyboru",
+                "formula": false,
+                "group_box_label": "Czy dom powyżej 70m2?"
+            },
+            {
+                "item_name": "spoutLength",
+                "item_type": "Pole tekstowe",
+                "formula": "=IF(PROPERTIES!buildingLength>7;0.8;0.6)",
+                "format": 1,
+                "group_box_label": "Długość wypustu"
+            },
+            {
+                "item_name": "gridArea",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Powierzchnia siatki"
+            },
+            {
+                "item_name": "firstFloorWalls",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Ścianki działowe na piętrze [mb]"
+            },
+            {
+                "item_name": "groundFloorHeight",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Wysokość ścian parteru"
+            },
+            {
+                "item_name": "groundWallArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter",
+                "format": 1,
+                "group_box_label": "Powierzchnia ściany parteru [m2]"
+            },
+            {
+                "item_name": "eavesLenght",
+                "item_type": "Pole tekstowe",
+                "formula": "=IF(PROPERTIES!buildingWidth>6;0.80;0.60)",
+                "format": 1,
+                "group_box_label": "Długość okapu"
+            },
+            {
+                "item_name": "buildingWidth",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Szerokość budynku [m]"
+            },
+            {
+                "item_name": "gableArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight",
+                "format": 1,
+                "group_box_label": "Powierzchnia szczytów [m2]"
+            },
+            {
+                "item_name": "roofLength",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Długość połaci"
+            },
+            {
+                "item_name": "buildingLength",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Długość budynku [m]"
+            },
+            {
+                "item_name": "externalWallArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea",
+                "format": 1,
+                "group_box_label": "Powierzchnia ścian zewnętrznych [m2]"
+            }
+        ],
+        "tab_name": "Właściwości"
+    },
+    {
+        "group_boxes": [
+            {
+                "cells": [
+                    {
+                        "item_name": "Fundament!A1",
+                        "formula": "SIATKA 20x20",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D1",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E1",
+                        "formula": "=((PROPERTIES!foundationArea*2)*1.15)/PROPERTIES!gridArea",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F1",
+                        "formula": "184.64",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G1",
+                        "formula": "=Fundament!E1*Fundament!F1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A2",
+                        "formula": "XPS 5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D2",
+                        "formula": "m3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E2",
+                        "formula": "=(PROPERTIES!foundationArea*0.1)+(((PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2)*0.8)*0.05",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F2",
+                        "formula": "336",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G2",
+                        "formula": "=Fundament!E2*Fundament!F2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A3",
+                        "formula": "XPS 8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D3",
+                        "formula": "m3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E3",
+                        "formula": "=(PROPERTIES!foundationArea*0.1)+(((PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2)*0.8)*0.08",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G3",
+                        "formula": "=Fundament!E3*Fundament!F3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A4",
+                        "formula": "PRĘT FI8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D4",
+                        "formula": "mb",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E4",
+                        "formula": "=(PROPERTIES!perimeter*4)+((PROPERTIES!perimeter/0.4)*1.03)+((PROPERTIES!perimeter/0.3+1)*0.6)+(2.4*4)*4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F4",
+                        "formula": "15.34",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G4",
+                        "formula": "=Fundament!E4*Fundament!F4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A5",
+                        "formula": "KOBYŁKI",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D5",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E5",
+                        "formula": "=PROPERTIES!foundationArea*1.3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F5",
+                        "formula": "1.83",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G5",
+                        "formula": "=Fundament!E5*Fundament!F5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A6",
+                        "formula": "DYSTANSE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D6",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E6",
+                        "formula": "=PROPERTIES!foundationArea*1.3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F6",
+                        "formula": "1.32",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G6",
+                        "formula": "=Fundament!E6*Fundament!F6",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A7",
+                        "formula": "GLIDEX",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E7",
+                        "formula": "1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F7",
+                        "formula": "12.7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G7",
+                        "formula": "=Fundament!E7*Fundament!F7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A8",
+                        "formula": "DYSPERBIT",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E8",
+                        "formula": "=0.5*PROPERTIES!glassQuantity",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F8",
+                        "formula": "36",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G8",
+                        "formula": "=Fundament!E8*Fundament!F8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A9",
+                        "formula": "DRUT WIĄZAŁKOWY",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C9",
+                        "formula": "dajemy 5kg",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D9",
+                        "formula": "kg",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E9",
+                        "formula": "5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F9",
+                        "formula": "5.25",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G9",
+                        "formula": "=Fundament!E9*Fundament!F9",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A10",
+                        "formula": "BLOCZKI BETONOWE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D10",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E10",
+                        "formula": "=PROPERTIES!glassQuantity*5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F10",
+                        "formula": "3.8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G10",
+                        "formula": "=Fundament!E10*Fundament!F10",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A11",
+                        "formula": "BETON C25",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D11",
+                        "formula": "m3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E11",
+                        "formula": "=PROPERTIES!foundationArea*0.2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G11",
+                        "formula": "=Fundament!E11*Fundament!F11",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A12",
+                        "formula": "KOPARKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B12",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C12",
+                        "formula": "nie zamawiamy powyżej 150zł/h",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D12",
+                        "formula": "godz.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E12",
+                        "formula": "10",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F12",
+                        "formula": "150",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G12",
+                        "formula": "=Fundament!E12*Fundament!F12",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A13",
+                        "formula": "PIASEK",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E13",
+                        "formula": "4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F13",
+                        "formula": "700",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G13",
+                        "formula": "=Fundament!E13*Fundament!F13",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A14",
+                        "formula": "TRÓJNIK 110",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B14",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C14",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D14",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E14",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F14",
+                        "formula": "13.5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G14",
+                        "formula": "=Fundament!E14*Fundament!F14",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A15",
+                        "formula": "KOLANO 110",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D15",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F15",
+                        "formula": "5.5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G15",
+                        "formula": "=Fundament!E15*Fundament!F15",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A16",
+                        "formula": "KOLANO 110",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D16",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F16",
+                        "formula": "5.5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G16",
+                        "formula": "=Fundament!E16*Fundament!F16",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A17",
+                        "formula": "KOLANO 110",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D17",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F17",
+                        "formula": "6",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G17",
+                        "formula": "=Fundament!E17*Fundament!F17",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A18",
+                        "formula": "RURA 110-0,5m",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D18",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F18",
+                        "formula": "9.7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G18",
+                        "formula": "=Fundament!E18*Fundament!F18",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A19",
+                        "formula": "RURA 110-1M",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D19",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F19",
+                        "formula": "13.7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G19",
+                        "formula": "=Fundament!E19*Fundament!F19",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A20",
+                        "formula": "RURA 110-2m",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D20",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F20",
+                        "formula": "9.7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G20",
+                        "formula": "=Fundament!E20*Fundament!F20",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A21",
+                        "formula": "REDUKCJA 16",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D21",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F21",
+                        "formula": "9",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G21",
+                        "formula": "=Fundament!E21*Fundament!F21",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A22",
+                        "formula": "RURA 160-1M",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D22",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F22",
+                        "formula": "38",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G22",
+                        "formula": "=Fundament!E22*Fundament!F22",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A23",
+                        "formula": "RURA 160-2M",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B23",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C23",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D23",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E23",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F23",
+                        "formula": "42",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G23",
+                        "formula": "=Fundament!E23*Fundament!F23",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A24",
+                        "formula": "KOLANO 160 90*",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D24",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G24",
+                        "formula": "=Fundament!E24*Fundament!F24",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A25",
+                        "formula": "TARCZA 230M",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B25",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C25",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D25",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E25",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F25",
+                        "formula": "7.32",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G25",
+                        "formula": "=Fundament!E25*Fundament!F25",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A26",
+                        "formula": "KOREK PCV",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B26",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C26",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D26",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E26",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F26",
+                        "formula": "3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G26",
+                        "formula": "=Fundament!E26*Fundament!F26",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A27",
+                        "formula": "KOLANO 160",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B27",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C27",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D27",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E27",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F27",
+                        "formula": "13.6",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G27",
+                        "formula": "=Fundament!E27*Fundament!F27",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A28",
+                        "formula": "EPS 100 5CM",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B28",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C28",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D28",
+                        "formula": "m3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E28",
+                        "formula": "=((PROPERTIES!foundationArea*2)*0.9)*0.05",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F28",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G28",
+                        "formula": "=Fundament!E28*Fundament!F28",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A29",
+                        "formula": "KLEJ DO MUROWANIA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B29",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C29",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D29",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E29",
+                        "formula": "=0.5*PROPERTIES!glassQuantity",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F29",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G29",
+                        "formula": "=Fundament!E29*Fundament!F29",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A30",
+                        "formula": "FOLIA BUDOWLANA CZARNA POD PŁYTĘ",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B30",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C30",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D30",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E30",
+                        "formula": "=PROPERTIES!foundationArea*1.1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F30",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G30",
+                        "formula": "=Fundament!E30*Fundament!F30",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A31",
+                        "formula": "WYLEWKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B31",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C31",
+                        "formula": "PRZY M2 PŁYTY POWYŻEJ 65M2 ODLICZAMY 15%",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D31",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E31",
+                        "formula": "=PROPERTIES!foundationArea*0.9",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F31",
+                        "formula": "45",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G31",
+                        "formula": "=Fundament!E31*Fundament!F31",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A32",
+                        "formula": "FOLIA BUDOWLANA POD WYLEWKĘ",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B32",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C32",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D32",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E32",
+                        "formula": "=PROPERTIES!foundationArea*1.1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F32",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G32",
+                        "formula": "=Fundament!E32*Fundament!F32",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!A33",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!B33",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!C33",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!D33",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!E33",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!F33",
+                        "formula": "SUMA: ",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Fundament!G33",
+                        "formula": "=SUM(Fundament!G1:G32)",
+                        "format": 1
+                    }
+                ],
+                "item_name": "Fundament",
+                "row_count": 33,
+                "column_count": 7,
+                "item_type": "Arkusz kalkulacyjny",
+                "group_box_label": "Fundament"
+            }
+        ],
+        "tab_name": "Fundament"
+    },
+    {
+        "group_boxes": [
+            {
+                "cells": [
+                    {
+                        "item_name": "Ocieplenie!A1",
+                        "formula": "STELAŻ 145x45 ZEW",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C1",
+                        "formula": "DO DOMU 70M 145 STELAŻ, POWYŻEJ DO SCIAN ZEWNETRZYNCH 195",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D1",
+                        "formula": "MB",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E1",
+                        "formula": "=IF(PROPERTIES!largeHouse;(((PROPERTIES!perimeter*2.8)*4)+((PROPERTIES!buildingWidth*2)*4)+((PROPERTIES!buildingLength*0.8)*4));0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G1",
+                        "formula": "=Ocieplenie!E1*Ocieplenie!F1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A2",
+                        "formula": "STELAŻ 195x45 ZEW",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D2",
+                        "formula": "MB",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E2",
+                        "formula": "=IF(PROPERTIES!largeHouse;(((PROPERTIES!perimeter*2.8)*4)+((PROPERTIES!buildingWidth*2)*4)+((PROPERTIES!buildingLength*0.8)*4));0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G2",
+                        "formula": "=Ocieplenie!E2*Ocieplenie!F2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A3",
+                        "formula": "STELAZ 95X45 WEW",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D3",
+                        "formula": "M3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E3",
+                        "formula": "=((((PROPERTIES!groundFloorWalls+PROPERTIES!firstFloorWalls)*2.6)*4)*0.045)*0.095",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G3",
+                        "formula": "=Ocieplenie!E3*Ocieplenie!F3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A4",
+                        "formula": "ZSZYWKI DO STEICO",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D4",
+                        "formula": "SZT",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E4",
+                        "formula": "=PROPERTIES!externalWallArea*18",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G4",
+                        "formula": "=Ocieplenie!E4*Ocieplenie!F4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A5",
+                        "formula": "STEICO",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D5",
+                        "formula": "M2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E5",
+                        "formula": "=PROPERTIES!externalWallArea",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G5",
+                        "formula": "=Ocieplenie!E5*Ocieplenie!F5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A6",
+                        "formula": "SIATKA PODTYNKOWA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D6",
+                        "formula": "M2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E6",
+                        "formula": "=PROPERTIES!externalWallArea",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G6",
+                        "formula": "=Ocieplenie!E6*Ocieplenie!F6",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A7",
+                        "formula": "KLEJ",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D7",
+                        "formula": "KG",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E7",
+                        "formula": "=Ocieplenie!E5*5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G7",
+                        "formula": "=Ocieplenie!E7*Ocieplenie!F7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A8",
+                        "formula": "TYNK",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D8",
+                        "formula": "KG",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E8",
+                        "formula": "=Ocieplenie!E5*2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G8",
+                        "formula": "=Ocieplenie!E8*Ocieplenie!F8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A9",
+                        "formula": "PŁYTA OSB 15MM",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D9",
+                        "formula": "M2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E9",
+                        "formula": "=PROPERTIES!externalWallArea*0.9",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G9",
+                        "formula": "=Ocieplenie!E9*Ocieplenie!F9",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A10",
+                        "formula": "WEŁNA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C10",
+                        "formula": "ODJAC POZNIEJ OKNA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D10",
+                        "formula": "M3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E10",
+                        "formula": "=((PROPERTIES!externalWallArea*0.15)-((Ocieplenie!E1*0.045)*0.145)+(PROPERTIES!externalWallArea*0.05)+((PROPERTIES!groundFloorWalls+PROPERTIES!firstFloorWalls)*2.6)*0.1)+(((PROPERTIES!rafterLength*0.55)*2)*PROPERTIES!buildingLength)+(PROPERTIES!rafterLength*0.2)*PROPERTIES!buildingLength",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G10",
+                        "formula": "=Ocieplenie!E10*Ocieplenie!F10",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A11",
+                        "formula": "FOLIA WIATROIZOLACYJNA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D11",
+                        "formula": "M2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E11",
+                        "formula": "=PROPERTIES!externalWallArea*1.05",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G11",
+                        "formula": "=Ocieplenie!E11*Ocieplenie!F11",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A12",
+                        "formula": "KONTRŁATY",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B12",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C12",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D12",
+                        "formula": "MB",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E12",
+                        "formula": "=Ocieplenie!E1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F12",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G12",
+                        "formula": "=Ocieplenie!E12*Ocieplenie!F12",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A13",
+                        "formula": "ZSZYWKI DO FOLII",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D13",
+                        "formula": "SZT.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E13",
+                        "formula": "=PROPERTIES!externalWallArea*20",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G13",
+                        "formula": "=Ocieplenie!E13*Ocieplenie!F13",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A14",
+                        "formula": "GWOŻDZIE DO KONTRŁAT",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B14",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C14",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D14",
+                        "formula": "SZT.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E14",
+                        "formula": "=Ocieplenie!E12*3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F14",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G14",
+                        "formula": "=Ocieplenie!E14*Ocieplenie!F14",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A15",
+                        "formula": "DESKA ELEWACYJNA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D15",
+                        "formula": "M2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E15",
+                        "formula": "=PROPERTIES!externalWallArea",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G15",
+                        "formula": "=Ocieplenie!E15*Ocieplenie!F15",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A16",
+                        "formula": "WKRĘTY 5X100",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D16",
+                        "formula": "SZT.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E16",
+                        "formula": "=Ocieplenie!E15*26",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G16",
+                        "formula": "=Ocieplenie!E16*Ocieplenie!F16",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A17",
+                        "formula": "KOŁKI FI15",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D17",
+                        "formula": "SZT.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E17",
+                        "formula": "=Ocieplenie!E16*0.5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G17",
+                        "formula": "=Ocieplenie!E17*Ocieplenie!F17",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A18",
+                        "formula": "WKRĘTY 5X100",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C18",
+                        "formula": "JEŻELI DOM DO 70M2 DWA WKRĘTY Z GÓRY, POWYŻEJ 3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D18",
+                        "formula": "SZT.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E18",
+                        "formula": "=PROPERTIES!externalWallArea*6",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G18",
+                        "formula": "=Ocieplenie!E18*Ocieplenie!F18",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A19",
+                        "formula": "FARBA REMMERS",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D19",
+                        "formula": "L",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E19",
+                        "formula": "=Ocieplenie!E15*0.35",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G19",
+                        "formula": "=Ocieplenie!E19*Ocieplenie!F19",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A20",
+                        "formula": "FARBA TEKNOS",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D20",
+                        "formula": "L",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E20",
+                        "formula": "=Ocieplenie!E15*0.5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G20",
+                        "formula": "=Ocieplenie!E20*Ocieplenie!F20",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A21",
+                        "formula": "IMPREGNAT",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D21",
+                        "formula": "L",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E21",
+                        "formula": "=Ocieplenie!E15*0.2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G21",
+                        "formula": "=Ocieplenie!E21*Ocieplenie!F21",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!A22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!B22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!C22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!D22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!E22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!F22",
+                        "formula": "SUMA: ",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ocieplenie!G22",
+                        "formula": "=SUM(Ocieplenie!G1:G21)",
+                        "format": 1
+                    }
+                ],
+                "item_name": "Ocieplenie",
+                "row_count": 22,
+                "column_count": 7,
+                "item_type": "Arkusz kalkulacyjny",
+                "group_box_label": "Ocieplenie"
+            }
+        ],
+        "tab_name": "Ocieplenie"
+    },
+    {
+        "group_boxes": [
+            {
+                "cells": [
+                    {
+                        "item_name": "Dach!A1",
+                        "formula": "BLACHODACHÓWKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D1",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E1",
+                        "formula": "=((PROPERTIES!rafterLength*PROPERTIES!roofLength)*2)*1.06",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G1",
+                        "formula": "=Dach!E1*Dach!F1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A2",
+                        "formula": "GĄSIOR",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D2",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E2",
+                        "formula": "=PROPERTIES!roofLength",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G2",
+                        "formula": "=Dach!E2*Dach!F2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A3",
+                        "formula": "WKRĘTY FARMERSKIE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D3",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E3",
+                        "formula": "=Dach!E1*8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G3",
+                        "formula": "=Dach!E3*Dach!F3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A4",
+                        "formula": "BLACHA PŁASKA OPIERZENIE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D4",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E4",
+                        "formula": "=((((PROPERTIES!roofLength/2)*2)/2)/4)*2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G4",
+                        "formula": "=Dach!E4*Dach!F4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A5",
+                        "formula": "BLACHA PŁASKA WIATROWNICA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D5",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E5",
+                        "formula": "=((PROPERTIES!rafterLength/2)*4)/4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G5",
+                        "formula": "=Dach!E5*Dach!F5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A6",
+                        "formula": "ŁAWA KOMINIARSKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E6",
+                        "formula": "=IF(PROPERTIES!chimney;1;0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G6",
+                        "formula": "=Dach!E6*Dach!F6",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A7",
+                        "formula": "STOPNIE KOMINIARSKIE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E7",
+                        "formula": "=IF(PROPERTIES!chimney;PROPERTIES!rafterLength*0.75;0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G7",
+                        "formula": "=Dach!E7*Dach!F7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A8",
+                        "formula": "OPASKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E8",
+                        "formula": "=IF(PROPERTIES!chimney;1;0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G8",
+                        "formula": "=Dach!E8*Dach!F8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A9",
+                        "formula": "WAKAFLEX",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E9",
+                        "formula": "=IF(PROPERTIES!chimney;1.5;0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G9",
+                        "formula": "=Dach!E9*Dach!F9",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F10",
+                        "formula": "SUMA: ",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G10",
+                        "formula": "=SUM(Dach!G1:G9)",
+                        "format": 1
+                    }
+                ],
+                "item_name": "Dach",
+                "row_count": 10,
+                "column_count": 7,
+                "item_type": "Arkusz kalkulacyjny",
+                "group_box_label": "Dach"
+            }
+        ],
+        "tab_name": "Dach"
+    },
+    {
+        "group_boxes": [
+            {
+                "cells": [
+                    {
+                        "item_name": "Ekipa!A1",
+                        "formula": "XPS 2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D1",
+                        "formula": "m3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E1",
+                        "formula": "=(PROPERTIES!perimeter*0.5)*0.02",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G1",
+                        "formula": "=Ekipa!E1*Ekipa!F1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A2",
+                        "formula": "KLEJ W PIANIE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C2",
+                        "formula": "SPRAWDZIC Z PAWLEM WYDAJNOSC",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G2",
+                        "formula": "=Ekipa!E2*Ekipa!F2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A3",
+                        "formula": "FOLIA PODWALINOWA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D3",
+                        "formula": "mb",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E3",
+                        "formula": "=PROPERTIES!perimeter+PROPERTIES!groundFloorWalls",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G3",
+                        "formula": "=Ekipa!E3*Ekipa!F3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A4",
+                        "formula": "PAPA SAMOPRZYLEPNA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C4",
+                        "formula": "1 ROLKA - 28MB",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D4",
+                        "formula": "mb",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E4",
+                        "formula": "=PROPERTIES!perimeter",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G4",
+                        "formula": "=Ekipa!E4*Ekipa!F4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A5",
+                        "formula": "KP1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D5",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E5",
+                        "formula": "=(PROPERTIES!perimeter+PROPERTIES!groundFloorWalls)/1.2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G5",
+                        "formula": "=Ekipa!E5*Ekipa!F5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A6",
+                        "formula": "KOTWA MONTAŻOWA FI12x80",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D6",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E6",
+                        "formula": "=Ekipa!E5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G6",
+                        "formula": "=Ekipa!E6*Ekipa!F6",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A7",
+                        "formula": "WKRĘT 7,5X132 STOŻEK",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D7",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E7",
+                        "formula": "=(PROPERTIES!perimeter/0.6)+1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G7",
+                        "formula": "=Ekipa!E7*Ekipa!F7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A8",
+                        "formula": "WKRĘT 5X100 STOŻEK",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D8",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E8",
+                        "formula": "=10*PROPERTIES!foundationArea",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G8",
+                        "formula": "=Ekipa!E8*Ekipa!F8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A9",
+                        "formula": "WKRĘTY 6X60",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D9",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E9",
+                        "formula": "=((PROPERTIES!perimeter/0.6)*2)+(3.5/0.6)*4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G9",
+                        "formula": "=Ekipa!E9*Ekipa!F9",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A10",
+                        "formula": "WKRĘTY 8X80",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D10",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E10",
+                        "formula": "=(PROPERTIES!groundFloorWalls/0.6)+1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G10",
+                        "formula": "=Ekipa!E10*Ekipa!F10",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A11",
+                        "formula": "WKRĘTY 8X120",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D11",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E11",
+                        "formula": "=((PROPERTIES!groundFloorWalls/0.6)+(PROPERTIES!perimeter/0.6)+(PROPERTIES!rafterCount*8))*1.1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F11",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G11",
+                        "formula": "=Ekipa!E11*Ekipa!F11",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A12",
+                        "formula": "WKRĘTY 8X160",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B12",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C12",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D12",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E12",
+                        "formula": "=PROPERTIES!foundationArea",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F12",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G12",
+                        "formula": "=Ekipa!E12*Ekipa!F12",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A13",
+                        "formula": "WKRĘTY 8X200",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D13",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E13",
+                        "formula": "=(PROPERTIES!buildingLength/0.6)*2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F13",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G13",
+                        "formula": "=Ekipa!E13*Ekipa!F13",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A14",
+                        "formula": "WKRĘTY 8X240",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B14",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C14",
+                        "formula": "POWYZEJ 6M SZEROKOSCI X4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D14",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E14",
+                        "formula": "=((PROPERTIES!buildingLength/0.6)+1)*3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F14",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G14",
+                        "formula": "=Ekipa!E14*Ekipa!F14",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A15",
+                        "formula": "WKRĘTY 8X260",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E15",
+                        "formula": "=(PROPERTIES!rafterCount*4)/2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F15",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G15",
+                        "formula": "=Ekipa!E15*Ekipa!F15",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A16",
+                        "formula": "WKRĘTY 8X300",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E16",
+                        "formula": "=(PROPERTIES!rafterCount*4)/2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F16",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G16",
+                        "formula": "=Ekipa!E16*Ekipa!F16",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A17",
+                        "formula": "ZSZYWKI TAKER MŁOT G8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D17",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E17",
+                        "formula": "=((PROPERTIES!rafterLength/0.1)*PROPERTIES!rafterCount)*2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F17",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G17",
+                        "formula": "=Ekipa!E17*Ekipa!F17",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A18",
+                        "formula": "GAZ DO GWOŹDZIARKI",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C18",
+                        "formula": "zweryfikowac z pawlem zuzycie",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F18",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G18",
+                        "formula": "=Ekipa!E18*Ekipa!F18",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A19",
+                        "formula": "GWOŹDZIE GWOŹDZIARKA 50mm",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D19",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E19",
+                        "formula": "=(Ekipa!E21*2)+(Ekipa!E29*42)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F19",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G19",
+                        "formula": "=Ekipa!E19*Ekipa!F19",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A20",
+                        "formula": "GWOŹDZIE GWOŹDZIARKA 70mm",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E20",
+                        "formula": "=Ekipa!E25*42",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F20",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G20",
+                        "formula": "=Ekipa!E20*Ekipa!F20",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A21",
+                        "formula": "GWOŹDZIE GWOŹDZIARKA 90mm",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D21",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E21",
+                        "formula": "=(((PROPERTIES!rafterLength/0.4)+2)*PROPERTIES!rafterCount)*2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F21",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G21",
+                        "formula": "=Ekipa!E21*Ekipa!F21",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A22",
+                        "formula": "PIANA PISTOLETOWA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F22",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G22",
+                        "formula": "=Ekipa!E22*Ekipa!F22",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A23",
+                        "formula": "SĘKI FI15",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B23",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C23",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D23",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E23",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F23",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G23",
+                        "formula": "=Ekipa!E23*Ekipa!F23",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A24",
+                        "formula": "SĘKI FI30",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F24",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G24",
+                        "formula": "=Ekipa!E24*Ekipa!F24",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A25",
+                        "formula": "DESKA PODŁOGOWA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B25",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C25",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D25",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E25",
+                        "formula": "=IF(PROPERTIES!attic;PROPERTIES!foundationArea-3;PROPERTIES!foundationArea)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F25",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G25",
+                        "formula": "=Ekipa!E25*Ekipa!F25",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A26",
+                        "formula": "MEMBRANA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B26",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C26",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D26",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E26",
+                        "formula": "=(PROPERTIES!roofLength*PROPERTIES!rafterLength)*2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F26",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G26",
+                        "formula": "=Ekipa!E26*Ekipa!F26",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A27",
+                        "formula": "ŁATY",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B27",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C27",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D27",
+                        "formula": "mb",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E27",
+                        "formula": "=(((PROPERTIES!rafterLength/0.4)+2)*2)*PROPERTIES!roofLength",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F27",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G27",
+                        "formula": "=Ekipa!E27*Ekipa!F27",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A28",
+                        "formula": "KONTRŁATY",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B28",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C28",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D28",
+                        "formula": "mb",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E28",
+                        "formula": "=((PROPERTIES!rafterLength*2)*PROPERTIES!rafterCount)*2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F28",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G28",
+                        "formula": "=Ekipa!E28*Ekipa!F28",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A29",
+                        "formula": "PODBITKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B29",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C29",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D29",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E29",
+                        "formula": "=(((PROPERTIES!buildingLength*PROPERTIES!eavesLenght)*2)+(PROPERTIES!spoutLength*PROPERTIES!rafterLength)*4)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F29",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G29",
+                        "formula": "=Ekipa!E29*Ekipa!F29",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!A30",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!B30",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!C30",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!D30",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!E30",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!F30",
+                        "formula": "SUMA: ",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Ekipa!G30",
+                        "formula": "=SUM(Ekipa!G1:G29)",
+                        "format": 1
+                    }
+                ],
+                "item_name": "Ekipa",
+                "row_count": 30,
+                "column_count": 7,
+                "item_type": "Arkusz kalkulacyjny",
+                "group_box_label": "Ekipa"
+            }
+        ],
+        "tab_name": "Ekipa"
+    }
+]
