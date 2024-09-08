@@ -148,6 +148,7 @@ class Spreadsheet(QTableWidget):
             return self.worksheet[row][column]
         return None
 
+    #Transforming into the DataFrame
     def to_dataframe(self) -> pd.DataFrame:
         data = []
         for row in self.worksheet:

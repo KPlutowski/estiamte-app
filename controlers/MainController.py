@@ -329,7 +329,7 @@ class MainController(QObject):
         self.is_edited = True
         self.current_file_path = None
 
-    ############################################
+    ##############################################
 
     def itemWithFormulaTextEdited(self, item, edited_text):
         self.view.update_formula_bar(edited_text)
