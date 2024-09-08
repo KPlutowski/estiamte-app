@@ -85,7 +85,6 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionSave)
-        self.menuFile.addAction(self.actionSaveAs)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.menuImport.menuAction())
         self.menuFile.addAction(self.menuEksport.menuAction())

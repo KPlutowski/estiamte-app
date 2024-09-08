@@ -50,7 +50,6 @@ class MainController(QObject):
         self.view.actionNew.triggered.connect(self.handle_new_file_action)
         self.view.actionOpen.triggered.connect(self.handle_file_open_action)
         self.view.actionSave.triggered.connect(self.handle_file_save_action)
-        self.view.actionSaveAs.triggered.connect(self.handle_file_save_as_action)
         self.view.actionClose.triggered.connect(self.handle_file_close_action)
 
         # Export actions
@@ -75,9 +74,8 @@ class MainController(QObject):
 
     ############################################
 
-    # TODO
     def handle_file_close_action(self):
-        # TODO ask if user want to save
+        self.ask_for_save()
         self.view.close()
 
     def handle_export_xlsx_action(self):
@@ -168,11 +166,6 @@ class MainController(QObject):
     def handle_export_pdf_action(self):
         print("handle_export_pdf_action")
 
-    # TODO
-    def handle_file_save_as_action(self):
-        print("handle_file_save_as_action")
-
-    # TODO
     def handle_file_open_action(self, file_path=None):
         """ IMPORT NEW FILE AND SET THE NEW PATH """
         if self.ask_for_save() == QMessageBox.StandardButton.Cancel:

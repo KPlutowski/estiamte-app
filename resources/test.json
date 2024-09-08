@@ -4,6 +4,370 @@
             {
                 "cells": [
                     {
+                        "item_name": "Dach!A1",
+                        "formula": "BLACHODACHÓWKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D1",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E1",
+                        "formula": "=((PROPERTIES!rafterLength*PROPERTIES!roofLength)*2)*1.06",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F1",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G1",
+                        "formula": "=Dach!E1*Dach!F1",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A2",
+                        "formula": "GĄSIOR",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D2",
+                        "formula": "m2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E2",
+                        "formula": "=PROPERTIES!roofLength",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F2",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G2",
+                        "formula": "=Dach!E2*Dach!F2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A3",
+                        "formula": "WKRĘTY FARMERSKIE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D3",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E3",
+                        "formula": "=Dach!E1*8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F3",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G3",
+                        "formula": "=Dach!E3*Dach!F3",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A4",
+                        "formula": "BLACHA PŁASKA OPIERZENIE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D4",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E4",
+                        "formula": "=((((PROPERTIES!roofLength/2)*2)/2)/4)*2",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F4",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G4",
+                        "formula": "=Dach!E4*Dach!F4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A5",
+                        "formula": "BLACHA PŁASKA WIATROWNICA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D5",
+                        "formula": "szt.",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E5",
+                        "formula": "=((PROPERTIES!rafterLength/2)*4)/4",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F5",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G5",
+                        "formula": "=Dach!E5*Dach!F5",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A6",
+                        "formula": "ŁAWA KOMINIARSKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E6",
+                        "formula": "=IF(PROPERTIES!chimney;1;0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F6",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G6",
+                        "formula": "=Dach!E6*Dach!F6",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A7",
+                        "formula": "STOPNIE KOMINIARSKIE",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E7",
+                        "formula": "=IF(PROPERTIES!chimney;PROPERTIES!rafterLength*0.75;0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F7",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G7",
+                        "formula": "=Dach!E7*Dach!F7",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A8",
+                        "formula": "OPASKA",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E8",
+                        "formula": "=IF(PROPERTIES!chimney;1;0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F8",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G8",
+                        "formula": "=Dach!E8*Dach!F8",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A9",
+                        "formula": "WAKAFLEX",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E9",
+                        "formula": "=IF(PROPERTIES!chimney;1.5;0)",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F9",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G9",
+                        "formula": "=Dach!E9*Dach!F9",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!A10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!B10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!C10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!D10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!E10",
+                        "formula": "",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!F10",
+                        "formula": "SUMA: ",
+                        "format": 1
+                    },
+                    {
+                        "item_name": "Dach!G10",
+                        "formula": "=SUM(Dach!G1:G9)",
+                        "format": 1
+                    }
+                ],
+                "item_name": "Dach",
+                "row_count": 10,
+                "column_count": 7,
+                "item_type": "Arkusz kalkulacyjny",
+                "group_box_label": "Dach"
+            }
+        ],
+        "tab_name": "Dach"
+    },
+    {
+        "group_boxes": [
+            {
+                "cells": [
+                    {
                         "item_name": "Fundament!A1",
                         "formula": "SIATKA 20x20",
                         "format": 1
@@ -185,7 +549,7 @@
                     },
                     {
                         "item_name": "Fundament!B6",
-                        "formula": "",
+                        "formula": "awd",
                         "format": 1
                     },
                     {
@@ -1171,6 +1535,153 @@
     {
         "group_boxes": [
             {
+                "item_name": "kneeWallArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter",
+                "format": 1,
+                "group_box_label": "Powierzchnia ściany kolankowej [m2]"
+            },
+            {
+                "item_name": "chimney",
+                "item_type": "Pole wyboru",
+                "formula": false,
+                "group_box_label": "Czy komin?"
+            },
+            {
+                "item_name": "eavesLenght",
+                "item_type": "Pole tekstowe",
+                "formula": "=IF(PROPERTIES!buildingWidth>6;0.80;0.60)",
+                "format": 1,
+                "group_box_label": "Długość okapu"
+            },
+            {
+                "item_name": "rafterCount",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!buildingLength/0.6",
+                "format": 1,
+                "group_box_label": "Ilość krokwii"
+            },
+            {
+                "item_name": "externalWallArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea",
+                "format": 1,
+                "group_box_label": "Powierzchnia ścian zewnętrznych [m2]"
+            },
+            {
+                "item_name": "groundFloorHeight",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Wysokość ścian parteru"
+            },
+            {
+                "item_name": "perimeter",
+                "item_type": "Pole tekstowe",
+                "formula": "=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2",
+                "format": 1,
+                "group_box_label": "Obwód"
+            },
+            {
+                "item_name": "spoutLength",
+                "item_type": "Pole tekstowe",
+                "formula": "=IF(PROPERTIES!buildingLength>7;0.8;0.6)",
+                "format": 1,
+                "group_box_label": "Długość wypustu"
+            },
+            {
+                "item_name": "roofLength",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Długość połaci"
+            },
+            {
+                "item_name": "glassQuantity",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Ilość szklanek"
+            },
+            {
+                "item_name": "gableArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight",
+                "format": 1,
+                "group_box_label": "Powierzchnia szczytów [m2]"
+            },
+            {
+                "item_name": "groundFloorWalls",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Ścianki działowe na parterze [mb]"
+            },
+            {
+                "item_name": "groundWallArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter",
+                "format": 1,
+                "group_box_label": "Powierzchnia ściany parteru [m2]"
+            },
+            {
+                "item_name": "rafterLength",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!buildingWidth*0.9",
+                "format": 1,
+                "group_box_label": "Długość Krokwii"
+            },
+            {
+                "item_name": "buildingLength",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Długość budynku [m]"
+            },
+            {
+                "item_name": "firstFloorWalls",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Ścianki działowe na piętrze [mb]"
+            },
+            {
+                "item_name": "largeHouse",
+                "item_type": "Pole wyboru",
+                "formula": false,
+                "group_box_label": "Czy dom powyżej 70m2?"
+            },
+            {
+                "item_name": "attic",
+                "item_type": "Pole wyboru",
+                "formula": false,
+                "group_box_label": "Czy poddasze użytkowe?"
+            },
+            {
+                "item_name": "buildingWidth",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Szerokość budynku [m]"
+            },
+            {
+                "item_name": "kneeWallHeight",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Wysokość ścianki kolankowej"
+            },
+            {
+                "item_name": "foundationArea",
+                "item_type": "Pole tekstowe",
+                "formula": "=PROPERTIES!buildingLength*PROPERTIES!buildingWidth",
+                "format": 1,
+                "group_box_label": "Powierzchnia Fundamentu"
+            },
+            {
+                "item_name": "gridArea",
+                "item_type": "Pole numeryczne",
+                "formula": 0.0,
+                "group_box_label": "Powierzchnia siatki"
+            }
+        ],
+        "tab_name": "Właściwości"
+    },
+    {
+        "group_boxes": [
+            {
                 "cells": [
                     {
                         "item_name": "Ocieplenie!A1",
@@ -1951,153 +2462,6 @@
             }
         ],
         "tab_name": "Ocieplenie"
-    },
-    {
-        "group_boxes": [
-            {
-                "item_name": "roofLength",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Długość połaci"
-            },
-            {
-                "item_name": "buildingLength",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Długość budynku [m]"
-            },
-            {
-                "item_name": "foundationArea",
-                "item_type": "Pole tekstowe",
-                "formula": "=PROPERTIES!buildingLength*PROPERTIES!buildingWidth",
-                "format": 1,
-                "group_box_label": "Powierzchnia Fundamentu"
-            },
-            {
-                "item_name": "externalWallArea",
-                "item_type": "Pole tekstowe",
-                "formula": "=PROPERTIES!groundWallArea+PROPERTIES!kneeWallArea+PROPERTIES!gableArea",
-                "format": 1,
-                "group_box_label": "Powierzchnia ścian zewnętrznych [m2]"
-            },
-            {
-                "item_name": "groundFloorWalls",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Ścianki działowe na parterze [mb]"
-            },
-            {
-                "item_name": "attic",
-                "item_type": "Pole wyboru",
-                "formula": false,
-                "group_box_label": "Czy poddasze użytkowe?"
-            },
-            {
-                "item_name": "kneeWallArea",
-                "item_type": "Pole tekstowe",
-                "formula": "=PROPERTIES!kneeWallHeight*PROPERTIES!perimeter",
-                "format": 1,
-                "group_box_label": "Powierzchnia ściany kolankowej [m2]"
-            },
-            {
-                "item_name": "perimeter",
-                "item_type": "Pole tekstowe",
-                "formula": "=(PROPERTIES!buildingLength+PROPERTIES!buildingWidth)*2",
-                "format": 1,
-                "group_box_label": "Obwód"
-            },
-            {
-                "item_name": "rafterLength",
-                "item_type": "Pole tekstowe",
-                "formula": "=PROPERTIES!buildingWidth*0.9",
-                "format": 1,
-                "group_box_label": "Długość Krokwii"
-            },
-            {
-                "item_name": "kneeWallHeight",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Wysokość ścianki kolankowej"
-            },
-            {
-                "item_name": "rafterCount",
-                "item_type": "Pole tekstowe",
-                "formula": "=PROPERTIES!buildingLength/0.6",
-                "format": 1,
-                "group_box_label": "Ilość krokwii"
-            },
-            {
-                "item_name": "glassQuantity",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Ilość szklanek"
-            },
-            {
-                "item_name": "largeHouse",
-                "item_type": "Pole wyboru",
-                "formula": false,
-                "group_box_label": "Czy dom powyżej 70m2?"
-            },
-            {
-                "item_name": "chimney",
-                "item_type": "Pole wyboru",
-                "formula": false,
-                "group_box_label": "Czy komin?"
-            },
-            {
-                "item_name": "spoutLength",
-                "item_type": "Pole tekstowe",
-                "formula": "=IF(PROPERTIES!buildingLength>7;0.8;0.6)",
-                "format": 1,
-                "group_box_label": "Długość wypustu"
-            },
-            {
-                "item_name": "firstFloorWalls",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Ścianki działowe na piętrze [mb]"
-            },
-            {
-                "item_name": "gridArea",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Powierzchnia siatki"
-            },
-            {
-                "item_name": "groundFloorHeight",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Wysokość ścian parteru"
-            },
-            {
-                "item_name": "groundWallArea",
-                "item_type": "Pole tekstowe",
-                "formula": "=PROPERTIES!groundFloorHeight*PROPERTIES!perimeter",
-                "format": 1,
-                "group_box_label": "Powierzchnia ściany parteru [m2]"
-            },
-            {
-                "item_name": "buildingWidth",
-                "item_type": "Pole numeryczne",
-                "formula": 0.0,
-                "group_box_label": "Szerokość budynku [m]"
-            },
-            {
-                "item_name": "eavesLenght",
-                "item_type": "Pole tekstowe",
-                "formula": "=IF(PROPERTIES!buildingWidth>6;0.80;0.60)",
-                "format": 1,
-                "group_box_label": "Długość okapu"
-            },
-            {
-                "item_name": "gableArea",
-                "item_type": "Pole tekstowe",
-                "formula": "=PROPERTIES!buildingWidth*PROPERTIES!groundFloorHeight",
-                "format": 1,
-                "group_box_label": "Powierzchnia szczytów [m2]"
-            }
-        ],
-        "tab_name": "Właściwości"
     },
     {
         "group_boxes": [
@@ -3162,369 +3526,5 @@
             }
         ],
         "tab_name": "Ekipa"
-    },
-    {
-        "group_boxes": [
-            {
-                "cells": [
-                    {
-                        "item_name": "Dach!A1",
-                        "formula": "BLACHODACHÓWKA",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B1",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C1",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D1",
-                        "formula": "m2",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E1",
-                        "formula": "=((PROPERTIES!rafterLength*PROPERTIES!roofLength)*2)*1.06",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F1",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G1",
-                        "formula": "=Dach!E1*Dach!F1",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A2",
-                        "formula": "GĄSIOR",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B2",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C2",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D2",
-                        "formula": "m2",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E2",
-                        "formula": "=PROPERTIES!roofLength",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F2",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G2",
-                        "formula": "=Dach!E2*Dach!F2",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A3",
-                        "formula": "WKRĘTY FARMERSKIE",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B3",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C3",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D3",
-                        "formula": "szt.",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E3",
-                        "formula": "=Dach!E1*8",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F3",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G3",
-                        "formula": "=Dach!E3*Dach!F3",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A4",
-                        "formula": "BLACHA PŁASKA OPIERZENIE",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B4",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C4",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D4",
-                        "formula": "szt.",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E4",
-                        "formula": "=((((PROPERTIES!roofLength/2)*2)/2)/4)*2",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F4",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G4",
-                        "formula": "=Dach!E4*Dach!F4",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A5",
-                        "formula": "BLACHA PŁASKA WIATROWNICA",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B5",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C5",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D5",
-                        "formula": "szt.",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E5",
-                        "formula": "=((PROPERTIES!rafterLength/2)*4)/4",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F5",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G5",
-                        "formula": "=Dach!E5*Dach!F5",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A6",
-                        "formula": "ŁAWA KOMINIARSKA",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B6",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C6",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D6",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E6",
-                        "formula": "=IF(PROPERTIES!chimney;1;0)",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F6",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G6",
-                        "formula": "=Dach!E6*Dach!F6",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A7",
-                        "formula": "STOPNIE KOMINIARSKIE",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B7",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C7",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D7",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E7",
-                        "formula": "=IF(PROPERTIES!chimney;PROPERTIES!rafterLength*0.75;0)",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F7",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G7",
-                        "formula": "=Dach!E7*Dach!F7",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A8",
-                        "formula": "OPASKA",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B8",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C8",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D8",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E8",
-                        "formula": "=IF(PROPERTIES!chimney;1;0)",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F8",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G8",
-                        "formula": "=Dach!E8*Dach!F8",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A9",
-                        "formula": "WAKAFLEX",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B9",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C9",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D9",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E9",
-                        "formula": "=IF(PROPERTIES!chimney;1.5;0)",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F9",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G9",
-                        "formula": "=Dach!E9*Dach!F9",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!A10",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!B10",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!C10",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!D10",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!E10",
-                        "formula": "",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!F10",
-                        "formula": "SUMA: ",
-                        "format": 1
-                    },
-                    {
-                        "item_name": "Dach!G10",
-                        "formula": "=SUM(Dach!G1:G9)",
-                        "format": 1
-                    }
-                ],
-                "item_name": "Dach",
-                "row_count": 10,
-                "column_count": 7,
-                "item_type": "Arkusz kalkulacyjny",
-                "group_box_label": "Dach"
-            }
-        ],
-        "tab_name": "Dach"
     }
 ]
