@@ -1,7 +1,8 @@
+import abc
 from enum import Enum, auto
-from typing import List, Optional, Dict
+from typing import List, Dict, Any
 
-from model.Enums import FormulaType
+from model.Enums import FormulaType, ErrorType
 from model.Item import Item
 from resources import constants
 
@@ -51,15 +52,7 @@ class ItemWithFormula(Item):
         self.items_that_i_depend_on: Dict[str, ItemWithFormula] = {}  # items and their representation in formula
         self.formula_type: FormulaType = FormulaType.NO_TYPE
         self.python_formula = ''
-        self.format = NumberFormat.GENERAL
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.name == other.name
-        return False
+        self.format: NumberFormat = NumberFormat.GENERAL
 
     def __str__(self) -> str:
         return (
@@ -74,44 +67,27 @@ class ItemWithFormula(Item):
             f"{'-' * 80}"
         )
 
-    @staticmethod
-    def sum_function(cells: List['SpreadsheetCell']) -> float:
-        """Sum the values of a list of cells."""
-        total = 0.0
-        for cell in cells:
-            if is_convertible_to_float(cell.value):
-                total += float(cell.value)
-            else:
-                # Handle non-numeric values if needed
-                pass
-        return total
-
-    @staticmethod
-    def if_function(logical_test, value_if_true, value_if_false):
-        if logical_test:
-            return value_if_true
-        else:
-            return value_if_false
-
     def add_dependent(self, cell: 'ItemWithFormula', reference_name: str):
         self.items_that_i_depend_on[reference_name] = cell
 
     def remove_dependent(self, cell: 'ItemWithFormula'):
         if cell.name in self.items_that_i_depend_on:
-            del self.items_that_i_depend_on[cell.name]
+            self.formula = self.formula.replace(cell.name,ErrorType.REF.value[0])
+            self.set_error(ErrorType.REF)
+            self.items_that_i_depend_on.pop(cell.name)
 
     def evaluate_formula(self):
         from model.Enums import ErrorType
         from model.Model import Model
+
         if self.error is not None:
             pass
+        self.error = None
         try:
             if self.formula_type == FormulaType.EXPRESSION:
-                self.error = None
-                self.python_formula = Parser.make_python_formula(self)
-                self.value = str(eval(self.python_formula))
+                self.python_formula = Parser.make_python_formula(self.formula)
+                self.value = Model.evaluate_formula(self.python_formula)
             else:
-                self.error = None
                 self.value = self.formula
         except ZeroDivisionError:
             self.set_error(ErrorType.DIV)
@@ -121,17 +97,6 @@ class ItemWithFormula(Item):
             self.set_error(ErrorType.NAME)
         except Exception:
             self.set_error(ErrorType.NAME)
-
-    def set_error(self, error: Optional['ErrorType'] = None):
-        """Update the error state of this cell and propagate the change to dependent cells. """
-        self.error = error
-        if error is not None:
-            self.value = self.error.value[0]
-            self.value = self.error.value[0]
-
-        for cell in self.items_that_dependents_on_me:
-            if cell.error is not error:
-                cell.set_error(error)
 
     def update_dependencies(self, new_dependencies: List['ItemWithFormula']):
         def remove_all_dependencies():
@@ -154,18 +119,13 @@ class ItemWithFormula(Item):
 
     def set_item(self, formula):
         from model.Model import Model
+        self.mark_dirty()
         self.formula = formula
         self.python_formula = None
         self.set_error()
         dep = Parser.parse_formula_for_dependencies(self.formula)
         self.update_dependencies(dep)
-        self.mark_dirty()
-        if formula.startswith('='):
-            self.formula_type = FormulaType.EXPRESSION
-        elif is_convertible_to_float(formula):
-            self.formula_type = FormulaType.NUMBER
-        else:
-            self.formula_type = FormulaType.STRING
+        self.formula_type = FormulaType.determine_formula_type(formula)
         Model.calculate_dirty_items()
 
     @property
@@ -181,6 +141,24 @@ class ItemWithFormula(Item):
         self._value = value
         if self.error:
             self._value = self.error.value[0]
+        self.set_display_text()
 
-        formatted_value = self.format.format_value(self._value)
-        self.setText(formatted_value)
+    @abc.abstractmethod
+    def set_display_text(self):
+        pass
+
+    def clean_up(self):
+        for item in self.items_that_dependents_on_me:
+            item.remove_dependent(self)
+        for name,item in self.items_that_i_depend_on.items():
+            item.items_that_dependents_on_me.remove(self)
+
+        self.items_that_dependents_on_me.clear()
+        self.items_that_i_depend_on.clear()
+
+    def get_dict_data(self) -> Dict[str, Any]:
+        data = super().get_dict_data()
+        data.update({
+            'format': self.format.value
+        })
+        return data

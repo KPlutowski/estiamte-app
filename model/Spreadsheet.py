@@ -1,12 +1,13 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 import pandas as pd
-from PyQt6 import QtWidgets
+from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtCore import pyqtSignal, QModelIndex, QEvent, Qt
-from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate
+from PyQt6.QtWidgets import QTableWidgetItem, QTableWidget, QStyledItemDelegate, QMenu
 
 from model.ItemWithFormula import ItemWithFormula
-from resources.utils import index_to_letter
+from resources import constants
+from resources.utils import index_to_letter, is_convertible_to_float
 
 
 class ItemDelegate(QStyledItemDelegate):
@@ -53,12 +54,21 @@ class SpreadsheetCell(ItemWithFormula, QTableWidgetItem):
     def name(self):
         return f"{self.tableWidget().objectName()}!{index_to_letter(self.column())}{self.row() + 1}"
 
+    def set_display_text(self):
+        self.setText(self.format.format_value(self._value))
+
+    def get_dict_data(self) -> Dict[str, Any]:
+        data = super().get_dict_data()
+        data.pop('item_type')
+        return data
+
 
 class Spreadsheet(QTableWidget):
     doubleClickedSignal = pyqtSignal(object)
     textEditedSignal = pyqtSignal(object,str)
     textEditingFinishedSignal = pyqtSignal(object)
     activeItemChangedSignal = pyqtSignal(object)
+    context_menu_request = pyqtSignal(QtCore.QPoint, object)
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
@@ -67,8 +77,33 @@ class Spreadsheet(QTableWidget):
         self.delegate = ItemDelegate(self)
         self.setItemDelegate(self.delegate)
         self.delegate.text_edited_signal.connect(self.text_edited)
-        self.delegate.commitData.connect(self.text_editing_finished)
+        self.delegate.commitData.connect(self.editing_finished)
         self.currentCellChanged.connect(self.active_cell_changed)
+        self.customContextMenuRequested.connect(self.context_menu)
+        self.initUI()
+
+    def clean_up(self):
+        for i in range(self.rowCount()):
+            self.remove_row(0)
+
+    @property
+    def name(self):
+        return self.objectName()
+
+    def initUI(self):
+        self.setObjectName(self.name)
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        self.setAlternatingRowColors(True)
+        self.setColumnCount(len(constants.COLUMNS))
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        self.setRowCount(0)
+        for i, (header_name, _) in enumerate(constants.COLUMNS):
+            item = QtWidgets.QTableWidgetItem()
+            item.setText(header_name)
+            self.setHorizontalHeaderItem(i, item)
 
     def add_row(self, index: Optional[int] = None, text: Optional[List[str]] = None):
         if text is None:
@@ -114,25 +149,41 @@ class Spreadsheet(QTableWidget):
         return None
 
     def to_dataframe(self) -> pd.DataFrame:
-        rows = self.rowCount()
-        cols = self.columnCount()
-
-        # Extract the headers
-        headers = [self.horizontalHeaderItem(col).text() if self.horizontalHeaderItem(col) else f'Column {col + 1}' for
-                   col in range(cols)]
-
-        # Extract the data
         data = []
-        for row in range(rows):
+        for row in self.worksheet:
             row_data = []
-            for col in range(cols):
-                item = self.item(row, col)
-                row_data.append(item.text() if item else '')
+            for cell in row:
+                row_data.append(float(cell.text()) if is_convertible_to_float(cell.text()) else cell.text())
             data.append(row_data)
 
-        # Create a DataFrame
-        df = pd.DataFrame(data, columns=headers)
+        df = pd.DataFrame(data, columns=self.get_headers())
         return df
+
+    def get_headers(self) -> List[str]:
+        return [self.horizontalHeaderItem(col).text() if self.horizontalHeaderItem(col) else f'Column {col + 1}' for col in range(self.columnCount())]
+
+    def recalculate(self):
+        for row in self.worksheet:
+            for cell in row:
+                cell.recalculate()
+
+    def get_dict_data(self) -> Dict[str, Any]:
+        from model.ItemModel import ItemModel
+
+        cells = []
+        for row in self.worksheet:
+            for cell in row:
+                cells.append(cell.get_dict_data())
+        data = {
+            'cells': cells,
+            'item_name': self.name,
+            'row_count': self.rowCount(),
+            'column_count': self.columnCount(),
+            'item_type': ItemModel.get_item_type_from_class(type(self))
+        }
+
+        return data
+
     ###############################################
 
     def mouseDoubleClickEvent(self, event: QEvent):
@@ -145,9 +196,27 @@ class Spreadsheet(QTableWidget):
     def text_edited(self, text):
         self.textEditedSignal.emit(self.currentItem(), text)
 
-    def text_editing_finished(self):
-        self.textEditingFinishedSignal.emit(self.currentItem())
+    def editing_finished(self):
+        self.currentItem().set_item(self.currentItem().text())
 
     def focusInEvent(self, event: QEvent):
         super().focusInEvent(event)
         self.activeItemChangedSignal.emit(self.currentItem())
+
+    def context_menu(self, pos):
+        index = self.indexAt(pos)
+
+        menu = QMenu()
+        add_position_action = menu.addAction('Dodaj wiersz')
+        menu.addSeparator()
+        delete_action = menu.addAction('Usuń wiersz')
+
+        action = menu.exec(self.mapToGlobal(pos))
+        if not action:
+            return
+
+        row = index.row()
+        if action == add_position_action:
+            self.add_row(row + 1)
+        elif action == delete_action:
+            self.remove_row(row)

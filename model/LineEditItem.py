@@ -6,13 +6,13 @@ from model.ItemWithFormula import ItemWithFormula
 
 class LineEditItem(ItemWithFormula, QLineEdit):
     doubleClickedSignal = pyqtSignal(object)
-    textEditedSignal = pyqtSignal(object,str)
-    textEditingFinishedSignal = pyqtSignal(object)
-    activeItemChangedSignal = pyqtSignal(object)
+    textEditedSignal = pyqtSignal(object, str)
 
     def __init__(self, formula="", *args, **kwargs):
         super().__init__(formula, *args, **kwargs)
-        self.editingFinished.connect(self.text_editing_finished)
+
+        self.editing_text = ""
+        self.editingFinished.connect(self.editing_finished)
         self.textEdited.connect(self.text_edited)
 
     def __str__(self) -> str:
@@ -32,18 +32,23 @@ class LineEditItem(ItemWithFormula, QLineEdit):
     def name(self):
         return self.objectName()
 
+    def set_display_text(self):
+        self.setText(self.format.format_value(self._value))
+
     ###############################################
 
     def mouseDoubleClickEvent(self, event: QEvent):
         super().mouseDoubleClickEvent(event)
         self.doubleClickedSignal.emit(self)
 
-    def focusInEvent(self, event: QEvent):
-        super().focusInEvent(event)
-        self.activeItemChangedSignal.emit(self)
-
     def text_edited(self, text):
+        self.editing_text = text
         self.textEditedSignal.emit(self, text)
 
-    def text_editing_finished(self):
-        self.textEditingFinishedSignal.emit(self)
+    def editing_finished(self,text=""):
+        self.set_item(self.editing_text)
+
+    def focusInEvent(self, event: QEvent):
+        super().focusInEvent(event)
+        self.editing_text = self.formula
+        self.activeItemChangedSignal.emit(self)

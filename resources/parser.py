@@ -144,10 +144,8 @@ class Parser:
     ####################################################################
 
     @staticmethod
-    def make_python_formula(item: 'ItemWithFormula') -> str:
+    def make_python_formula(formula: str) -> str:
         """Convert a spreadsheet formula to a Python expression."""
-
-        formula = item.formula
         if formula.startswith('='):
             formula = formula[1:]
         else:
@@ -172,19 +170,19 @@ class Parser:
             elif token.token_type == TokenType.FUNCTION:
                 func = token.value
                 if func == 'SUM':
-                    return 'self.sum_function'
+                    return 'Model.sum_function'
                 elif func == 'IF':
-                    return 'self.if_function'
+                    return 'Model.if_function'
                 elif func == 'AVERAGE':
-                    return 'self.average_function'
+                    return 'Model.average_function'
                 elif func == 'MAX':
-                    return 'self.max_function'
+                    return 'Model.max_function'
                 elif func == 'MIN':
-                    return 'self.min_function'
+                    return 'Model.min_function'
                 elif func == 'AND':
-                    return 'self.and_function'
+                    return 'Model.and_function'
                 elif func == 'OR':
-                    return 'self.or_function'
+                    return 'Model.or_function'
             elif token.token_type == TokenType.OPERATOR:
                 return token.value
             elif token.token_type in {TokenType.COMMA, TokenType.SEMICOLON}:

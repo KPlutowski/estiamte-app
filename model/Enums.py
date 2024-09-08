@@ -1,5 +1,7 @@
 from enum import Enum
 
+from resources.utils import is_convertible_to_float
+
 
 class ErrorType(Enum):
     REF = ("#REF!", 'Invalid cell reference.')
@@ -17,3 +19,13 @@ class FormulaType(Enum):
     STRING = 'STRING'
     EXPRESSION = 'EXPRESSION'
     NO_TYPE = 'NO_TYPE'
+
+    @staticmethod
+    def determine_formula_type(formula: str) -> 'FormulaType':
+        """Determine the type of the formula based on its content."""
+        if formula.startswith('='):
+            return FormulaType.EXPRESSION
+        elif is_convertible_to_float(formula):
+            return FormulaType.NUMBER
+        else:
+            return FormulaType.STRING
