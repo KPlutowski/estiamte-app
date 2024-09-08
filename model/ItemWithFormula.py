@@ -74,7 +74,7 @@ class ItemWithFormula(Item):
         if cell.name in self.items_that_i_depend_on:
             self.formula = self.formula.replace(cell.name,ErrorType.REF.value[0])
             self.set_error(ErrorType.REF)
-            del self.items_that_i_depend_on[cell.name]
+            self.items_that_i_depend_on.pop(cell.name)
 
     def evaluate_formula(self):
         from model.Enums import ErrorType
@@ -151,7 +151,7 @@ class ItemWithFormula(Item):
         for item in self.items_that_dependents_on_me:
             item.remove_dependent(self)
         for name,item in self.items_that_i_depend_on.items():
-            item.items_that_i_depend_on.pop(self.name)
+            item.items_that_dependents_on_me.remove(self)
 
         self.items_that_dependents_on_me.clear()
         self.items_that_i_depend_on.clear()
