@@ -83,16 +83,17 @@ class MainController(QObject):
             """Gather properties and spreadsheets from the group boxes."""
             properties = {}
             sheets = {}
-            for group_box in Model.list_all_group_boxes():
-                if isinstance(group_box.item, Spreadsheet):
-                    sheets[group_box.label.text()] = group_box.item
-                elif isinstance(group_box.item, CheckBoxItem):
-                    if group_box.item.isChecked():
-                        properties[group_box.label.text()] = 'TAK'
+            for tab in Model.get_list_of_tabs():
+                for group_box in tab.group_boxes:
+                    if isinstance(group_box.item, Spreadsheet):
+                        sheets[group_box.label.text()] = group_box.item
+                    elif isinstance(group_box.item, CheckBoxItem):
+                        if group_box.item.isChecked():
+                            properties[group_box.label.text()] = 'TAK'
+                        else:
+                            properties[group_box.label.text()] = 'NIE'
                     else:
-                        properties[group_box.label.text()] = 'NIE'
-                else:
-                    properties[group_box.label.text()] = group_box.item.value
+                        properties[group_box.label.text()] = group_box.item.value
             return properties, sheets
 
         def format_properties_sheet(worksheet, workbook):
@@ -194,7 +195,7 @@ class MainController(QObject):
                         for i in range(group_box_data['row_count']):
                             group_box.item.add_row()
                         for cell_data in group_box_data['cells']:
-                            sh_name,row,col = parse_cell_reference(cell_data['item_name'])
+                            sh_name, row, col = parse_cell_reference(cell_data['item_name'])
                             formula = cell_data.get('formula', '')
                             group_box.item.get_cell(row, col).set_item(formula)
                     else:
@@ -236,9 +237,11 @@ class MainController(QObject):
                         QMessageBox.information(self.view, "Saving Successful",
                                                 f"Data successfully saved to {self.current_file_path}")
                         self.is_edited = False
+                        return 1
                     except Exception as e:
                         QMessageBox.critical(self.view, "Saving Failed", f"Failed to save data: {str(e)}")
                         self.current_file_path = None
+        return QMessageBox.StandardButton.Cancel
 
     def reset_project(self):
         self.view.tabWidget.clean_up()
@@ -257,18 +260,21 @@ class MainController(QObject):
                                          QMessageBox.StandardButton.Cancel)
 
             if reply == QMessageBox.StandardButton.Yes:
-                self.handle_file_save_action()
+                if self.handle_file_save_action() == QMessageBox.StandardButton.Cancel:
+                    return QMessageBox.StandardButton.Cancel
             elif reply == QMessageBox.StandardButton.Cancel:
                 return reply
 
     def handle_new_file_action(self):
-        self.ask_for_save()
+        if self.ask_for_save() == QMessageBox.StandardButton.Cancel:
+            return
         self.reset_project()
         self.current_file_path = None
         self.is_edited = False
 
     def handle_export_json_action(self):
         """ Save file to json and DOES NOT set current_file_path to new path"""
+
         def save_json_data_to_file(json_data):
             file_dialog = QFileDialog()
             file_name, _ = file_dialog.getSaveFileName(self.view, "Export to JSON", "", "JSON Files (*.json)")
@@ -315,7 +321,7 @@ class MainController(QObject):
                         for i in range(group_box_data['row_count']):
                             group_box.item.add_row()
                         for cell_data in group_box_data['cells']:
-                            sh_name,row,col = parse_cell_reference(cell_data['item_name'])
+                            sh_name, row, col = parse_cell_reference(cell_data['item_name'])
                             formula = cell_data.get('formula', '')
                             group_box.item.get_cell(row, col).set_item(formula)
                     else:
