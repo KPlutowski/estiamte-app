@@ -2,9 +2,10 @@ import json
 from typing import Optional
 
 import pandas as pd
+from PyQt6 import QtPrintSupport, QtGui, QtWidgets
 
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
-from PyQt6.QtCore import QObject, pyqtSlot
+from PyQt6.QtCore import QObject, pyqtSlot, QSizeF
 
 from model.CheckBoxItem import CheckBoxItem
 from model.DoubleSpinBoxItem import DoubleSpinBoxItem
@@ -163,9 +164,92 @@ class MainController(QObject):
         except Exception as e:
             print(f"An error occurred during export: {e}")
 
-    # TODO
     def handle_export_pdf_action(self):
-        print("handle_export_pdf_action")
+        def generate_pdf_html_content():
+            html = """
+            <html>
+            <head>
+                <style>
+                    table {
+                        width: 100%;
+                        border: 1px solid black;
+                        border-collapse: collapse;
+                        page-break-after: always;
+                    }
+                    th, td {
+                        border: 1px solid black;
+                        padding: 5px;
+                        text-align: center;
+                    }
+                    th {
+                        background-color: #f2f2f2;
+                    }
+                </style>
+            </head>
+            <body>
+            """
+
+            for tab in Model.get_list_of_tabs():
+                for group_box in tab.group_boxes:
+                    if isinstance(group_box.item, Spreadsheet):
+                        table = group_box.item
+                        html += "<h2>{}</h2>".format(group_box.label.text())
+                        html += "<table><thead><tr>"
+
+                        # Add headers
+                        headers = table.get_headers()
+                        for header in headers:
+                            html += f"<th>{header}</th>"
+                        html += "</tr></thead><tbody>"
+
+                        # Add table data
+                        for row in table.worksheet:
+                            html += "<tr>"
+                            for cell in row:
+                                cell_content = cell.text() or ""
+                                html += f"<td>{cell_content}</td>"
+                            html += "</tr>"
+
+                        html += "</tbody></table>"
+
+                # Close the HTML tags
+            html += "</body></html>"
+
+            # Return None if no table data was generated
+            if "<table>" not in html:
+                return None
+
+            return html
+
+        file_path, _ = QFileDialog.getSaveFileName(self.view, "Save PDF File", "",
+                                                   "PDF Files (*.pdf);;All Files (*)")
+        if not file_path:
+            return
+        if not file_path.endswith('.pdf'):
+            file_path += '.pdf'
+        filename = file_path
+
+        printer = QtPrintSupport.QPrinter()
+        printer.setOutputFormat(QtPrintSupport.QPrinter.OutputFormat.PdfFormat)
+        printer.setPageSize(QtGui.QPageSize(QtGui.QPageSize.PageSizeId.A4))
+        printer.setPageOrientation(QtGui.QPageLayout.Orientation.Landscape)
+        printer.setOutputFileName(filename)
+
+        html_content = generate_pdf_html_content()
+
+        if not html_content:
+            QtWidgets.QMessageBox.warning(self.view, "Export Failed", "No data available for export.")
+            return
+
+        doc = QtGui.QTextDocument()
+        doc.setHtml(html_content)
+
+
+        try:
+            doc.print(printer)
+            QtWidgets.QMessageBox.information(self.view, "Success", f"PDF successfully saved as {filename}.")
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self.view, "Export Error", f"Failed to export PDF: {e}")
 
     def handle_file_open_action(self, file_path=None):
         """ IMPORT NEW FILE AND SET THE NEW PATH """
