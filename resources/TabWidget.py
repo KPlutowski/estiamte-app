@@ -94,6 +94,7 @@ class GroupBox(QWidget):
 
 class MyTab(QWidget):
     propertyAdded = pyqtSignal(object)
+    add_tab_dialog = pyqtSignal()
 
     def __init__(self, parent, name: str):
         super().__init__(parent)
@@ -204,12 +205,19 @@ class MyTab(QWidget):
         menu = QMenu()
         add_new_property_action = menu.addAction('Dodaj')
 
+        reset_spliter_action = None
+        delete_property_action = None
+        edit_property_action = None
+        add_new_tab_action = menu.addAction(f'Dodaj nową kartę')
+
         if index is not None:
             widget = self.get_GroupBox(index)
             name = widget.item.name
             reset_spliter_action = menu.addAction('Przywróć domyślny układ')
             delete_property_action = menu.addAction(f'Usuń {name}')
             edit_property_action = menu.addAction(f'Edytuj {name}')
+
+
 
         action = menu.exec(self.mapToGlobal(pos))
         if action is None:
@@ -219,6 +227,8 @@ class MyTab(QWidget):
             from views.Dialogs.NewPropertyDialog import NewPropertyDialog
             self.property_dialog = NewPropertyDialog(index)
             self.property_dialog.property_added.connect(self.add_property)
+        elif action == add_new_tab_action:
+            self.add_tab_dialog.emit()
         elif action == reset_spliter_action:
             self.reset_spliter()
         elif action == delete_property_action:
@@ -227,6 +237,7 @@ class MyTab(QWidget):
             from views.Dialogs.EditPropertyDialog import EditPropertyDialog
             self.edit_property_dialog = EditPropertyDialog(index, widget)
             self.edit_property_dialog.property_edited.connect(self.edit_property)
+
 
     def add_property(self, label_text: str, item_name: str, item_type, index: int = 0):
         if item_type is None:
@@ -285,7 +296,6 @@ class MyTab(QWidget):
 
 class TabWidget(QTabWidget):
     propertyAdded = pyqtSignal(object)
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUI()
@@ -295,6 +305,10 @@ class TabWidget(QTabWidget):
         self.tabBar().setAcceptDrops(True)
         self.tabBar().installEventFilter(self)
         self.tabBar().customContextMenuRequested.connect(self.tabBar_context_menu)
+
+        self.customContextMenuRequested.connect(self.widget_context_menu)
+
+
 
     def initUI(self):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -340,9 +354,7 @@ class TabWidget(QTabWidget):
             action = menu.exec(global_pos)
 
             if action == add_tab_action:
-                from views.Dialogs.NewTabDialog import NewTabDialog
-                self.tab_dialog = NewTabDialog()
-                self.tab_dialog.tab_added.connect(self.add_new_tab)
+                self.add_tab_dialog()
             elif action == delete_tab_action:
                 tab_name = self.tabText(index_of_clicked_tab)
                 reply = QtWidgets.QMessageBox.question(
@@ -357,10 +369,20 @@ class TabWidget(QTabWidget):
         else:
             print("No tab was clicked.")
 
+    def widget_context_menu(self, pos: QtCore.QPoint):
+        """Menu kontekstowe dla całego widżetu TabWidget"""
+        global_pos = self.mapToGlobal(pos)
+        menu = QMenu()
+        add_tab_action = menu.addAction('Dodaj nową kartę')
+        action = menu.exec(global_pos)
+        if action == add_tab_action:
+            self.add_tab_dialog()
+
     def add_new_tab(self, name: str) -> MyTab:
         from model.Model import Model
         my_tab = MyTab(self, name)
         my_tab.propertyAdded.connect(self.propertyAdded.emit)
+        my_tab.add_tab_dialog.connect(self.add_tab_dialog)
         self.addTab(my_tab, name)
         Model.add_tab_to_db(my_tab)
         return my_tab
@@ -376,4 +398,7 @@ class TabWidget(QTabWidget):
         for i in range(self.count()):
             self.delete_tab(0)
 
-
+    def add_tab_dialog(self):
+        from views.Dialogs.NewTabDialog import NewTabDialog
+        self.tab_dialog = NewTabDialog()
+        self.tab_dialog.tab_added.connect(self.add_new_tab)

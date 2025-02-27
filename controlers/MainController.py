@@ -36,7 +36,8 @@ class MainController(QObject):
     ############################################
 
     def default_data(self):
-        self.handle_file_open_action("resources/test.json")
+        # self.handle_file_open_action("resources/test.json")
+        pass
 
     def setup_connections(self):
         # Tab widget
@@ -259,6 +260,8 @@ class MainController(QObject):
         if not file_path:
             file_dialog = QFileDialog()
             file_path, _ = file_dialog.getOpenFileName(self.view, "Open project", "", "JSON Files (*.json)")
+            if not file_path:
+                return
 
         self.reset_project()
         try:
@@ -289,6 +292,7 @@ class MainController(QObject):
             QMessageBox.information(self.view, "Open Successful", f"Data successfully opened from {file_path}")
         except Exception as e:
             QMessageBox.critical(self.view, "Open Failed", f"Failed to open data: {str(e)}")
+            return
 
         self.current_file_path = file_path
         self.is_edited = False
@@ -385,6 +389,8 @@ class MainController(QObject):
         if not file_path:
             file_dialog = QFileDialog()
             file_path, _ = file_dialog.getOpenFileName(self.view, "Import from JSON", "", "JSON Files (*.json)")
+            if not file_path:
+                return
 
         self.reset_project()
         try:
